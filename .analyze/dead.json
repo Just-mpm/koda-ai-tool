@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-01-30T03:09:26.588Z",
+  "cwd": "D:\\Users\\Matheus Pimenta\\Pictures\\Pacotes-Pessoais\\ai-tool",
+  "summary": {
+    "totalDead": 0,
+    "byType": {
+      "files": 0,
+      "exports": 0,
+      "dependencies": 0
+    }
+  },
+  "files": [],
+  "exports": [],
+  "dependencies": []
+}

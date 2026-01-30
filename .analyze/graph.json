@@ -1,0 +1,183 @@
+{
+  "graph": {
+    "src/cache/index.ts": {
+      "id": "src/cache/index.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 5217,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/cli.ts": {
+      "id": "src/cli.ts",
+      "adjacentTo": [
+        "src/commands/map.ts",
+        "src/commands/dead.ts",
+        "src/commands/impact.ts",
+        "src/commands/suggest.ts",
+        "src/commands/context.ts",
+        "src/index.ts",
+        "src/mcp/server.ts"
+      ],
+      "body": {
+        "size": 5668,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/map.ts": {
+      "id": "src/commands/map.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/formatters/text.ts",
+        "src/cache/index.ts"
+      ],
+      "body": {
+        "size": 3724,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/detect.ts": {
+      "id": "src/utils/detect.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 3958,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/formatters/text.ts": {
+      "id": "src/formatters/text.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts"
+      ],
+      "body": {
+        "size": 16370,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/dead.ts": {
+      "id": "src/commands/dead.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/formatters/text.ts",
+        "src/cache/index.ts"
+      ],
+      "body": {
+        "size": 4316,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/impact.ts": {
+      "id": "src/commands/impact.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/formatters/text.ts",
+        "src/cache/index.ts"
+      ],
+      "body": {
+        "size": 12329,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/suggest.ts": {
+      "id": "src/commands/suggest.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/formatters/text.ts",
+        "src/cache/index.ts"
+      ],
+      "body": {
+        "size": 9082,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/context.ts": {
+      "id": "src/commands/context.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/formatters/text.ts",
+        "src/ts/extractor.ts"
+      ],
+      "body": {
+        "size": 6874,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/ts/extractor.ts": {
+      "id": "src/ts/extractor.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 8789,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/index.ts": {
+      "id": "src/index.ts",
+      "adjacentTo": [
+        "src/commands/map.ts",
+        "src/commands/dead.ts",
+        "src/commands/impact.ts",
+        "src/commands/suggest.ts",
+        "src/commands/context.ts",
+        "src/types.ts",
+        "src/utils/detect.ts",
+        "src/cache/index.ts"
+      ],
+      "body": {
+        "size": 1436,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/types.ts": {
+      "id": "src/types.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 4344,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/mcp/server.ts": {
+      "id": "src/mcp/server.ts",
+      "adjacentTo": [
+        "src/commands/map.ts",
+        "src/commands/dead.ts",
+        "src/commands/impact.ts",
+        "src/commands/suggest.ts",
+        "src/commands/context.ts",
+        "src/index.ts"
+      ],
+      "body": {
+        "size": 11947,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    }
+  },
+  "files": [
+    "src/cache/index.ts",
+    "src/cli.ts",
+    "src/commands/map.ts",
+    "src/utils/detect.ts",
+    "src/formatters/text.ts",
+    "src/commands/dead.ts",
+    "src/commands/impact.ts",
+    "src/commands/suggest.ts",
+    "src/commands/context.ts",
+    "src/ts/extractor.ts",
+    "src/index.ts",
+    "src/types.ts",
+    "src/mcp/server.ts"
+  ],
+  "timestamp": "2026-01-30T03:28:19.789Z"
+}

@@ -2,7 +2,7 @@
  * Formatadores de texto para output no terminal
  */
 
-import type { MapResult, DeadResult, ImpactResult, FileCategory } from "../types.js";
+import type { MapResult, DeadResult, ImpactResult, SuggestResult, ContextResult, FileCategory } from "../types.js";
 import { categoryIcons } from "../utils/detect.js";
 
 /**
@@ -249,6 +249,182 @@ export function formatImpactText(result: ImpactResult): string {
       out += `   • ${suggestion}\n`;
     }
   }
+
+  return out;
+}
+
+/**
+ * Formata resultado do SUGGEST para texto
+ */
+export function formatSuggestText(result: SuggestResult): string {
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    📚 SUGGEST                                ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Info do arquivo alvo
+  const icon = categoryIcons[result.category];
+  out += `📍 Antes de modificar: ${result.target}\n`;
+  out += `   ${icon} ${result.category}\n\n`;
+
+  if (result.suggestions.length === 0) {
+    out += `✅ Nenhuma sugestao de leitura.\n`;
+    out += `   Este arquivo nao tem dependencias ou arquivos relacionados.\n`;
+    return out;
+  }
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Agrupar por prioridade
+  const byPriority = {
+    critical: result.suggestions.filter((s) => s.priority === "critical"),
+    high: result.suggestions.filter((s) => s.priority === "high"),
+    medium: result.suggestions.filter((s) => s.priority === "medium"),
+    low: result.suggestions.filter((s) => s.priority === "low"),
+  };
+
+  // CRITICAL - Tipos/interfaces
+  if (byPriority.critical.length > 0) {
+    out += `🔴 LEITURA CRITICA (${byPriority.critical.length})\n`;
+    out += `   Tipos e interfaces que voce DEVE entender:\n\n`;
+    for (const s of byPriority.critical) {
+      const sIcon = categoryIcons[s.category];
+      out += `   ${sIcon} ${s.path}\n`;
+      out += `      ${s.reason}\n`;
+    }
+    out += `\n`;
+  }
+
+  // HIGH - Dependencias diretas
+  if (byPriority.high.length > 0) {
+    out += `🟠 LEITURA IMPORTANTE (${byPriority.high.length})\n`;
+    out += `   Arquivos importados diretamente:\n\n`;
+    for (const s of byPriority.high) {
+      const sIcon = categoryIcons[s.category];
+      out += `   ${sIcon} ${s.path}\n`;
+      out += `      ${s.reason}\n`;
+    }
+    out += `\n`;
+  }
+
+  // MEDIUM - Upstream
+  if (byPriority.medium.length > 0) {
+    out += `🟡 LEITURA RECOMENDADA (${byPriority.medium.length})\n`;
+    out += `   Arquivos que usam este arquivo:\n\n`;
+    for (const s of byPriority.medium) {
+      const sIcon = categoryIcons[s.category];
+      out += `   ${sIcon} ${s.path}\n`;
+      out += `      ${s.reason}\n`;
+    }
+    out += `\n`;
+  }
+
+  // LOW - Testes
+  if (byPriority.low.length > 0) {
+    out += `🟢 LEITURA OPCIONAL (${byPriority.low.length})\n`;
+    out += `   Testes relacionados:\n\n`;
+    for (const s of byPriority.low) {
+      const sIcon = categoryIcons[s.category];
+      out += `   ${sIcon} ${s.path}\n`;
+      out += `      ${s.reason}\n`;
+    }
+    out += `\n`;
+  }
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Resumo
+  out += `📊 RESUMO\n`;
+  out += `   Total de arquivos sugeridos: ${result.suggestions.length}\n`;
+  if (byPriority.critical.length > 0) {
+    out += `   🔴 Criticos: ${byPriority.critical.length}\n`;
+  }
+  if (byPriority.high.length > 0) {
+    out += `   🟠 Importantes: ${byPriority.high.length}\n`;
+  }
+  if (byPriority.medium.length > 0) {
+    out += `   🟡 Recomendados: ${byPriority.medium.length}\n`;
+  }
+  if (byPriority.low.length > 0) {
+    out += `   🟢 Opcionais: ${byPriority.low.length}\n`;
+  }
+
+  return out;
+}
+
+/**
+ * Formata resultado do CONTEXT para texto
+ */
+export function formatContextText(result: ContextResult): string {
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    📄 CONTEXT                                ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Info do arquivo
+  const icon = categoryIcons[result.category];
+  out += `📍 ARQUIVO: ${result.file}\n`;
+  out += `   ${icon} ${result.category}\n\n`;
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Imports
+  if (result.imports.length > 0) {
+    out += `📥 IMPORTS (${result.imports.length})\n\n`;
+    for (const imp of result.imports) {
+      const typeLabel = imp.isTypeOnly ? " [type]" : "";
+      out += `   ${imp.source}${typeLabel}\n`;
+      if (imp.specifiers.length > 0) {
+        out += `      { ${imp.specifiers.join(", ")} }\n`;
+      }
+    }
+    out += `\n`;
+  }
+
+  // Exports
+  if (result.exports.length > 0) {
+    out += `📤 EXPORTS (${result.exports.length})\n`;
+    out += `   ${result.exports.join(", ")}\n\n`;
+  }
+
+  // Types
+  if (result.types.length > 0) {
+    out += `🏷️ TYPES (${result.types.length})\n\n`;
+    for (const t of result.types) {
+      const exported = t.isExported ? "export " : "";
+      out += `   ${exported}${t.kind} ${t.name}\n`;
+      out += `      ${t.definition}\n\n`;
+    }
+  }
+
+  // Functions
+  if (result.functions.length > 0) {
+    out += `⚡ FUNCTIONS (${result.functions.length})\n\n`;
+    for (const fn of result.functions) {
+      const exported = fn.isExported ? "export " : "";
+      const async = fn.isAsync ? "async " : "";
+      const arrow = fn.isArrowFunction ? " =>" : "";
+      const params = fn.params.map((p) => `${p.name}: ${p.type}`).join(", ");
+      out += `   ${exported}${async}${fn.name}(${params})${arrow}: ${fn.returnType}\n`;
+      if (fn.jsdoc) {
+        out += `      /** ${fn.jsdoc} */\n`;
+      }
+      out += `\n`;
+    }
+  }
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Resumo
+  out += `📊 RESUMO\n`;
+  out += `   Imports: ${result.imports.length}\n`;
+  out += `   Exports: ${result.exports.length}\n`;
+  out += `   Types: ${result.types.length}\n`;
+  out += `   Functions: ${result.functions.length}\n`;
 
   return out;
 }

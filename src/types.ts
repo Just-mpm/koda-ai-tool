@@ -130,3 +130,77 @@ export interface ImpactResult {
   risks: RiskInfo[];
   suggestions: string[];
 }
+
+// ============================================================================
+// SUGGEST COMMAND TYPES
+// ============================================================================
+
+export interface SuggestOptions extends CommandOptions {
+  limit?: number;
+}
+
+export type SuggestionPriority = "critical" | "high" | "medium" | "low";
+
+export interface Suggestion {
+  path: string;
+  category: FileCategory;
+  reason: string;
+  priority: SuggestionPriority;
+}
+
+export interface SuggestResult {
+  version: string;
+  timestamp: string;
+  target: string;
+  category: FileCategory;
+  suggestions: Suggestion[];
+}
+
+// ============================================================================
+// CONTEXT COMMAND TYPES
+// ============================================================================
+
+export interface ContextOptions extends CommandOptions {
+  depth?: number;
+}
+
+export interface ImportInfo {
+  source: string;
+  specifiers: string[];
+  isTypeOnly: boolean;
+}
+
+export type ParamInfo = {
+  name: string;
+  type: string;
+};
+
+export interface FunctionInfo {
+  name: string;
+  params: ParamInfo[];
+  returnType: string;
+  isAsync: boolean;
+  isExported: boolean;
+  isArrowFunction: boolean;
+  jsdoc?: string;
+}
+
+export type TypeKind = "interface" | "type" | "enum";
+
+export interface TypeInfo {
+  name: string;
+  kind: TypeKind;
+  definition: string;
+  isExported: boolean;
+}
+
+export interface ContextResult {
+  version: string;
+  timestamp: string;
+  file: string;
+  category: FileCategory;
+  imports: ImportInfo[];
+  exports: string[];
+  functions: FunctionInfo[];
+  types: TypeInfo[];
+}

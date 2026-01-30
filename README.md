@@ -1,29 +1,27 @@
 # ai-tool
 
-Ferramenta de análise de dependências e impacto para projetos TypeScript/JavaScript.
+Ferramenta de analise de dependencias e impacto para projetos TypeScript/JavaScript.
 
-Usa [Skott](https://github.com/antoine-coulon/skott) + [Knip](https://knip.dev) internamente para análise precisa.
+Usa [Skott](https://github.com/antoine-coulon/skott) + [Knip](https://knip.dev) + [ts-morph](https://ts-morph.com) internamente.
 
-## Instalação
+## Instalacao
 
 ```bash
 # Via npx (sem instalar)
-npx ai-tool map
-npx ai-tool dead
-npx ai-tool impact Button
+npx @justmpm/ai-tool map
 
 # Ou instalar globalmente
-npm install -g ai-tool
+npm install -g @justmpm/ai-tool
 
 # Ou como devDependency
-npm install -D ai-tool
+npm install -D @justmpm/ai-tool
 ```
 
 ## Comandos
 
 ### `map` - Mapa do Projeto
 
-Gera um mapa completo do projeto com categorização de arquivos.
+Gera um mapa completo do projeto com categorizacao de arquivos.
 
 ```bash
 ai-tool map
@@ -32,13 +30,13 @@ ai-tool map --format=json
 
 **Output:**
 - Total de arquivos e pastas
-- Categorização automática (component, hook, service, util, etc.)
+- Categorizacao automatica (component, hook, service, util, etc.)
 - Estrutura de pastas
-- Dependências circulares detectadas
+- Dependencias circulares detectadas
 
-### `dead` - Código Morto
+### `dead` - Codigo Morto
 
-Detecta arquivos, exports e dependências não utilizados.
+Detecta arquivos, exports e dependencias nao utilizados.
 
 ```bash
 ai-tool dead
@@ -47,13 +45,13 @@ ai-tool dead --fix  # Remove automaticamente
 ```
 
 **Detecta:**
-- Arquivos órfãos (ninguém importa)
-- Exports não utilizados
-- Dependências npm não usadas
+- Arquivos orfaos (ninguem importa)
+- Exports nao utilizados
+- Dependencias npm nao usadas
 
-### `impact` - Análise de Impacto
+### `impact` - Analise de Impacto
 
-Analisa o impacto de modificar um arquivo específico.
+Analisa o impacto de modificar um arquivo especifico.
 
 ```bash
 ai-tool impact Button
@@ -62,100 +60,159 @@ ai-tool impact useAuth --format=json
 ```
 
 **Output:**
-- **Upstream**: Quem importa este arquivo (afetados por mudanças)
-- **Downstream**: O que este arquivo importa (dependências)
-- **Riscos**: Arquivo crítico, dependências circulares, etc.
-- **Sugestões**: Recomendações para modificação segura
+- **Upstream**: Quem importa este arquivo (afetados por mudancas)
+- **Downstream**: O que este arquivo importa (dependencias)
+- **Riscos**: Arquivo critico, dependencias circulares, etc.
+- **Sugestoes**: Recomendacoes para modificacao segura
 
-## Uso Programático
+### `suggest` - Sugestao de Leitura
+
+Sugere arquivos para ler ANTES de modificar um arquivo.
+
+```bash
+ai-tool suggest Button
+ai-tool suggest src/hooks/useAuth.ts --limit=5
+```
+
+**Prioridades:**
+- **Critical**: Tipos/interfaces usados pelo arquivo
+- **High**: Dependencias diretas (imports)
+- **Medium**: Upstream (quem usa o arquivo)
+- **Low**: Testes relacionados
+
+### `context` - Contexto do Arquivo
+
+Extrai assinaturas de funcoes e tipos SEM a implementacao.
+
+```bash
+ai-tool context Button
+ai-tool context src/hooks/useAuth.ts --format=json
+```
+
+**Extrai:**
+- Imports com specifiers
+- Exports do arquivo
+- Funcoes com parametros e tipos de retorno
+- Interfaces, types e enums com definicoes
+
+Ideal para entender rapidamente a API publica de um arquivo.
+
+## Servidor MCP
+
+Integra com Claude Desktop e outras ferramentas MCP.
+
+```bash
+ai-tool --mcp
+```
+
+**Tools expostas:**
+- `aitool_project_map` - Mapa do projeto
+- `aitool_dead_code` - Codigo morto
+- `aitool_impact_analysis` - Analise de impacto
+- `aitool_suggest_reads` - Sugestao de leitura
+- `aitool_file_context` - Contexto do arquivo
+
+### Configuracao Claude Code
+
+Adicione ao `.mcp.json` do projeto ou ao arquivo global `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "analyze": {
+      "command": "npx",
+      "args": ["-y", "@justmpm/ai-tool", "--mcp"]
+    }
+  }
+}
+```
+
+### Configuracao Claude Desktop
+
+Adicione ao `claude_desktop_config.json`:
+
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "analyze": {
+      "command": "npx",
+      "args": ["-y", "@justmpm/ai-tool", "--mcp"]
+    }
+  }
+}
+```
+
+## Uso Programatico
 
 ```typescript
-import { map, dead, impact } from "ai-tool";
+import { map, dead, impact, suggest, context } from "@justmpm/ai-tool";
 
 // Mapa do projeto
 const projectMap = await map({ format: "json" });
 
-// Código morto
+// Codigo morto
 const deadCode = await dead({ format: "json" });
 
-// Análise de impacto
-const analysis = await impact("src/components/Button.tsx", {
-  format: "json"
-});
+// Analise de impacto
+const analysis = await impact("Button", { format: "json" });
+
+// Sugestao de leitura
+const suggestions = await suggest("Button", { limit: 5 });
+
+// Contexto do arquivo
+const fileContext = await context("Button", { format: "json" });
 ```
 
-## Opções
+## Opcoes
 
-| Opção | Descrição | Default |
+| Opcao | Descricao | Default |
 |-------|-----------|---------|
-| `--format=text\|json` | Formato de saída | `text` |
-| `--cwd=<path>` | Diretório do projeto | `process.cwd()` |
-| `--fix` | Remove código morto (só para `dead`) | `false` |
+| `--format=text\|json` | Formato de saida | `text` |
+| `--cwd=<path>` | Diretorio do projeto | `process.cwd()` |
+| `--no-cache` | Ignora cache | `false` |
+| `--fix` | Remove codigo morto (so `dead`) | `false` |
+| `--limit=<n>` | Limite de sugestoes (so `suggest`) | `10` |
+| `--mcp` | Inicia servidor MCP | - |
 
 ## Categorias de Arquivos
 
-O ai-tool categoriza automaticamente os arquivos:
-
-| Categoria | Descrição |
+| Categoria | Descricao |
 |-----------|-----------|
-| `page` | Páginas (Next.js, etc.) |
+| `page` | Paginas (Next.js, etc.) |
 | `layout` | Layouts |
 | `route` | Rotas de API |
 | `component` | Componentes React/Vue |
 | `hook` | React Hooks |
-| `service` | Serviços/API |
-| `store` | Estado global (Redux, Zustand, Context) |
-| `util` | Utilitários |
+| `service` | Servicos/API |
+| `store` | Estado global |
+| `util` | Utilitarios |
 | `type` | Tipos TypeScript |
-| `config` | Configurações |
+| `config` | Configuracoes |
 | `test` | Testes |
 | `other` | Outros |
 
-## Integração com IA
+## Cache
 
-Este pacote foi criado para ser usado com ferramentas de IA como Claude Code, OpenCode, etc.
+Resultados sao salvos em `.analyze/` para acelerar execucoes futuras.
 
-Exemplo de tool para OpenCode:
-
-```typescript
-import { tool } from "@opencode-ai/plugin";
-import { execSync } from "child_process";
-
-export default tool({
-  description: `Analisa dependências e impacto do projeto.
-
-  COMANDOS:
-  - map: Mapa do projeto
-  - dead: Código morto
-  - impact <arquivo>: Análise de impacto`,
-
-  args: {
-    command: tool.schema.enum(["map", "dead", "impact"]),
-    target: tool.schema.string().optional(),
-    format: tool.schema.enum(["text", "json"]).optional()
-  },
-
-  async execute({ command, target, format }) {
-    const fmt = format || "text";
-    const cmd = target
-      ? `npx ai-tool ${command} "${target}" --format=${fmt}`
-      : `npx ai-tool ${command} --format=${fmt}`;
-
-    return execSync(cmd, { encoding: "utf-8" });
-  }
-});
-```
+- Cache e invalidado automaticamente quando arquivos mudam
+- Use `--no-cache` para forcar regeneracao
+- Adicione `.analyze/` ao `.gitignore`
 
 ## Requisitos
 
 - Node.js >= 18.0.0
-- TypeScript/JavaScript project
+- Projeto TypeScript/JavaScript
 
-## Créditos
+## Creditos
 
-- [Skott](https://github.com/antoine-coulon/skott) - Análise de dependências
-- [Knip](https://knip.dev) - Detecção de código morto
+- [Skott](https://github.com/antoine-coulon/skott) - Analise de dependencias
+- [Knip](https://knip.dev) - Deteccao de codigo morto
+- [ts-morph](https://ts-morph.com) - Analise AST
 
-## Licença
+## Licenca
 
 MIT - [Koda AI Studio](https://kodaai.app)

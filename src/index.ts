@@ -22,6 +22,8 @@
 export { map } from "./commands/map.js";
 export { dead, deadFix } from "./commands/dead.js";
 export { impact } from "./commands/impact.js";
+export { suggest } from "./commands/suggest.js";
+export { context } from "./commands/context.js";
 
 // Tipos
 export type {
@@ -39,6 +41,19 @@ export type {
   DeadFile,
   ImpactFile,
   RiskInfo,
+  // Suggest types
+  SuggestOptions,
+  SuggestionPriority,
+  Suggestion,
+  SuggestResult,
+  // Context types
+  ContextOptions,
+  ImportInfo,
+  ParamInfo,
+  FunctionInfo,
+  TypeKind,
+  TypeInfo,
+  ContextResult,
 } from "./types.js";
 
 // Utilitários
@@ -48,4 +63,4 @@ export { detectCategory, categoryIcons, isEntryPoint, isCodeFile } from "./utils
 export { invalidateCache, isCacheValid, getCacheDir } from "./cache/index.js";
 
 // Versão
-export const VERSION = "0.2.0";
+export const VERSION = "0.3.1";

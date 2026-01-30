@@ -22,3 +22,5 @@ coverage/
 # Cache
 .cache/
 *.tsbuildinfo
+
+IDEAS.md

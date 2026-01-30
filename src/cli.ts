@@ -21,28 +21,36 @@
 import { map } from "./commands/map.js";
 import { dead, deadFix } from "./commands/dead.js";
 import { impact } from "./commands/impact.js";
+import { suggest } from "./commands/suggest.js";
+import { context } from "./commands/context.js";
 import { VERSION } from "./index.js";
 
 const HELP = `
-ai-tool v${VERSION} - Análise de dependências e impacto
+ai-tool v${VERSION} - Analise de dependencias e impacto
 
 COMANDOS:
   map                    Mapa completo do projeto (usa Skott)
-  dead                   Detecta código morto (usa Knip)
-  dead --fix             Remove código morto automaticamente
-  impact <arquivo>       Análise de impacto antes de modificar
+  dead                   Detecta codigo morto (usa Knip)
+  dead --fix             Remove codigo morto automaticamente
+  impact <arquivo>       Analise de impacto antes de modificar
+  suggest <arquivo>      Sugere arquivos para ler antes de modificar
+  context <arquivo>      Extrai assinaturas de um arquivo (funcoes, tipos)
 
-OPÇÕES:
-  --format=text|json     Formato de saída (default: text)
-  --cwd=<path>           Diretório do projeto (default: cwd)
-  --no-cache             Ignora cache e força regeneração
+MODOS:
+  --mcp                  Inicia servidor MCP para integracao com Claude Desktop
+
+OPCOES:
+  --format=text|json     Formato de saida (default: text)
+  --cwd=<path>           Diretorio do projeto (default: cwd)
+  --no-cache             Ignora cache e forca regeneracao
+  --limit=<n>            Limite de sugestoes (default: 10, apenas suggest)
   --help, -h             Mostra esta ajuda
-  --version, -v          Mostra versão
+  --version, -v          Mostra versao
 
 CACHE:
-  Resultados são salvos em .analyze/ para acelerar execuções futuras.
-  O cache é invalidado automaticamente quando arquivos mudam.
-  Use --no-cache para forçar regeneração.
+  Resultados sao salvos em .analyze/ para acelerar execucoes futuras.
+  O cache e invalidado automaticamente quando arquivos mudam.
+  Use --no-cache para forcar regeneracao.
 
 EXEMPLOS:
   ai-tool map
@@ -53,10 +61,15 @@ EXEMPLOS:
   ai-tool impact Button
   ai-tool impact src/hooks/useAuth.ts
   ai-tool impact src/components/Header.tsx --format=json
+  ai-tool suggest Button
+  ai-tool suggest src/hooks/useAuth.ts --limit=5
+  ai-tool context Button
+  ai-tool context src/hooks/useAuth.ts --format=json
+  ai-tool --mcp
 
 SOBRE:
   Criado por Koda AI Studio (kodaai.app)
-  Usa Skott para análise de dependências e Knip para dead code detection.
+  Usa Skott para analise de dependencias e Knip para dead code detection.
 `;
 
 async function main() {
@@ -76,6 +89,13 @@ async function main() {
     } else {
       positional.push(arg);
     }
+  }
+
+  // MCP Server mode (check ANTES do help para funcionar com --mcp sem comando)
+  if (flags.mcp) {
+    const { startMcpServer } = await import("./mcp/server.js");
+    await startMcpServer();
+    return; // Fica rodando indefinidamente via stdio
   }
 
   // Help
@@ -120,6 +140,31 @@ async function main() {
           process.exit(1);
         }
         result = await impact(target, { format, cwd, cache });
+        break;
+
+      case "suggest":
+        if (!target) {
+          console.error("❌ Erro: arquivo alvo é obrigatório para o comando suggest");
+          console.error("   Exemplo: ai-tool suggest src/components/Button.tsx");
+          console.error("   Exemplo: ai-tool suggest Button");
+          process.exit(1);
+        }
+        result = await suggest(target, {
+          format,
+          cwd,
+          cache,
+          limit: flags.limit ? Number(flags.limit) : undefined,
+        });
+        break;
+
+      case "context":
+        if (!target) {
+          console.error("❌ Erro: arquivo alvo é obrigatório para o comando context");
+          console.error("   Exemplo: ai-tool context src/components/Button.tsx");
+          console.error("   Exemplo: ai-tool context Button");
+          process.exit(1);
+        }
+        result = await context(target, { format, cwd });
         break;
 
       default:
