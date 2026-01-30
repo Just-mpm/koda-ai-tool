@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.2] - 2025-01-30
+
+### Corrigido
+
+- **Falsos positivos em Firebase Cloud Functions**: O comando `dead` agora detecta automaticamente projetos Firebase (via `.firebaserc` ou `firebase.json`) e filtra arquivos em `functions/src/` que estao exportados no `index.ts`
+  - Resolve o problema de Cloud Functions serem marcadas como "orfas" pelo Knip
+  - Detecta padroes: `export { foo } from "./foo"`, `export * from "./foo"`, imports com re-export
+  - Mostra no output quantos arquivos foram filtrados
+
+### Adicionado
+
+- Novo utilitario `src/utils/firebase.ts` com funcoes:
+  - `isFirebaseProject(cwd)` - Detecta projeto Firebase
+  - `hasFirebaseFunctions(cwd)` - Detecta Cloud Functions
+  - `isExportedCloudFunction(file, cwd)` - Verifica se arquivo esta exportado
+  - `filterCloudFunctionsFalsePositives(files, cwd)` - Filtra falsos positivos
+- Campo `filters` no resultado do `dead` com metadata sobre filtros aplicados
+- Cache do conteudo do `index.ts` para performance
+
 ## [0.3.1] - 2025-01-30
 
 ### Adicionado

@@ -1,5 +1,8 @@
 /**
  * Comando DEAD - Detecção de código morto usando Knip
+ *
+ * Inclui filtro inteligente para Firebase Cloud Functions que elimina
+ * falsos positivos de arquivos exportados via functions/src/index.ts
  */
 
 import { execSync } from "child_process";
@@ -12,6 +15,10 @@ import {
   cacheDeadResult,
   updateCacheMeta,
 } from "../cache/index.js";
+import {
+  filterCloudFunctionsFalsePositives,
+  hasFirebaseFunctions,
+} from "../utils/firebase.js";
 
 interface KnipIssue {
   file: string;
@@ -79,12 +86,22 @@ export async function dead(options: DeadOptions = {}): Promise<string> {
       }
     }
 
-    // Processar arquivos órfãos
-    const deadFiles: DeadFile[] = (knipOutput.files || []).map((file) => ({
+    // Processar arquivos órfãos (com filtro de Cloud Functions)
+    const rawFiles = knipOutput.files || [];
+    const { filtered: filteredFiles, excluded: excludedFunctions } =
+      filterCloudFunctionsFalsePositives(rawFiles, cwd);
+
+    const deadFiles: DeadFile[] = filteredFiles.map((file) => ({
       path: file,
       category: detectCategory(file),
       type: "file" as const,
     }));
+
+    // Log de debug se houve exclusões
+    const hasFirebase = hasFirebaseFunctions(cwd);
+    const firebaseInfo = hasFirebase
+      ? { detected: true, excludedCount: excludedFunctions.length }
+      : { detected: false, excludedCount: 0 };
 
     // Processar exports não usados
     const deadExports: Array<{ file: string; export: string }> = [];
@@ -121,6 +138,11 @@ export async function dead(options: DeadOptions = {}): Promise<string> {
       files: deadFiles,
       exports: deadExports,
       dependencies: deadDependencies,
+      // Metadata sobre filtros aplicados
+      filters: {
+        firebase: firebaseInfo,
+        excludedFiles: excludedFunctions,
+      },
     };
 
     // Salvar no cache

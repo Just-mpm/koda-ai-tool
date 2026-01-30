@@ -94,6 +94,14 @@ export interface DeadResult {
   files: DeadFile[];
   exports: Array<{ file: string; export: string }>;
   dependencies: string[];
+  /** Informações sobre filtros aplicados (ex: Cloud Functions excluídas) */
+  filters?: {
+    firebase: {
+      detected: boolean;
+      excludedCount: number;
+    };
+    excludedFiles: string[];
+  };
 }
 
 // ============================================================================

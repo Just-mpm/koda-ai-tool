@@ -59,8 +59,17 @@ export type {
 // Utilitários
 export { detectCategory, categoryIcons, isEntryPoint, isCodeFile } from "./utils/detect.js";
 
+// Firebase Cloud Functions utils
+export {
+  isFirebaseProject,
+  hasFirebaseFunctions,
+  isExportedCloudFunction,
+  filterCloudFunctionsFalsePositives,
+  clearFirebaseCache,
+} from "./utils/firebase.js";
+
 // Cache
 export { invalidateCache, isCacheValid, getCacheDir } from "./cache/index.js";
 
 // Versão
-export const VERSION = "0.3.1";
+export const VERSION = "0.3.2";

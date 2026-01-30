@@ -147,6 +147,16 @@ export function formatDeadText(result: DeadResult): string {
     out += `\n`;
   }
 
+  // Info sobre filtros aplicados
+  if (result.filters?.firebase.detected) {
+    out += `🔥 FIREBASE CLOUD FUNCTIONS\n`;
+    out += `   Projeto Firebase detectado.\n`;
+    if (result.filters.firebase.excludedCount > 0) {
+      out += `   ${result.filters.firebase.excludedCount} arquivo(s) filtrado(s) (exportados em functions/src/index.ts)\n`;
+    }
+    out += `\n`;
+  }
+
   out += `💡 SUGESTÃO\n`;
   out += `   Execute 'npx knip --fix' para remover automaticamente.\n`;
 

@@ -7,6 +7,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, readdirSync } from "fs";
 import { join, extname } from "path";
+import { clearFirebaseCache } from "../utils/firebase.js";
 
 const CACHE_DIR = ".analyze";
 const META_FILE = "meta.json";
@@ -209,6 +210,9 @@ export function getCachedDeadResult<T>(cwd: string): T | null {
  */
 export function invalidateCache(cwd: string): void {
   const metaPath = join(getCacheDir(cwd), META_FILE);
+
+  // Limpar cache do Firebase também
+  clearFirebaseCache();
 
   if (existsSync(metaPath)) {
     try {
