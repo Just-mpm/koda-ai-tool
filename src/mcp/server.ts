@@ -13,7 +13,11 @@ import { dead } from "../commands/dead.js";
 import { impact } from "../commands/impact.js";
 import { suggest } from "../commands/suggest.js";
 import { context } from "../commands/context.js";
+import { areas } from "../commands/areas.js";
+import { area } from "../commands/area.js";
+import { areasInit } from "../commands/areas-init.js";
 import { VERSION } from "../index.js";
+import type { FileCategory } from "../types.js";
 
 /**
  * Cria e configura o servidor MCP
@@ -382,6 +386,278 @@ Eficiente: retorna apenas assinaturas, nao o codigo completo.`,
           {
             type: "text",
             text: `Erro ao executar context: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: aitool_list_areas
+// ============================================================================
+
+server.registerTool(
+  "aitool_list_areas",
+  {
+    title: "List Project Areas",
+    description: `Lista todas as areas/dominios funcionais do projeto.
+
+IMPORTANTE - AREAS vs CATEGORIAS:
+- CATEGORIA = tipo tecnico (hook, component, page, service...)
+  → Use aitool_project_map para ver categorias
+- AREA = dominio funcional (auth, meus-pets, stripe, dashboard...)
+  → Use ESTA tool para ver areas
+  → Use aitool_area_detail para ver arquivos de uma area especifica
+
+Um arquivo pode pertencer a MULTIPLAS areas!
+
+FUNCIONALIDADES:
+- Detecta areas automaticamente baseado em padroes de pasta e keywords
+- Agrupa arquivos por dominio funcional
+- Mostra distribuicao de categorias por area
+- Identifica arquivos sem area definida
+
+PARAMETROS:
+- format: "text" (legivel) ou "json" (estruturado)
+- cwd: Diretorio do projeto (default: diretorio atual)
+
+RETORNA:
+- Lista de areas com nome, descricao e contagem
+- Distribuicao de categorias por area
+- Lista de arquivos sem area (para configurar manualmente)
+
+EXEMPLO DE USO:
+Chamar no inicio da sessao para entender os dominios do projeto.
+Usar antes de trabalhar em uma feature especifica.
+
+CONFIGURACAO MANUAL:
+Se houver arquivos sem area ou areas incorretas, use aitool_areas_init
+para gerar .analyze/areas.config.json e edite manualmente.`,
+    inputSchema: {
+      format: z
+        .enum(["text", "json"])
+        .default("text")
+        .describe("Formato de saida: text (legivel) ou json (estruturado)"),
+      cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
+    },
+    annotations: {
+      title: "List Project Areas",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params) => {
+    try {
+      const result = await areas({
+        format: params.format,
+        cwd: params.cwd,
+      });
+      return { content: [{ type: "text", text: result }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Erro ao executar areas: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: aitool_area_detail
+// ============================================================================
+
+server.registerTool(
+  "aitool_area_detail",
+  {
+    title: "Area Detail",
+    description: `Mostra todos os arquivos de uma area/dominio especifica.
+
+USE ESTA TOOL QUANDO:
+- Usuario pedir para trabalhar em uma feature (ex: "vou mexer em auth")
+- Precisar listar todos os arquivos de um dominio
+- Quiser ver apenas hooks, components, etc de uma area especifica
+
+FUNCIONALIDADES:
+- Lista arquivos agrupados por categoria (page, component, hook...)
+- Mostra descricao de cada arquivo (inferida ou manual)
+- Permite filtrar por categoria especifica (type="hook")
+- Mostra resumo de distribuicao
+
+PARAMETROS:
+- target: Nome da area (OBRIGATORIO - ex: "meus-pets", "auth", "stripe")
+- type: Filtrar por categoria (opcional - ex: "hook", "component")
+- full: Mostrar todos os arquivos (default: false = resumido)
+- cwd: Diretorio do projeto
+
+RETORNA:
+- Nome e descricao da area
+- Lista de arquivos por categoria
+- Descricao de cada arquivo
+
+EXEMPLOS DE USO:
+- Ver tudo de auth: target="auth"
+- Ver apenas hooks de auth: target="auth", type="hook"
+- Ver todos os arquivos de stripe: target="stripe", full=true
+
+DICA: Use aitool_list_areas primeiro para ver quais areas existem.`,
+    inputSchema: {
+      target: z
+        .string()
+        .min(1)
+        .describe("Nome da area: meus-pets, auth, stripe, etc"),
+      type: z
+        .enum([
+          "page",
+          "layout",
+          "route",
+          "component",
+          "hook",
+          "service",
+          "store",
+          "util",
+          "type",
+          "config",
+          "test",
+          "other",
+        ])
+        .optional()
+        .describe("Filtrar por categoria especifica"),
+      full: z
+        .boolean()
+        .default(false)
+        .describe("Mostrar todos os arquivos (default: resumido)"),
+      cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
+    },
+    annotations: {
+      title: "Area Detail",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params) => {
+    try {
+      const result = await area(params.target, {
+        type: params.type as FileCategory | undefined,
+        full: params.full,
+        cwd: params.cwd,
+        format: "text",
+      });
+      return { content: [{ type: "text", text: result }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Erro ao executar area: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: aitool_areas_init
+// ============================================================================
+
+server.registerTool(
+  "aitool_areas_init",
+  {
+    title: "Initialize Areas Config",
+    description: `Gera arquivo de configuracao de areas (.analyze/areas.config.json).
+
+QUANDO USAR:
+- Quando aitool_list_areas mostrar arquivos sem area definida
+- Quando precisar personalizar deteccao de areas
+- Quando quiser adicionar areas que nao sao detectadas automaticamente
+
+O QUE FAZ:
+- Escaneia o projeto e detecta areas automaticamente
+- Infere patterns glob para cada area detectada
+- Gera arquivo editavel em .analyze/areas.config.json
+- NAO sobrescreve config existente (use force=true para sobrescrever)
+
+PARAMETROS:
+- force: Sobrescrever config existente (default: false)
+- cwd: Diretorio do projeto (default: diretorio atual)
+
+RETORNA:
+- Confirmacao do arquivo criado
+- Lista de areas detectadas com contagem
+- Arquivos sem area (para configurar manualmente)
+- Instrucoes de como editar o arquivo
+
+ESTRUTURA DO ARQUIVO GERADO:
+{
+  "areas": {
+    "auth": {
+      "name": "Autenticacao",
+      "description": "Sistema de login e sessao",
+      "patterns": ["components/auth/**", "hooks/useAuth.ts"],
+      "keywords": ["auth", "login", "session"]
+    }
+  },
+  "descriptions": {
+    "components/pets/PetForm.tsx": "Formulario multi-step de pets"
+  },
+  "settings": {
+    "autoDetect": true,
+    "inferDescriptions": true
+  }
+}
+
+COMO EDITAR MANUALMENTE:
+1. Adicionar areas nao detectadas: adicione entrada em "areas"
+2. Renomear areas: altere "name" da area
+3. Ajustar deteccao: modifique "patterns" e "keywords"
+4. Excluir arquivos: adicione "exclude" com patterns
+5. Descrever arquivos: adicione entrada em "descriptions"
+
+EXEMPLO DE USO:
+1. Rode aitool_list_areas para ver areas atuais
+2. Se houver arquivos sem area, rode aitool_areas_init
+3. Edite .analyze/areas.config.json conforme necessario
+4. Rode aitool_list_areas novamente para ver mudancas`,
+    inputSchema: {
+      force: z
+        .boolean()
+        .default(false)
+        .describe("Sobrescrever config existente"),
+      cwd: z.string().optional().describe("Diretorio do projeto"),
+    },
+    annotations: {
+      title: "Initialize Areas Config",
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: false,
+    },
+  },
+  async (params) => {
+    try {
+      const result = await areasInit({
+        force: params.force,
+        cwd: params.cwd,
+      });
+      return { content: [{ type: "text", text: result }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Erro ao executar areas init: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],
         isError: true,

@@ -23,7 +23,11 @@ import { dead, deadFix } from "./commands/dead.js";
 import { impact } from "./commands/impact.js";
 import { suggest } from "./commands/suggest.js";
 import { context } from "./commands/context.js";
+import { areas } from "./commands/areas.js";
+import { area } from "./commands/area.js";
+import { areasInit } from "./commands/areas-init.js";
 import { VERSION } from "./index.js";
+import type { FileCategory } from "./types.js";
 
 const HELP = `
 ai-tool v${VERSION} - Analise de dependencias e impacto
@@ -36,6 +40,14 @@ COMANDOS:
   suggest <arquivo>      Sugere arquivos para ler antes de modificar
   context <arquivo>      Extrai assinaturas de um arquivo (funcoes, tipos)
 
+AREAS (NOVO):
+  areas                  Lista todas as areas/dominios do projeto
+  areas init             Gera arquivo de configuracao .analyze/areas.config.json
+  areas init --force     Sobrescreve configuracao existente
+  area <nome>            Mostra arquivos de uma area especifica
+  area <nome> --type=hook   Filtra por categoria
+  area <nome> --full     Mostra todos os arquivos
+
 MODOS:
   --mcp                  Inicia servidor MCP para integracao com Claude Desktop
 
@@ -44,6 +56,8 @@ OPCOES:
   --cwd=<path>           Diretorio do projeto (default: cwd)
   --no-cache             Ignora cache e forca regeneracao
   --limit=<n>            Limite de sugestoes (default: 10, apenas suggest)
+  --type=<categoria>     Filtra por categoria (apenas area)
+  --full                 Mostra todos os arquivos (apenas area)
   --help, -h             Mostra esta ajuda
   --version, -v          Mostra versao
 
@@ -55,16 +69,16 @@ CACHE:
 EXEMPLOS:
   ai-tool map
   ai-tool map --format=json
-  ai-tool map --no-cache
   ai-tool dead
   ai-tool dead --fix
   ai-tool impact Button
-  ai-tool impact src/hooks/useAuth.ts
-  ai-tool impact src/components/Header.tsx --format=json
-  ai-tool suggest Button
-  ai-tool suggest src/hooks/useAuth.ts --limit=5
+  ai-tool suggest Button --limit=5
   ai-tool context Button
-  ai-tool context src/hooks/useAuth.ts --format=json
+  ai-tool areas
+  ai-tool areas init
+  ai-tool area meus-pets
+  ai-tool area meus-pets --type=hook
+  ai-tool area firebase --full
   ai-tool --mcp
 
 SOBRE:
@@ -165,6 +179,30 @@ async function main() {
           process.exit(1);
         }
         result = await context(target, { format, cwd });
+        break;
+
+      case "areas":
+        // Subcomando: areas init
+        if (target === "init") {
+          result = await areasInit({ cwd, force: !!flags.force });
+        } else {
+          result = await areas({ format, cwd });
+        }
+        break;
+
+      case "area":
+        if (!target) {
+          console.error("❌ Erro: nome da área é obrigatório para o comando area");
+          console.error("   Exemplo: ai-tool area meus-pets");
+          console.error("   Use 'ai-tool areas' para listar áreas disponíveis");
+          process.exit(1);
+        }
+        result = await area(target, {
+          format,
+          cwd,
+          type: flags.type as FileCategory | undefined,
+          full: !!flags.full,
+        });
         break;
 
       default:

@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.4.0] - 2025-01-31
+
+### Adicionado
+
+- **Sistema de Areas/Dominios Funcionais**: Nova feature principal para navegar projetos por dominio funcional
+  - `ai-tool areas` - Lista todas as areas detectadas automaticamente
+  - `ai-tool area <nome>` - Mostra arquivos de uma area especifica
+  - `ai-tool area <nome> --type=hook` - Filtra por categoria
+  - `ai-tool area <nome> --full` - Mostra todos os arquivos
+  - `ai-tool areas init` - Gera arquivo de configuracao `.analyze/areas.config.json`
+
+- **Arquivo de configuracao editavel**: `.analyze/areas.config.json`
+  - Permite definir areas customizadas com patterns glob
+  - Keywords para deteccao por nome de arquivo
+  - Descricoes manuais para arquivos especificos
+  - Merge de deteccao automatica + configuracao manual
+
+- **Suporte multi-framework**: Deteccao de categorias e areas para:
+  - Next.js (App Router e Pages Router)
+  - Vite (React, Vue)
+  - Create React App
+  - Remix
+  - Nuxt
+  - SvelteKit
+  - Astro
+
+- **Tools MCP**:
+  - `aitool_list_areas` - Lista areas do projeto
+  - `aitool_area_detail` - Detalhe de uma area especifica
+  - `aitool_areas_init` - Gera arquivo de configuracao de areas
+
+### Dependencias
+
+- Adicionado `minimatch@^10.0.1` (pattern matching para areas)
+
 ## [0.3.2] - 2025-01-30
 
 ### Corrigido

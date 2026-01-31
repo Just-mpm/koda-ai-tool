@@ -2,7 +2,16 @@
  * Formatadores de texto para output no terminal
  */
 
-import type { MapResult, DeadResult, ImpactResult, SuggestResult, ContextResult, FileCategory } from "../types.js";
+import type {
+  MapResult,
+  DeadResult,
+  ImpactResult,
+  SuggestResult,
+  ContextResult,
+  AreasResult,
+  AreaDetailResult,
+  FileCategory,
+} from "../types.js";
 import { categoryIcons } from "../utils/detect.js";
 
 /**
@@ -435,6 +444,184 @@ export function formatContextText(result: ContextResult): string {
   out += `   Exports: ${result.exports.length}\n`;
   out += `   Types: ${result.types.length}\n`;
   out += `   Functions: ${result.functions.length}\n`;
+
+  return out;
+}
+
+/**
+ * Formata resultado do AREAS para texto
+ */
+export function formatAreasText(result: AreasResult): string {
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    📦 PROJECT AREAS                         ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Resumo
+  out += `📊 RESUMO\n`;
+  out += `   Áreas: ${result.summary.totalAreas}\n`;
+  out += `   Arquivos: ${result.summary.totalFiles}\n`;
+  if (result.summary.unmappedCount > 0) {
+    out += `   ⚠️ Sem área: ${result.summary.unmappedCount}\n`;
+  }
+  out += `\n`;
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Lista de áreas
+  out += `📦 ÁREAS DETECTADAS\n\n`;
+
+  for (const area of result.areas) {
+    const autoTag = area.isAutoDetected ? " (auto)" : "";
+    out += `   ${area.name.padEnd(25)} ${String(area.fileCount).padStart(4)} arquivos${autoTag}\n`;
+
+    // Mostrar distribuição de categorias (resumido)
+    const catSummary = Object.entries(area.categories)
+      .sort((a, b) => (b[1] as number) - (a[1] as number))
+      .slice(0, 4)
+      .map(([cat, count]) => `${categoryIcons[cat as FileCategory]}${count}`)
+      .join(" ");
+
+    if (catSummary) {
+      out += `      ${catSummary}\n`;
+    }
+
+    if (area.description) {
+      out += `      ${area.description}\n`;
+    }
+
+    out += `\n`;
+  }
+
+  // Arquivos sem área
+  if (result.unmapped.length > 0) {
+    out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    out += `⚠️ ARQUIVOS SEM ÁREA (${result.unmapped.length})\n\n`;
+
+    for (const file of result.unmapped.slice(0, 10)) {
+      const icon = categoryIcons[file.category];
+      out += `   ${icon} ${file.path}\n`;
+    }
+
+    if (result.unmapped.length > 10) {
+      out += `   ... e mais ${result.unmapped.length - 10}\n`;
+    }
+
+    out += `\n💡 Adicione padrões em .analyze/areas.config.json\n`;
+    out += `   ou execute 'ai-tool areas init' para gerar configuração\n`;
+  }
+
+  out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  out += `💡 Use 'ai-tool area <nome>' para ver detalhes de uma área\n`;
+  out += `   Exemplo: ai-tool area meus-pets\n`;
+
+  return out;
+}
+
+/**
+ * Formata resultado do AREA (detalhe) para texto
+ */
+export function formatAreaDetailText(
+  result: AreaDetailResult,
+  options: { full?: boolean; filterType?: FileCategory } = {}
+): string {
+  const { full = false, filterType } = options;
+  const { area, byCategory } = result;
+
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    📦 AREA DETAIL                           ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Header da área
+  out += `📦 ${area.name}\n`;
+  if (area.description) {
+    out += `   ${area.description}\n`;
+  }
+  out += `\n`;
+
+  // Resumo de categorias
+  out += `📊 Resumo: ${area.fileCount} arquivos\n   `;
+
+  const catOrder: FileCategory[] = [
+    "page",
+    "layout",
+    "route",
+    "component",
+    "hook",
+    "service",
+    "store",
+    "util",
+    "type",
+    "config",
+    "test",
+    "other",
+  ];
+
+  const catParts: string[] = [];
+  for (const cat of catOrder) {
+    const count = area.categories[cat];
+    if (count) {
+      catParts.push(`${categoryIcons[cat]} ${cat}: ${count}`);
+    }
+  }
+  out += catParts.join("  ");
+  out += `\n\n`;
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Se filtro por tipo, mostrar só esse tipo
+  if (filterType) {
+    const files = byCategory[filterType] || [];
+    out += `${categoryIcons[filterType]} ${filterType.toUpperCase()} (${files.length})\n\n`;
+
+    for (const file of files) {
+      const desc = file.description ? `  ${file.description}` : "";
+      out += `   ${file.path}${desc}\n`;
+    }
+
+    return out;
+  }
+
+  // Listar por categoria
+  const maxFilesPerCategory = full ? 100 : 8;
+
+  for (const cat of catOrder) {
+    const files = byCategory[cat];
+    if (!files || files.length === 0) continue;
+
+    out += `${categoryIcons[cat]} ${cat.toUpperCase()} (${files.length})\n`;
+
+    const filesToShow = files.slice(0, maxFilesPerCategory);
+    const remaining = files.length - filesToShow.length;
+
+    for (const file of filesToShow) {
+      // Truncar path se muito longo
+      const maxPathLen = 50;
+      let displayPath = file.path;
+      if (displayPath.length > maxPathLen) {
+        displayPath = "..." + displayPath.slice(-maxPathLen + 3);
+      }
+
+      const desc = file.description || "";
+      out += `   ${displayPath.padEnd(maxPathLen + 2)} ${desc}\n`;
+    }
+
+    if (remaining > 0) {
+      out += `   ... e mais ${remaining}\n`;
+    }
+
+    out += `\n`;
+  }
+
+  if (!full && area.fileCount > 20) {
+    out += `💡 Use --full para ver todos os arquivos\n`;
+  }
 
   return out;
 }

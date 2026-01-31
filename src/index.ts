@@ -24,6 +24,9 @@ export { dead, deadFix } from "./commands/dead.js";
 export { impact } from "./commands/impact.js";
 export { suggest } from "./commands/suggest.js";
 export { context } from "./commands/context.js";
+export { areas } from "./commands/areas.js";
+export { area } from "./commands/area.js";
+export { areasInit } from "./commands/areas-init.js";
 
 // Tipos
 export type {
@@ -54,6 +57,15 @@ export type {
   TypeKind,
   TypeInfo,
   ContextResult,
+  // Areas types
+  AreaConfig,
+  AreasConfigFile,
+  AreaFile,
+  DetectedArea,
+  AreasResult,
+  AreaDetailResult,
+  AreasOptions,
+  AreaOptions,
 } from "./types.js";
 
 // Utilitários
@@ -71,5 +83,23 @@ export {
 // Cache
 export { invalidateCache, isCacheValid, getCacheDir } from "./cache/index.js";
 
+// Areas
+export {
+  readConfig,
+  writeConfig,
+  configExists,
+  setArea,
+  removeArea,
+  setFileDescription,
+  getFileDescription,
+} from "./areas/config.js";
+export {
+  detectFileAreas,
+  getAreaName,
+  getAreaDescription,
+  inferFileDescription,
+} from "./areas/detector.js";
+export { FOLDER_PATTERNS, KEYWORD_PATTERNS, AREA_NAMES, AREA_DESCRIPTIONS } from "./areas/patterns.js";
+
 // Versão
-export const VERSION = "0.3.2";
+export const VERSION = "0.4.0";

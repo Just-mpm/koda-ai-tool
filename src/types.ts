@@ -212,3 +212,73 @@ export interface ContextResult {
   functions: FunctionInfo[];
   types: TypeInfo[];
 }
+
+// ============================================================================
+// AREAS COMMAND TYPES
+// ============================================================================
+
+export interface AreaConfig {
+  name: string;
+  description?: string;
+  patterns: string[];
+  keywords?: string[];
+  exclude?: string[];
+}
+
+export interface AreasConfigFile {
+  $schema?: string;
+  version: string;
+  areas: Record<string, AreaConfig>;
+  descriptions?: Record<string, string>; // path → descrição manual
+  settings?: {
+    autoDetect?: boolean; // default: true
+    inferDescriptions?: boolean; // default: true
+    groupByCategory?: boolean; // default: true
+  };
+}
+
+export interface AreaFile {
+  path: string;
+  category: FileCategory;
+  description?: string;
+}
+
+export interface DetectedArea {
+  id: string;
+  name: string;
+  description?: string;
+  files: AreaFile[];
+  fileCount: number;
+  categories: Partial<Record<FileCategory, number>>;
+  isAutoDetected: boolean;
+}
+
+export interface AreasResult {
+  version: string;
+  timestamp: string;
+  cwd: string;
+  areas: DetectedArea[];
+  unmapped: AreaFile[];
+  summary: {
+    totalAreas: number;
+    totalFiles: number;
+    unmappedCount: number;
+  };
+}
+
+export interface AreaDetailResult {
+  version: string;
+  timestamp: string;
+  area: DetectedArea;
+  byCategory: Partial<Record<FileCategory, AreaFile[]>>;
+}
+
+export interface AreasOptions extends CommandOptions {
+  full?: boolean; // mostrar todos os arquivos
+  type?: FileCategory; // filtrar por categoria
+}
+
+export interface AreaOptions extends CommandOptions {
+  full?: boolean;
+  type?: FileCategory;
+}
