@@ -1,10 +1,65 @@
 {
   "graph": {
+    "src/areas/config.ts": {
+      "id": "src/areas/config.ts",
+      "adjacentTo": [
+        "src/cache/index.ts"
+      ],
+      "body": {
+        "size": 3106,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
     "src/cache/index.ts": {
       "id": "src/cache/index.ts",
+      "adjacentTo": [
+        "src/utils/firebase.ts"
+      ],
+      "body": {
+        "size": 5339,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/firebase.ts": {
+      "id": "src/utils/firebase.ts",
       "adjacentTo": [],
       "body": {
-        "size": 5217,
+        "size": 5118,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/areas/detector.ts": {
+      "id": "src/areas/detector.ts",
+      "adjacentTo": [
+        "src/areas/patterns.ts"
+      ],
+      "body": {
+        "size": 7702,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/areas/patterns.ts": {
+      "id": "src/areas/patterns.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 21530,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/areas/index.ts": {
+      "id": "src/areas/index.ts",
+      "adjacentTo": [
+        "src/areas/config.ts",
+        "src/areas/detector.ts",
+        "src/areas/patterns.ts"
+      ],
+      "body": {
+        "size": 181,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -17,11 +72,14 @@
         "src/commands/impact.ts",
         "src/commands/suggest.ts",
         "src/commands/context.ts",
+        "src/commands/areas.ts",
+        "src/commands/area.ts",
+        "src/commands/areas-init.ts",
         "src/index.ts",
         "src/mcp/server.ts"
       ],
       "body": {
-        "size": 5668,
+        "size": 7226,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -31,10 +89,12 @@
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
-        "src/cache/index.ts"
+        "src/cache/index.ts",
+        "src/areas/config.ts",
+        "src/areas/detector.ts"
       ],
       "body": {
-        "size": 3724,
+        "size": 5299,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -43,7 +103,7 @@
       "id": "src/utils/detect.ts",
       "adjacentTo": [],
       "body": {
-        "size": 3958,
+        "size": 8958,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -54,7 +114,7 @@
         "src/utils/detect.ts"
       ],
       "body": {
-        "size": 16370,
+        "size": 24583,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -64,10 +124,11 @@
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
-        "src/cache/index.ts"
+        "src/cache/index.ts",
+        "src/utils/firebase.ts"
       ],
       "body": {
-        "size": 4316,
+        "size": 5141,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -120,6 +181,46 @@
         "builtinDependencies": []
       }
     },
+    "src/commands/areas.ts": {
+      "id": "src/commands/areas.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/areas/config.ts",
+        "src/areas/detector.ts",
+        "src/formatters/text.ts"
+      ],
+      "body": {
+        "size": 4524,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/area.ts": {
+      "id": "src/commands/area.ts",
+      "adjacentTo": [
+        "src/utils/detect.ts",
+        "src/areas/config.ts",
+        "src/areas/detector.ts",
+        "src/formatters/text.ts"
+      ],
+      "body": {
+        "size": 7519,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/areas-init.ts": {
+      "id": "src/commands/areas-init.ts",
+      "adjacentTo": [
+        "src/areas/config.ts",
+        "src/areas/detector.ts"
+      ],
+      "body": {
+        "size": 5907,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
     "src/index.ts": {
       "id": "src/index.ts",
       "adjacentTo": [
@@ -128,12 +229,19 @@
         "src/commands/impact.ts",
         "src/commands/suggest.ts",
         "src/commands/context.ts",
+        "src/commands/areas.ts",
+        "src/commands/area.ts",
+        "src/commands/areas-init.ts",
         "src/types.ts",
         "src/utils/detect.ts",
-        "src/cache/index.ts"
+        "src/utils/firebase.ts",
+        "src/cache/index.ts",
+        "src/areas/config.ts",
+        "src/areas/detector.ts",
+        "src/areas/patterns.ts"
       ],
       "body": {
-        "size": 1436,
+        "size": 2486,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -142,7 +250,7 @@
       "id": "src/types.ts",
       "adjacentTo": [],
       "body": {
-        "size": 4344,
+        "size": 6379,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -155,17 +263,25 @@
         "src/commands/impact.ts",
         "src/commands/suggest.ts",
         "src/commands/context.ts",
+        "src/commands/areas.ts",
+        "src/commands/area.ts",
+        "src/commands/areas-init.ts",
         "src/index.ts"
       ],
       "body": {
-        "size": 11947,
+        "size": 13141,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
     }
   },
   "files": [
+    "src/areas/config.ts",
     "src/cache/index.ts",
+    "src/utils/firebase.ts",
+    "src/areas/detector.ts",
+    "src/areas/patterns.ts",
+    "src/areas/index.ts",
     "src/cli.ts",
     "src/commands/map.ts",
     "src/utils/detect.ts",
@@ -175,9 +291,12 @@
     "src/commands/suggest.ts",
     "src/commands/context.ts",
     "src/ts/extractor.ts",
+    "src/commands/areas.ts",
+    "src/commands/area.ts",
+    "src/commands/areas-init.ts",
     "src/index.ts",
     "src/types.ts",
     "src/mcp/server.ts"
   ],
-  "timestamp": "2026-01-30T03:28:19.789Z"
+  "timestamp": "2026-01-31T23:43:18.497Z"
 }

@@ -1,22 +1,36 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-01-30T03:28:19.794Z",
+  "timestamp": "2026-01-31T23:43:18.504Z",
   "cwd": "D:\\Users\\Matheus Pimenta\\Pictures\\Pacotes-Pessoais\\ai-tool",
   "summary": {
-    "totalFiles": 13,
-    "totalFolders": 7,
+    "totalFiles": 21,
+    "totalFolders": 8,
     "categories": {
-      "other": 11,
-      "util": 1,
+      "other": 18,
+      "util": 2,
       "type": 1
     }
   },
   "folders": [
     {
+      "path": "src/areas",
+      "fileCount": 4,
+      "categories": {
+        "other": 4
+      }
+    },
+    {
       "path": "src/cache",
       "fileCount": 1,
       "categories": {
         "other": 1
+      }
+    },
+    {
+      "path": "src/utils",
+      "fileCount": 2,
+      "categories": {
+        "util": 2
       }
     },
     {
@@ -29,16 +43,9 @@
     },
     {
       "path": "src/commands",
-      "fileCount": 5,
+      "fileCount": 8,
       "categories": {
-        "other": 5
-      }
-    },
-    {
-      "path": "src/utils",
-      "fileCount": 1,
-      "categories": {
-        "util": 1
+        "other": 8
       }
     },
     {
@@ -65,7 +72,32 @@
   ],
   "files": [
     {
+      "path": "src/areas/config.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
       "path": "src/cache/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/utils/firebase.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/areas/detector.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/areas/patterns.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/areas/index.ts",
       "category": "other",
       "size": 0
     },
@@ -111,6 +143,21 @@
     },
     {
       "path": "src/ts/extractor.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/areas.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/area.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/areas-init.ts",
       "category": "other",
       "size": 0
     },

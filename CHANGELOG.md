@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.5.0] - 2025-01-31
+
+### Mudancas Importantes
+
+- **`map` agora retorna resumo compacto por padrao**: Otimizado para uso com LLMs, reduzindo de ~30k tokens para ~200 tokens
+  - Mostra: contagens por categoria, areas detectadas, alertas (deps circulares, arquivos sem area)
+  - Inclui dicas de proximos passos guiando uso das outras tools
+  - Use `--full` para obter a lista completa de arquivos (comportamento antigo)
+
+- **Descricoes das tools MCP reduzidas em 92%**: De ~200 linhas para ~16 linhas total
+  - Cada tool agora tem 2 linhas de descricao concisa
+  - Modelos entendem melhor e usam menos tokens
+
+### Adicionado
+
+- Nova funcao `formatMapSummary` para output compacto
+- Parametro `--full` no comando `map` para lista completa
+- Integracao de areas no output do `map` (mostra nomes das areas detectadas)
+- Dicas contextuais no resumo:
+  - Alerta de dependencias circulares com sugestao de usar `impact`
+  - Alerta de arquivos sem area com sugestao de usar `areas init`
+
+### Alterado
+
+- MCP `aitool_project_map` sempre usa resumo (nao tem opcao full)
+- CLI `ai-tool map` usa resumo por padrao, `--full` para lista completa
+
 ## [0.4.1] - 2025-01-31
 
 ### Corrigido

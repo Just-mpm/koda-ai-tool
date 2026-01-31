@@ -33,14 +33,15 @@ const HELP = `
 ai-tool v${VERSION} - Analise de dependencias e impacto
 
 COMANDOS:
-  map                    Mapa completo do projeto (usa Skott)
+  map                    Resumo do projeto: contagens e areas
+  map --full             Mapa completo com lista de arquivos
   dead                   Detecta codigo morto (usa Knip)
   dead --fix             Remove codigo morto automaticamente
   impact <arquivo>       Analise de impacto antes de modificar
   suggest <arquivo>      Sugere arquivos para ler antes de modificar
   context <arquivo>      Extrai assinaturas de um arquivo (funcoes, tipos)
 
-AREAS (NOVO):
+AREAS:
   areas                  Lista todas as areas/dominios do projeto
   areas init             Gera arquivo de configuracao .analyze/areas.config.json
   areas init --force     Sobrescreve configuracao existente
@@ -57,7 +58,7 @@ OPCOES:
   --no-cache             Ignora cache e forca regeneracao
   --limit=<n>            Limite de sugestoes (default: 10, apenas suggest)
   --type=<categoria>     Filtra por categoria (apenas area)
-  --full                 Mostra todos os arquivos (apenas area)
+  --full                 Lista completa (map: lista arquivos, area: todos arquivos)
   --help, -h             Mostra esta ajuda
   --version, -v          Mostra versao
 
@@ -67,7 +68,8 @@ CACHE:
   Use --no-cache para forcar regeneracao.
 
 EXEMPLOS:
-  ai-tool map
+  ai-tool map                      # Resumo compacto
+  ai-tool map --full               # Lista completa de arquivos
   ai-tool map --format=json
   ai-tool dead
   ai-tool dead --fix
@@ -135,7 +137,7 @@ async function main() {
 
     switch (command) {
       case "map":
-        result = await map({ format, cwd, cache });
+        result = await map({ format, cwd, cache, full: !!flags.full });
         break;
 
       case "dead":

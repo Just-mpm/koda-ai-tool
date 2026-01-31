@@ -4,6 +4,7 @@
 
 import type {
   MapResult,
+  MapAreasInfo,
   DeadResult,
   ImpactResult,
   SuggestResult,
@@ -15,7 +16,74 @@ import type {
 import { categoryIcons } from "../utils/detect.js";
 
 /**
- * Formata resultado do MAP para texto
+ * Formata resultado do MAP como resumo compacto + dicas contextuais
+ * Usado como output padrão para economizar tokens
+ */
+export function formatMapSummary(
+  result: MapResult,
+  areasInfo?: MapAreasInfo
+): string {
+  let out = "";
+
+  // Resumo compacto
+  out += `📊 ${result.summary.totalFiles} arquivos | ${result.summary.totalFolders} pastas\n`;
+
+  // Categorias em uma linha
+  const catOrder: FileCategory[] = [
+    "component",
+    "hook",
+    "page",
+    "service",
+    "util",
+    "type",
+    "config",
+    "test",
+    "layout",
+    "route",
+    "store",
+    "other",
+  ];
+
+  const catParts: string[] = [];
+  for (const cat of catOrder) {
+    const count = result.summary.categories[cat];
+    if (count) {
+      catParts.push(`${count} ${cat}s`);
+    }
+  }
+  out += `   ${catParts.join(", ")}\n`;
+
+  // Áreas (se disponível)
+  if (areasInfo && areasInfo.total > 0) {
+    out += `\n🗂️ Áreas: ${areasInfo.names.join(", ")}\n`;
+  }
+
+  // Alertas e dicas contextuais
+  out += `\n`;
+
+  // Alerta: dependências circulares
+  if (result.circularDependencies.length > 0) {
+    out += `⚠️ ${result.circularDependencies.length} dependência(s) circular(es) detectada(s)\n`;
+    out += `   → Use impact <arquivo> para investigar\n\n`;
+  }
+
+  // Alerta: arquivos sem área
+  if (areasInfo && areasInfo.unmappedCount > 0) {
+    out += `⚠️ ${areasInfo.unmappedCount} arquivo(s) sem área definida\n`;
+    out += `   → Use areas init para configurar\n\n`;
+  }
+
+  // Dicas de navegação
+  out += `📖 Próximos passos:\n`;
+  out += `   → area <nome> - ver arquivos de uma área\n`;
+  out += `   → suggest <arquivo> - o que ler antes de editar\n`;
+  out += `   → context <arquivo> - ver API de um arquivo\n`;
+
+  return out;
+}
+
+/**
+ * Formata resultado do MAP para texto completo (lista todos arquivos)
  */
 export function formatMapText(result: MapResult): string {
   let out = "";

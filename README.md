@@ -21,18 +21,34 @@ npm install -D @justmpm/ai-tool
 
 ### `map` - Mapa do Projeto
 
-Gera um mapa completo do projeto com categorizacao de arquivos.
+Gera um resumo compacto do projeto com contagens, areas e alertas.
 
 ```bash
-ai-tool map
+ai-tool map           # Resumo compacto (otimizado para tokens)
+ai-tool map --full    # Lista completa de arquivos e pastas
 ai-tool map --format=json
 ```
 
-**Output:**
-- Total de arquivos e pastas
-- Categorizacao automatica (component, hook, service, util, etc.)
-- Estrutura de pastas
-- Dependencias circulares detectadas
+**Output (resumo):**
+```
+📊 486 arquivos | 97 pastas
+   55 components, 40 hooks, 187 pages, 31 services, 95 utils...
+
+🗂️ Áreas: Admin, Auth, Checkout, Dashboard, Stripe...
+
+⚠️ 4 dependência(s) circular(es) detectada(s)
+   → Use impact <arquivo> para investigar
+
+📖 Próximos passos:
+   → area <nome> - ver arquivos de uma área
+   → suggest <arquivo> - o que ler antes de editar
+   → context <arquivo> - ver API de um arquivo
+```
+
+**Output (--full):**
+- Lista completa de arquivos por pasta
+- Estrutura detalhada de pastas
+- Dependencias circulares listadas
 
 ### `dead` - Codigo Morto
 
@@ -196,8 +212,9 @@ Adicione ao `claude_desktop_config.json`:
 ```typescript
 import { map, dead, impact, suggest, context, areas, area, areasInit } from "@justmpm/ai-tool";
 
-// Mapa do projeto
+// Mapa do projeto (resumo por padrao, full: true para lista completa)
 const projectMap = await map({ format: "json" });
+const fullMap = await map({ format: "json", full: true });
 
 // Codigo morto
 const deadCode = await dead({ format: "json" });
@@ -228,8 +245,10 @@ await areasInit({ force: false });
 | `--format=text\|json` | Formato de saida | `text` |
 | `--cwd=<path>` | Diretorio do projeto | `process.cwd()` |
 | `--no-cache` | Ignora cache | `false` |
+| `--full` | Lista completa (`map`: arquivos, `area`: todos) | `false` |
 | `--fix` | Remove codigo morto (so `dead`) | `false` |
 | `--limit=<n>` | Limite de sugestoes (so `suggest`) | `10` |
+| `--type=<cat>` | Filtra por categoria (so `area`) | - |
 | `--mcp` | Inicia servidor MCP | - |
 
 ## Categorias de Arquivos

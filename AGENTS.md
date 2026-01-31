@@ -4,7 +4,8 @@ Pacote npm para analise de dependencias, codigo morto e areas funcionais em proj
 
 ## O que faz
 
-- **`map`** - Gera mapa do projeto com categorizacao automatica de arquivos
+- **`map`** - Resumo compacto do projeto: contagens, areas, alertas
+- **`map --full`** - Lista completa de arquivos e pastas
 - **`dead`** - Detecta arquivos orfaos, exports nao usados, deps npm mortas
 - **`impact <arquivo>`** - Analisa upstream/downstream de um arquivo especifico
 - **`suggest <arquivo>`** - Sugere arquivos para ler antes de modificar
@@ -20,7 +21,6 @@ ai-tool --mcp  # Inicia servidor MCP via stdio
 ```
 
 Tools expostas:
-
 - `aitool_project_map`
 - `aitool_dead_code`
 - `aitool_impact_analysis`
@@ -71,7 +71,8 @@ npx ai-tool map  # Testa localmente
 
 ```bash
 # Analise basica
-npx ai-tool map                    # Mapa do projeto
+npx ai-tool map                    # Resumo compacto (contagens + areas + alertas)
+npx ai-tool map --full             # Lista completa de arquivos
 npx ai-tool dead                   # Codigo morto
 npx ai-tool dead --fix             # Remove codigo morto
 
@@ -80,7 +81,7 @@ npx ai-tool impact Button          # Impacto de mudanca
 npx ai-tool suggest Button         # Arquivos para ler antes de modificar
 npx ai-tool context Button         # Assinaturas do arquivo
 
-# Areas funcionais (NOVO em v0.4.0)
+# Areas funcionais
 npx ai-tool areas                  # Lista todas as areas
 npx ai-tool areas init             # Gera configuracao inicial
 npx ai-tool area meus-pets         # Arquivos da area "meus-pets"

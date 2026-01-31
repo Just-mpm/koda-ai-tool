@@ -3,9 +3,15 @@
  */
 
 import skott from "skott";
-import type { MapOptions, MapResult, FileCategory, FolderStats } from "../types.js";
+import type {
+  MapOptions,
+  MapResult,
+  MapAreasInfo,
+  FileCategory,
+  FolderStats,
+} from "../types.js";
 import { detectCategory } from "../utils/detect.js";
-import { formatMapText } from "../formatters/text.js";
+import { formatMapText, formatMapSummary } from "../formatters/text.js";
 import {
   isCacheValid,
   getCachedMapResult,
@@ -13,6 +19,8 @@ import {
   cacheGraph,
   updateCacheMeta,
 } from "../cache/index.js";
+import { readConfig } from "../areas/config.js";
+import { detectFileAreas, getAreaName } from "../areas/detector.js";
 
 /**
  * Executa o comando MAP
@@ -21,6 +29,7 @@ export async function map(options: MapOptions = {}): Promise<string> {
   const cwd = options.cwd || process.cwd();
   const format = options.format || "text";
   const useCache = options.cache !== false; // default: true
+  const full = options.full ?? false; // default: resumo compacto
 
   // Tentar usar cache
   if (useCache && isCacheValid(cwd)) {
@@ -32,7 +41,13 @@ export async function map(options: MapOptions = {}): Promise<string> {
       if (format === "json") {
         return JSON.stringify(result, null, 2);
       }
-      return formatMapText(result) + "\n\n📦 (resultado do cache)";
+
+      // Se full, mostra lista completa; senão, resumo
+      if (full) {
+        return formatMapText(result) + "\n\n📦 (resultado do cache)";
+      }
+      const areasInfo = detectAreasInfo(cwd, result.files.map((f) => f.path));
+      return formatMapSummary(result, areasInfo) + "\n📦 (cache)";
     }
   }
 
@@ -127,9 +142,50 @@ export async function map(options: MapOptions = {}): Promise<string> {
       return JSON.stringify(result, null, 2);
     }
 
-    return formatMapText(result);
+    // Se full, mostra lista completa; senão, resumo
+    if (full) {
+      return formatMapText(result);
+    }
+
+    const areasInfo = detectAreasInfo(cwd, files.map((f) => f.path));
+    return formatMapSummary(result, areasInfo);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar map: ${message}`);
+  }
+}
+
+/**
+ * Detecta informações de áreas de forma leve (apenas nomes e contagens)
+ */
+function detectAreasInfo(cwd: string, filePaths: string[]): MapAreasInfo {
+  try {
+    const config = readConfig(cwd);
+    const areaSet = new Set<string>();
+    let unmappedCount = 0;
+
+    for (const filePath of filePaths) {
+      const areas = detectFileAreas(filePath, config);
+      if (areas.length === 0) {
+        unmappedCount++;
+      } else {
+        for (const areaId of areas) {
+          areaSet.add(areaId);
+        }
+      }
+    }
+
+    // Ordenar áreas alfabeticamente e pegar nomes amigáveis
+    const areaIds = Array.from(areaSet).sort();
+    const names = areaIds.map((id) => getAreaName(id, config));
+
+    return {
+      names,
+      total: areaIds.length,
+      unmappedCount,
+    };
+  } catch {
+    // Se falhar a detecção de áreas, retorna vazio
+    return { names: [], total: 0, unmappedCount: 0 };
   }
 }

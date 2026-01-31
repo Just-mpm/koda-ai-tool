@@ -27,6 +27,7 @@ export interface CommandOptions {
 
 export interface MapOptions extends CommandOptions {
   trackDependencies?: boolean;
+  full?: boolean; // default: false - mostrar resumo compacto
 }
 
 export interface DeadOptions extends CommandOptions {
@@ -67,6 +68,13 @@ export interface MapResult {
   folders: FolderStats[];
   files: FileInfo[];
   circularDependencies: string[][];
+}
+
+/** Dados mínimos de áreas para o resumo do map */
+export interface MapAreasInfo {
+  names: string[];
+  total: number;
+  unmappedCount: number;
 }
 
 // ============================================================================
