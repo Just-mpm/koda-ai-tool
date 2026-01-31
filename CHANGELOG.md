@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.1] - 2025-01-31
+
+### Corrigido
+
+- **Tools MCP de Areas**: Corrigido bug onde as 3 tools de areas nao estavam sendo expostas no servidor MCP
+  - `aitool_list_areas` - Agora disponivel
+  - `aitool_area_detail` - Agora disponivel
+  - `aitool_areas_init` - Agora disponivel
+- Build agora inclui corretamente todas as 8 tools MCP
+
 ## [0.4.0] - 2025-01-31
 
 ### Adicionado

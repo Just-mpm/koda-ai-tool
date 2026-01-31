@@ -101,5 +101,8 @@ export {
 } from "./areas/detector.js";
 export { FOLDER_PATTERNS, KEYWORD_PATTERNS, AREA_NAMES, AREA_DESCRIPTIONS } from "./areas/patterns.js";
 
-// Versão
-export const VERSION = "0.4.0";
+// Versão - lida do package.json em runtime
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json");
+export const VERSION: string = pkg.version;

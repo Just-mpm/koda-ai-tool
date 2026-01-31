@@ -97,6 +97,49 @@ ai-tool context src/hooks/useAuth.ts --format=json
 
 Ideal para entender rapidamente a API publica de um arquivo.
 
+### `areas` - Areas/Dominios Funcionais
+
+Lista todas as areas funcionais do projeto (auth, dashboard, stripe, etc).
+
+```bash
+ai-tool areas
+ai-tool areas --format=json
+```
+
+**Output:**
+- Lista de areas detectadas automaticamente
+- Contagem de arquivos por area
+- Distribuicao de categorias por area
+
+### `area` - Detalhe de uma Area
+
+Mostra todos os arquivos de uma area especifica.
+
+```bash
+ai-tool area auth
+ai-tool area meus-pets --type=hook  # Filtra por categoria
+ai-tool area stripe --full          # Mostra todos os arquivos
+```
+
+**Output:**
+- Arquivos agrupados por categoria
+- Descricao inferida de cada arquivo
+
+### `areas init` - Configuracao de Areas
+
+Gera arquivo de configuracao editavel para areas.
+
+```bash
+ai-tool areas init
+ai-tool areas init --force  # Sobrescreve config existente
+```
+
+Cria `.analyze/areas.config.json` com:
+- Areas detectadas automaticamente
+- Patterns glob para cada area
+- Keywords de deteccao
+- Descricoes manuais de arquivos
+
 ## Servidor MCP
 
 Integra com Claude Desktop e outras ferramentas MCP.
@@ -111,6 +154,9 @@ ai-tool --mcp
 - `aitool_impact_analysis` - Analise de impacto
 - `aitool_suggest_reads` - Sugestao de leitura
 - `aitool_file_context` - Contexto do arquivo
+- `aitool_list_areas` - Lista areas funcionais
+- `aitool_area_detail` - Detalhe de uma area
+- `aitool_areas_init` - Gera config de areas
 
 ### Configuracao Claude Code
 
@@ -148,7 +194,7 @@ Adicione ao `claude_desktop_config.json`:
 ## Uso Programatico
 
 ```typescript
-import { map, dead, impact, suggest, context } from "@justmpm/ai-tool";
+import { map, dead, impact, suggest, context, areas, area, areasInit } from "@justmpm/ai-tool";
 
 // Mapa do projeto
 const projectMap = await map({ format: "json" });
@@ -164,6 +210,15 @@ const suggestions = await suggest("Button", { limit: 5 });
 
 // Contexto do arquivo
 const fileContext = await context("Button", { format: "json" });
+
+// Areas funcionais
+const projectAreas = await areas({ format: "json" });
+
+// Detalhe de uma area
+const authArea = await area("auth", { type: "hook" });
+
+// Gerar config de areas
+await areasInit({ force: false });
 ```
 
 ## Opcoes
