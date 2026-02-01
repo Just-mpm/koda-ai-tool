@@ -46,7 +46,7 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
   const full = options.full ?? false;
 
   if (!target) {
-    throw new Error("Nome da área é obrigatório. Exemplo: ai-tool area meus-pets");
+    throw new Error("Nome da área é obrigatório. Exemplo: ai-tool area auth");
   }
 
   try {
@@ -218,7 +218,7 @@ function formatAreaNotFound(target: string, availableAreas: Array<{ id: string; 
   }
 
   out += `💡 Dicas:\n`;
-  out += `   - Use o ID exato da área (ex: ai-tool area meus-pets)\n`;
+  out += `   - Use o ID exato da área (ex: ai-tool area auth)\n`;
   out += `   - Use 'ai-tool areas' para listar todas as áreas\n`;
 
   return out;

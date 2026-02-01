@@ -337,7 +337,7 @@ Parametros: target (nome da area), type (filtrar categoria), full (todos arquivo
       target: z
         .string()
         .min(1)
-        .describe("Nome da area: meus-pets, auth, stripe, etc"),
+        .describe("Nome da area: auth, dashboard, billing, etc"),
       type: z
         .enum([
           "page",

@@ -78,9 +78,9 @@ EXEMPLOS:
   ai-tool context Button
   ai-tool areas
   ai-tool areas init
-  ai-tool area meus-pets
-  ai-tool area meus-pets --type=hook
-  ai-tool area firebase --full
+  ai-tool area auth
+  ai-tool area auth --type=hook
+  ai-tool area dashboard --full
   ai-tool --mcp
 
 SOBRE:
@@ -195,7 +195,7 @@ async function main() {
       case "area":
         if (!target) {
           console.error("❌ Erro: nome da área é obrigatório para o comando area");
-          console.error("   Exemplo: ai-tool area meus-pets");
+          console.error("   Exemplo: ai-tool area auth");
           console.error("   Use 'ai-tool areas' para listar áreas disponíveis");
           process.exit(1);
         }

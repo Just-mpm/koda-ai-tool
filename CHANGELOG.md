@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.1] - 2025-02-01
+
+### Corrigido
+
+- **`autoDetect: false` agora funciona corretamente**: Quando desabilitado no `areas.config.json`, apenas áreas definidas manualmente são usadas
+  - Antes: padrões automáticos eram sempre aplicados, ignorando a configuração
+  - Agora: respeita `settings.autoDetect: false` e usa APENAS a configuração manual
+
+### Alterado
+
+- **Padrões automáticos agora são genéricos**: Removidos todos os padrões específicos de domínio
+  - Removido: `meus-pets`, `consultas-ia`, `health-tracking`, `training`, `veterinary`, etc
+  - Renomeado: `stripe` → `billing` (mais genérico)
+  - Mantido: apenas termos técnicos universais (auth, dashboard, billing, checkout, etc)
+- **Descrições genéricas**: Removidas descrições específicas como "consultas veterinárias"
+- **Keywords simplificadas**: Apenas keywords que fazem sentido em qualquer projeto
+
+### Recomendação
+
+Para projetos com domínios específicos, use `autoDetect: false` no `areas.config.json` e defina suas áreas manualmente.
+
 ## [0.5.0] - 2025-01-31
 
 ### Mudancas Importantes

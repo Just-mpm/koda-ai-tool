@@ -3,8 +3,8 @@
  *
  * Detecta automaticamente a área de cada arquivo baseado em:
  * 1. Configuração manual (areas.config.json)
- * 2. Padrões de pasta
- * 3. Keywords no nome
+ * 2. Padrões de pasta (se autoDetect estiver habilitado)
+ * 3. Keywords no nome (se autoDetect estiver habilitado)
  */
 
 import { minimatch } from "minimatch";
@@ -20,6 +20,10 @@ interface AreaMatch {
 /**
  * Detecta a(s) área(s) de um arquivo
  * Retorna array porque um arquivo pode pertencer a múltiplas áreas
+ *
+ * Respeita settings.autoDetect:
+ * - true (default): usa config + padrões automáticos
+ * - false: usa APENAS a configuração manual
  */
 export function detectFileAreas(
   filePath: string,
@@ -28,14 +32,23 @@ export function detectFileAreas(
   const normalizedPath = filePath.replace(/\\/g, "/");
   const matches: AreaMatch[] = [];
 
-  // 1. Verificar configuração manual (maior prioridade)
+  // Verificar se autoDetect está habilitado (default: true)
+  const autoDetect = config.settings?.autoDetect !== false;
+
+  // 1. Verificar configuração manual (maior prioridade - SEMPRE executado)
   for (const [areaId, areaConfig] of Object.entries(config.areas)) {
     if (matchesAreaConfig(normalizedPath, areaConfig)) {
       matches.push({ area: areaId, priority: 200, source: "config" });
     }
   }
 
-  // 2. Verificar padrões de pasta
+  // Se autoDetect está desabilitado, retornar apenas matches da config
+  if (!autoDetect) {
+    const unique = [...new Set(matches.map((m) => m.area))];
+    return unique;
+  }
+
+  // 2. Verificar padrões de pasta (apenas se autoDetect = true)
   for (const { pattern, area, priority } of FOLDER_PATTERNS) {
     if (pattern.test(normalizedPath)) {
       // Não adicionar se já existe da config
@@ -45,7 +58,7 @@ export function detectFileAreas(
     }
   }
 
-  // 3. Verificar keywords no nome do arquivo
+  // 3. Verificar keywords no nome do arquivo (apenas se autoDetect = true)
   const fileName = normalizedPath.split("/").pop() || "";
   for (const { keyword, area, priority } of KEYWORD_PATTERNS) {
     if (keyword.test(fileName) || keyword.test(normalizedPath)) {

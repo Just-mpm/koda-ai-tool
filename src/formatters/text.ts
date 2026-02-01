@@ -584,7 +584,7 @@ export function formatAreasText(result: AreasResult): string {
   out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   out += `💡 Use 'ai-tool area <nome>' para ver detalhes de uma área\n`;
-  out += `   Exemplo: ai-tool area meus-pets\n`;
+  out += `   Exemplo: ai-tool area auth\n`;
 
   return out;
 }
