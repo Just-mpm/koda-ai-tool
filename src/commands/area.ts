@@ -12,6 +12,7 @@ import {
   getAreaName,
   getAreaDescription,
   inferFileDescription,
+  isFileIgnored,
 } from "../areas/detector.js";
 import { formatAreaDetailText } from "../formatters/text.js";
 
@@ -56,11 +57,14 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
     // 2. Listar todos os arquivos de código
     const allFiles = getAllCodeFiles(cwd);
 
-    // 3. Filtrar arquivos da área específica
+    // 3. Filtrar arquivos ignorados
+    const filteredFiles = allFiles.filter((filePath) => !isFileIgnored(filePath, config));
+
+    // 4. Filtrar arquivos da área específica
     const areaFiles: AreaFile[] = [];
     const targetLower = target.toLowerCase();
 
-    for (const filePath of allFiles) {
+    for (const filePath of filteredFiles) {
       const fileAreas = detectFileAreas(filePath, config);
 
       // Verificar se arquivo pertence à área (match parcial ou exato)
@@ -90,14 +94,14 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
       }
     }
 
-    // 4. Verificar se área foi encontrada
+    // 5. Verificar se área foi encontrada
     if (areaFiles.length === 0) {
       // Listar áreas disponíveis
-      const availableAreas = getAvailableAreas(allFiles, config);
+      const availableAreas = getAvailableAreas(filteredFiles, config);
       return formatAreaNotFound(target, availableAreas);
     }
 
-    // 5. Agrupar por categoria
+    // 6. Agrupar por categoria
     const byCategory: Partial<Record<FileCategory, AreaFile[]>> = {};
     const categories: Partial<Record<FileCategory, number>> = {};
 
@@ -114,10 +118,10 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
       byCategory[cat]!.sort((a, b) => a.path.localeCompare(b.path));
     }
 
-    // 6. Encontrar o ID real da área (para nome e descrição corretos)
-    const realAreaId = findRealAreaId(target, allFiles, config);
+    // 7. Encontrar o ID real da área (para nome e descrição corretos)
+    const realAreaId = findRealAreaId(target, filteredFiles, config);
 
-    // 7. Montar resultado
+    // 8. Montar resultado
     const detectedArea: DetectedArea = {
       id: realAreaId || target,
       name: getAreaName(realAreaId || target, config),
@@ -135,7 +139,7 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
       byCategory,
     };
 
-    // 8. Formatar output
+    // 9. Formatar output
     if (format === "json") {
       return JSON.stringify(result, null, 2);
     }

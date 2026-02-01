@@ -18,6 +18,7 @@ const CACHE_FILE = "areas.json";
 export const DEFAULT_CONFIG: AreasConfigFile = {
   $schema: "./areas.schema.json",
   version: "1.0.0",
+  ignore: [],
   areas: {},
   descriptions: {},
   settings: {
@@ -127,4 +128,12 @@ export function setFileDescription(cwd: string, filePath: string, description: s
 export function getFileDescription(cwd: string, filePath: string): string | undefined {
   const config = readConfig(cwd);
   return config.descriptions?.[filePath];
+}
+
+/**
+ * Obtém a lista de padrões ignore da configuração
+ */
+export function getIgnorePatterns(cwd: string): string[] {
+  const config = readConfig(cwd);
+  return config.ignore || [];
 }

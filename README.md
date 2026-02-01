@@ -155,6 +155,46 @@ Cria `.analyze/areas.config.json` com:
 - Patterns glob para cada area
 - Keywords de deteccao
 - Descricoes manuais de arquivos
+- Padroes de ignore global
+
+### Configuracao de Areas
+
+O arquivo `.analyze/areas.config.json` suporta:
+
+```json
+{
+  "$schema": "./areas.schema.json",
+  "version": "1.0.0",
+  "ignore": [
+    "docs/brainstorming/**",
+    "functions/lib/**",
+    "**/*.test.ts"
+  ],
+  "areas": {
+    "auth": {
+      "name": "Autenticacao",
+      "description": "Sistema de login e sessao",
+      "patterns": ["**/auth/**", "**/login/**"],
+      "keywords": ["auth", "login", "session"]
+    }
+  },
+  "descriptions": {
+    "src/hooks/useAuth.ts": "Hook principal de autenticacao"
+  },
+  "settings": {
+    "autoDetect": true,
+    "inferDescriptions": true
+  }
+}
+```
+
+| Campo | Descricao |
+|-------|-----------|
+| `ignore` | Padroes glob para ignorar arquivos/pastas globalmente |
+| `areas` | Definicao manual de areas com patterns e keywords |
+| `descriptions` | Descricoes manuais para arquivos especificos |
+| `settings.autoDetect` | Se `false`, usa apenas areas definidas manualmente |
+| `settings.inferDescriptions` | Infere descricoes automaticamente baseado no nome |
 
 ## Servidor MCP
 

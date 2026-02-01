@@ -20,7 +20,7 @@ import {
   updateCacheMeta,
 } from "../cache/index.js";
 import { readConfig } from "../areas/config.js";
-import { detectFileAreas, getAreaName } from "../areas/detector.js";
+import { detectFileAreas, getAreaName, isFileIgnored } from "../areas/detector.js";
 
 /**
  * Executa o comando MAP
@@ -157,6 +157,7 @@ export async function map(options: MapOptions = {}): Promise<string> {
 
 /**
  * Detecta informações de áreas de forma leve (apenas nomes e contagens)
+ * Filtra arquivos ignorados pela configuração
  */
 function detectAreasInfo(cwd: string, filePaths: string[]): MapAreasInfo {
   try {
@@ -165,6 +166,11 @@ function detectAreasInfo(cwd: string, filePaths: string[]): MapAreasInfo {
     let unmappedCount = 0;
 
     for (const filePath of filePaths) {
+      // Ignorar arquivos configurados no ignore
+      if (isFileIgnored(filePath, config)) {
+        continue;
+      }
+
       const areas = detectFileAreas(filePath, config);
       if (areas.length === 0) {
         unmappedCount++;

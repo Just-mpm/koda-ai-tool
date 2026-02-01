@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.2] - 2025-02-01
+
+### Adicionado
+
+- **Suporte a `ignore` no `areas.config.json`**: Permite ignorar arquivos/pastas globalmente em todos os comandos de áreas
+  - Usa padrões glob (minimatch): `"ignore": ["docs/brainstorming/**", "functions/lib/**"]`
+  - Arquivos ignorados não aparecem nos resultados de `map`, `areas` e `area`
+  - Útil para excluir protótipos, código compilado, ou diretórios irrelevantes
+
+### Alterado
+
+- Comandos `map`, `areas` e `area` agora filtram arquivos baseado no campo `ignore` da configuração
+- Função `isFileIgnored` exportada do `areas/detector.ts` para uso externo
+- Função `getIgnorePatterns` adicionada ao `areas/config.ts`
+
 ## [0.5.1] - 2025-02-01
 
 ### Corrigido

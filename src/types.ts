@@ -236,6 +236,7 @@ export interface AreaConfig {
 export interface AreasConfigFile {
   $schema?: string;
   version: string;
+  ignore?: string[]; // Padrões glob para ignorar arquivos/pastas globalmente
   areas: Record<string, AreaConfig>;
   descriptions?: Record<string, string>; // path → descrição manual
   settings?: {

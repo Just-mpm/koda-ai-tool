@@ -12,6 +12,7 @@ import {
   getAreaName,
   getAreaDescription,
   inferFileDescription,
+  isFileIgnored,
 } from "../areas/detector.js";
 import { formatAreasText } from "../formatters/text.js";
 
@@ -50,11 +51,14 @@ export async function areas(options: AreasOptions = {}): Promise<string> {
     // 2. Listar todos os arquivos de código
     const allFiles = getAllCodeFiles(cwd);
 
-    // 3. Detectar área de cada arquivo
+    // 3. Filtrar arquivos ignorados
+    const filteredFiles = allFiles.filter((filePath) => !isFileIgnored(filePath, config));
+
+    // 4. Detectar área de cada arquivo
     const areaMap = new Map<string, AreaFile[]>();
     const unmapped: AreaFile[] = [];
 
-    for (const filePath of allFiles) {
+    for (const filePath of filteredFiles) {
       const category = detectCategory(filePath);
       const areas = detectFileAreas(filePath, config);
 
@@ -83,7 +87,7 @@ export async function areas(options: AreasOptions = {}): Promise<string> {
       }
     }
 
-    // 4. Montar resultado
+    // 5. Montar resultado
     const detectedAreas: DetectedArea[] = [];
 
     for (const [areaId, files] of areaMap) {
@@ -115,12 +119,12 @@ export async function areas(options: AreasOptions = {}): Promise<string> {
       unmapped,
       summary: {
         totalAreas: detectedAreas.length,
-        totalFiles: allFiles.length,
+        totalFiles: filteredFiles.length,
         unmappedCount: unmapped.length,
       },
     };
 
-    // 5. Formatar output
+    // 6. Formatar output
     if (format === "json") {
       return JSON.stringify(result, null, 2);
     }

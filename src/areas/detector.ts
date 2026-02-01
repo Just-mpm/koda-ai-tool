@@ -11,6 +11,24 @@ import { minimatch } from "minimatch";
 import type { AreaConfig, AreasConfigFile, FileCategory } from "../types.js";
 import { FOLDER_PATTERNS, KEYWORD_PATTERNS, AREA_NAMES, AREA_DESCRIPTIONS } from "./patterns.js";
 
+/**
+ * Verifica se um arquivo deve ser ignorado baseado nos padrões de ignore
+ */
+export function isFileIgnored(filePath: string, config: AreasConfigFile): boolean {
+  const ignorePatterns = config.ignore || [];
+  if (ignorePatterns.length === 0) return false;
+
+  const normalizedPath = filePath.replace(/\\/g, "/");
+
+  for (const pattern of ignorePatterns) {
+    if (minimatch(normalizedPath, pattern, { dot: true })) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 interface AreaMatch {
   area: string;
   priority: number;
