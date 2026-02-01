@@ -84,9 +84,9 @@ npx ai-tool context Button         # Assinaturas do arquivo
 # Areas funcionais
 npx ai-tool areas                  # Lista todas as areas
 npx ai-tool areas init             # Gera configuracao inicial
-npx ai-tool area meus-pets         # Arquivos da area "meus-pets"
+npx ai-tool area auth              # Arquivos da area "auth"
 npx ai-tool area auth --type=hook  # Apenas hooks da area "auth"
-npx ai-tool area stripe --full     # Todos os arquivos da area
+npx ai-tool area dashboard --full  # Todos os arquivos da area
 
 # MCP
 npx ai-tool --mcp                  # Servidor MCP
@@ -101,15 +101,23 @@ O arquivo `.analyze/areas.config.json` permite personalizar as areas:
 ```json
 {
   "areas": {
-    "meus-pets": {
-      "name": "Meus Pets",
-      "description": "Gerenciamento de pets",
-      "patterns": ["components/pets/**", "app/**/meus-pets/**"],
-      "keywords": ["pet", "vaccination"]
+    "auth": {
+      "name": "Autenticação",
+      "description": "Login, signup e gerenciamento de sessão",
+      "patterns": ["src/pages/Auth/**", "src/components/auth/**"],
+      "keywords": ["auth", "login", "signup"]
     }
   },
   "descriptions": {
-    "components/pets/PetForm.tsx": "Formulario multi-step de pets"
+    "src/hooks/useAuth.ts": "Hook principal de autenticação"
+  },
+  "settings": {
+    "autoDetect": false
   }
 }
 ```
+
+### autoDetect
+
+- `true` (default): usa config manual + padrões automáticos
+- `false`: usa APENAS a configuração manual (recomendado para projetos com domínios específicos)
