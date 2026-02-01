@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.5.4] - 2025-02-01
+
+### Adicionado
+
+- **Sugestões inteligentes "Você quis dizer?"**: Quando usuário digita errado, o sistema sugere a opção correta
+  - Usa algoritmo de Levenshtein para detectar typos (ex: `auht` → `auth`)
+  - Funciona para arquivos e áreas
+  - Considera tanto áreas manuais quanto automáticas
+
+- **Referência rápida de comandos**: Mensagens de erro agora incluem lista de comandos disponíveis
+  - Ajuda usuários a descobrir comandos úteis quando algo dá errado
+
+- **Novo módulo `src/utils/similarity.ts`**: Funções de similaridade de strings
+  - `levenshteinDistance(a, b)` - Calcula distância entre strings
+  - `findSimilar(target, candidates, options)` - Encontra itens similares
+  - `findBestMatch(target, candidates)` - Retorna melhor match para "você quis dizer?"
+  - `extractFileName(path)` - Extrai nome do arquivo sem extensão
+
+- **Novo módulo `src/utils/errors.ts`**: Formatadores de erro padronizados
+  - `formatFileNotFound()` - Erro de arquivo não encontrado com sugestões
+  - `formatAreaNotFound()` - Erro de área não encontrada com sugestões
+  - `formatMissingTarget()` - Erro de target obrigatório com exemplos
+  - `formatInvalidCommand()` - Erro de comando inválido com lista de comandos
+  - `COMMAND_REFERENCE` - Dicionário de comandos disponíveis
+
+### Alterado
+
+- **Código DRY**: Removido código duplicado de Levenshtein de 3 arquivos
+  - `impact.ts`, `suggest.ts`, `context.ts` agora usam módulo compartilhado
+  - Redução de ~180 linhas duplicadas para ~60 linhas centralizadas
+
+- **Mensagens de erro consistentes**: Todos os erros seguem o mesmo formato com emojis
+  - ❌ Erro principal
+  - 💡 Você quis dizer?
+  - 📝 Arquivos/áreas similares
+  - 📖 Dicas
+  - 📌 Comandos úteis
+
+### Exemplo
+
+```bash
+$ ai-tool suggest errrs
+❌ Arquivo não encontrado: "errrs"
+
+💡 Você quis dizer?
+   → src/utils/errors.ts
+
+📌 Comandos úteis:
+   ai-tool map        Resumo do projeto
+   ai-tool areas      Listar áreas
+   ...
+```
+
 ## [0.5.2] - 2025-02-01
 
 ### Adicionado

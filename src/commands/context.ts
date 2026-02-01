@@ -15,6 +15,7 @@ import {
   extractTypes,
   extractExports,
 } from "../ts/extractor.js";
+import { formatFileNotFound } from "../utils/errors.js";
 
 /**
  * Executa o comando CONTEXT
@@ -191,69 +192,9 @@ function shouldIgnore(name: string): boolean {
 
 /**
  * Formata mensagem de "nao encontrado"
+ * Usa módulo compartilhado com sugestões "você quis dizer?"
  */
 function formatNotFound(target: string, cwd: string): string {
-  const normalizedTarget = target.toLowerCase();
   const allFiles = getAllCodeFiles(cwd);
-
-  // Buscar arquivos similares
-  const similar = allFiles
-    .filter((f) => {
-      const fileName = basename(f).toLowerCase();
-      const fileNameNoExt = fileName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
-      return (
-        fileName.includes(normalizedTarget) ||
-        fileNameNoExt.includes(normalizedTarget) ||
-        levenshteinDistance(fileNameNoExt, normalizedTarget) <= 3
-      );
-    })
-    .slice(0, 5);
-
-  let out = `Arquivo nao encontrado: "${target}"\n\n`;
-  out += `Total de arquivos no projeto: ${allFiles.length}\n\n`;
-
-  if (similar.length > 0) {
-    out += `Arquivos com nome similar:\n`;
-    for (const s of similar) {
-      out += `   - ${s}\n`;
-    }
-    out += `\n`;
-  }
-
-  out += `Dicas:\n`;
-  out += `   - Use o caminho relativo: src/components/Header.tsx\n`;
-  out += `   - Ou apenas o nome do arquivo: Header\n`;
-  out += `   - Verifique se o arquivo existe e e um arquivo .ts/.tsx/.js/.jsx\n`;
-
-  return out;
-}
-
-/**
- * Calcula distancia de Levenshtein para sugestoes
- */
-function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
+  return formatFileNotFound({ target, allFiles, command: "context" });
 }

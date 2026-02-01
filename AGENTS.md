@@ -56,7 +56,7 @@ src/
   ts/           # Extrator TypeScript (ts-morph)
   formatters/   # Formatadores text/json
   cache/        # Sistema de cache
-  utils/        # Utilitarios
+  utils/        # Utilitarios (detect, firebase, similarity, errors)
 dist/           # Build compilado
 ```
 
@@ -121,3 +121,17 @@ O arquivo `.analyze/areas.config.json` permite personalizar as areas:
 
 - `true` (default): usa config manual + padrões automáticos
 - `false`: usa APENAS a configuração manual (recomendado para projetos com domínios específicos)
+
+## Sugestões Inteligentes
+
+Quando usuário digita errado, o sistema sugere correções:
+
+```bash
+$ ai-tool area auht
+❌ Área não encontrada: "auht"
+
+💡 Você quis dizer?
+   → ai-tool area auth
+```
+
+Funciona para arquivos e áreas, considerando tanto config manual quanto automática.

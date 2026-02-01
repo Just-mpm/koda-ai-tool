@@ -6,7 +6,7 @@
         "src/cache/index.ts"
       ],
       "body": {
-        "size": 3106,
+        "size": 3309,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -37,7 +37,7 @@
         "src/areas/patterns.ts"
       ],
       "body": {
-        "size": 7702,
+        "size": 8763,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -46,7 +46,7 @@
       "id": "src/areas/patterns.ts",
       "adjacentTo": [],
       "body": {
-        "size": 21530,
+        "size": 17984,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -79,7 +79,7 @@
         "src/mcp/server.ts"
       ],
       "body": {
-        "size": 7226,
+        "size": 7212,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -94,7 +94,7 @@
         "src/areas/detector.ts"
       ],
       "body": {
-        "size": 5299,
+        "size": 5484,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -114,7 +114,7 @@
         "src/utils/detect.ts"
       ],
       "body": {
-        "size": 24583,
+        "size": 24578,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -138,10 +138,31 @@
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
-        "src/cache/index.ts"
+        "src/cache/index.ts",
+        "src/utils/errors.ts"
       ],
       "body": {
-        "size": 12329,
+        "size": 10800,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/errors.ts": {
+      "id": "src/utils/errors.ts",
+      "adjacentTo": [
+        "src/utils/similarity.ts"
+      ],
+      "body": {
+        "size": 7408,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/similarity.ts": {
+      "id": "src/utils/similarity.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 4983,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -151,10 +172,11 @@
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
-        "src/cache/index.ts"
+        "src/cache/index.ts",
+        "src/utils/errors.ts"
       ],
       "body": {
-        "size": 9082,
+        "size": 7586,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -164,10 +186,11 @@
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
-        "src/ts/extractor.ts"
+        "src/ts/extractor.ts",
+        "src/utils/errors.ts"
       ],
       "body": {
-        "size": 6874,
+        "size": 5396,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -190,7 +213,7 @@
         "src/formatters/text.ts"
       ],
       "body": {
-        "size": 4524,
+        "size": 4680,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -201,10 +224,11 @@
         "src/utils/detect.ts",
         "src/areas/config.ts",
         "src/areas/detector.ts",
-        "src/formatters/text.ts"
+        "src/formatters/text.ts",
+        "src/utils/errors.ts"
       ],
       "body": {
-        "size": 7519,
+        "size": 7312,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -234,6 +258,8 @@
         "src/commands/areas-init.ts",
         "src/types.ts",
         "src/utils/detect.ts",
+        "src/utils/similarity.ts",
+        "src/utils/errors.ts",
         "src/utils/firebase.ts",
         "src/cache/index.ts",
         "src/areas/config.ts",
@@ -241,7 +267,7 @@
         "src/areas/patterns.ts"
       ],
       "body": {
-        "size": 2486,
+        "size": 2936,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -250,7 +276,7 @@
       "id": "src/types.ts",
       "adjacentTo": [],
       "body": {
-        "size": 6379,
+        "size": 6458,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -269,7 +295,7 @@
         "src/index.ts"
       ],
       "body": {
-        "size": 13141,
+        "size": 13142,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -288,6 +314,8 @@
     "src/formatters/text.ts",
     "src/commands/dead.ts",
     "src/commands/impact.ts",
+    "src/utils/errors.ts",
+    "src/utils/similarity.ts",
     "src/commands/suggest.ts",
     "src/commands/context.ts",
     "src/ts/extractor.ts",
@@ -298,5 +326,5 @@
     "src/types.ts",
     "src/mcp/server.ts"
   ],
-  "timestamp": "2026-01-31T23:43:18.497Z"
+  "timestamp": "2026-02-01T23:02:52.115Z"
 }

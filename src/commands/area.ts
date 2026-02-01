@@ -15,6 +15,7 @@ import {
   isFileIgnored,
 } from "../areas/detector.js";
 import { formatAreaDetailText } from "../formatters/text.js";
+import { formatAreaNotFound as formatAreaNotFoundError } from "../utils/errors.js";
 
 /**
  * Extensões de código suportadas
@@ -206,26 +207,10 @@ function getAvailableAreas(
 
 /**
  * Formata mensagem de área não encontrada
+ * Usa módulo compartilhado com sugestões "você quis dizer?"
  */
 function formatAreaNotFound(target: string, availableAreas: Array<{ id: string; count: number }>): string {
-  let out = `\n❌ Área não encontrada: "${target}"\n\n`;
-
-  if (availableAreas.length > 0) {
-    out += `📦 Áreas disponíveis:\n\n`;
-    for (const { id, count } of availableAreas.slice(0, 15)) {
-      out += `   ${id.padEnd(25)} ${count} arquivos\n`;
-    }
-    if (availableAreas.length > 15) {
-      out += `   ... e mais ${availableAreas.length - 15}\n`;
-    }
-    out += `\n`;
-  }
-
-  out += `💡 Dicas:\n`;
-  out += `   - Use o ID exato da área (ex: ai-tool area auth)\n`;
-  out += `   - Use 'ai-tool areas' para listar todas as áreas\n`;
-
-  return out;
+  return formatAreaNotFoundError({ target, availableAreas });
 }
 
 /**

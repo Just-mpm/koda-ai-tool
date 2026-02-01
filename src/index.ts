@@ -71,6 +71,18 @@ export type {
 // Utilitários
 export { detectCategory, categoryIcons, isEntryPoint, isCodeFile } from "./utils/detect.js";
 
+// Similaridade e erros
+export { levenshteinDistance, findSimilar, findBestMatch, extractFileName } from "./utils/similarity.js";
+export {
+  formatFileNotFound,
+  formatAreaNotFound,
+  formatMissingTarget,
+  formatInvalidCommand,
+  COMMAND_REFERENCE,
+} from "./utils/errors.js";
+export type { FindSimilarOptions } from "./utils/similarity.js";
+export type { FormatFileNotFoundOptions, FormatAreaNotFoundOptions, AreaInfo } from "./utils/errors.js";
+
 // Firebase Cloud Functions utils
 export {
   isFirebaseProject,

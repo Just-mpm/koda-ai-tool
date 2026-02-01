@@ -18,6 +18,7 @@ import {
   updateCacheMeta,
   type CachedGraph,
 } from "../cache/index.js";
+import { formatFileNotFound } from "../utils/errors.js";
 
 /**
  * Executa o comando IMPACT
@@ -302,40 +303,10 @@ function findTargetFile(target: string, allFiles: string[]): string | null {
 
 /**
  * Formata mensagem de "não encontrado"
+ * Usa módulo compartilhado com sugestões "você quis dizer?"
  */
 function formatNotFound(target: string, allFiles: string[]): string {
-  const normalizedTarget = target.toLowerCase();
-
-  // Buscar arquivos similares
-  const similar = allFiles
-    .filter((f) => {
-      const fileName = f.split("/").pop()?.toLowerCase() || "";
-      const fileNameNoExt = fileName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
-      return (
-        fileName.includes(normalizedTarget) ||
-        fileNameNoExt.includes(normalizedTarget) ||
-        levenshteinDistance(fileNameNoExt, normalizedTarget) <= 3
-      );
-    })
-    .slice(0, 5);
-
-  let out = `❌ Arquivo não encontrado no índice: "${target}"\n\n`;
-  out += `📊 Total de arquivos indexados: ${allFiles.length}\n\n`;
-
-  if (similar.length > 0) {
-    out += `📝 Arquivos com nome similar:\n`;
-    for (const s of similar) {
-      out += `   • ${s}\n`;
-    }
-    out += `\n`;
-  }
-
-  out += `💡 Dicas:\n`;
-  out += `   • Use o caminho relativo: src/components/Header.tsx\n`;
-  out += `   • Ou apenas o nome do arquivo: Header\n`;
-  out += `   • Verifique se o arquivo está em uma pasta incluída no scan\n`;
-
-  return out;
+  return formatFileNotFound({ target, allFiles, command: "impact" });
 }
 
 /**
@@ -440,32 +411,3 @@ function generateSuggestions(
   return suggestions;
 }
 
-/**
- * Calcula distância de Levenshtein para sugestões
- */
-function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-
-  return matrix[b.length][a.length];
-}
