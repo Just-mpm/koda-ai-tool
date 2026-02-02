@@ -1,0 +1,206 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-02-02T23:38:33.983Z",
+  "cwd": "D:\\Users\\Matheus Pimenta\\Pictures\\Pacotes-Pessoais\\ai-tool",
+  "summary": {
+    "totalFiles": 26,
+    "totalFolders": 8,
+    "categories": {
+      "other": 21,
+      "util": 4,
+      "type": 1
+    }
+  },
+  "folders": [
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas",
+      "fileCount": 4,
+      "categories": {
+        "other": 4
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/cache",
+      "fileCount": 1,
+      "categories": {
+        "other": 1
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils",
+      "fileCount": 4,
+      "categories": {
+        "util": 4
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src",
+      "fileCount": 3,
+      "categories": {
+        "other": 2,
+        "type": 1
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands",
+      "fileCount": 10,
+      "categories": {
+        "other": 10
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/formatters",
+      "fileCount": 1,
+      "categories": {
+        "other": 1
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/ts",
+      "fileCount": 2,
+      "categories": {
+        "other": 2
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp",
+      "fileCount": 1,
+      "categories": {
+        "other": 1
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/config.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/cache/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/firebase.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/detector.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/patterns.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/cli.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/map.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/detect.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/formatters/text.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/dead.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/impact.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/errors.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/similarity.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/suggest.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/context.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/ts/extractor.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/ts/indexer.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/areas.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/area.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/areas-init.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/find.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/functions.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/types.ts",
+      "category": "type",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp/server.ts",
+      "category": "other",
+      "size": 0
+    }
+  ],
+  "circularDependencies": []
+}

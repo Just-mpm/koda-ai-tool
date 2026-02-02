@@ -85,10 +85,14 @@ Ou edite manualmente o arquivo existente.
       };
     }
 
-    // 5. Criar configuração
+    // 5. Detectar padrões sugeridos para ignore
+    const suggestedIgnore = detectSuggestedIgnorePatterns(allFiles);
+
+    // 6. Criar configuração
     const newConfig: AreasConfigFile = {
       $schema: "./areas.schema.json",
       version: "1.0.0",
+      ignore: suggestedIgnore,
       areas: generatedAreas,
       descriptions: {},
       settings: {
@@ -108,8 +112,13 @@ Ou edite manualmente o arquivo existente.
 ✅ Arquivo criado: .analyze/areas.config.json
 
 📦 Áreas detectadas: ${sortedAreas.length}
-
 `;
+
+    // Mostrar padrões de ignore se houver
+    if (suggestedIgnore.length > 0) {
+      out += `🚫 Padrões ignorados: ${suggestedIgnore.length}\n`;
+    }
+    out += `\n`;
 
     for (const [areaId, files] of sortedAreas.slice(0, 15)) {
       const name = getAreaName(areaId, newConfig);
@@ -129,6 +138,14 @@ Ou edite manualmente o arquivo existente.
 ⚠️ ${unmappedCount} arquivos sem área definida
    Use 'ai-tool areas' para ver detalhes
 `;
+    }
+
+    if (suggestedIgnore.length > 0) {
+      out += `
+📋 Padrões adicionados ao ignore:\n`;
+      for (const pattern of suggestedIgnore) {
+        out += `   • ${pattern}\n`;
+      }
     }
 
     out += `
@@ -186,6 +203,41 @@ function inferPatternsFromFiles(files: string[]): string[] {
   }
 
   return [...patterns].sort();
+}
+
+/**
+ * Detecta padrões sugeridos para ignore baseado nos arquivos do projeto
+ */
+function detectSuggestedIgnorePatterns(files: string[]): string[] {
+  const patterns: string[] = [];
+
+  // Verificar functions/lib/
+  if (files.some(f => f.includes("functions/lib/"))) {
+    patterns.push("functions/lib/**");
+  }
+
+  // Verificar arquivos de teste
+  const testCount = files.filter(f => /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f)).length;
+  if (testCount > 3) {
+    patterns.push("**/*.test.{ts,tsx,js,jsx}");
+    patterns.push("**/*.spec.{ts,tsx,js,jsx}");
+  }
+
+  // Verificar arquivos .d.ts
+  const dtsCount = files.filter(f => f.endsWith(".d.ts")).length;
+  if (dtsCount > 2) {
+    patterns.push("**/*.d.ts");
+  }
+
+  // Verificar configurações
+  const configCount = files.filter(f => 
+    /\.(config|conf)\.(ts|js|mjs|cjs)$/.test(f)
+  ).length;
+  if (configCount > 2) {
+    patterns.push("**/*.config.{ts,js,mjs,cjs}");
+  }
+
+  return patterns;
 }
 
 /**

@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.7.1] - 2025-02-02
+
+### Corrigido
+
+- **Bug: Cloud Functions não detectadas**: Melhorada detecção de triggers Firebase v2
+  - Regex aprimorada para capturar type parameters: `onCall<Request>()`
+  - Adicionado suporte a mais padrões de namespace
+  - Debug mode: `DEBUG_ANALYZE=true ai-tool functions` mostra logs detalhados
+
+### Adicionado
+
+- **Melhorias UX - Comando DEAD**:
+  - Nova seção "COMO RESOLVER" com 3 opções claras no final do output
+  - Sugestões inteligentes de padrões para ignore:
+    - Detecta automaticamente `functions/lib/**` (build Firebase)
+    - Detecta arquivos de teste (`**/*.test.ts`)
+    - Detecta arquivos `.d.ts`, configurações e scripts
+  - Cada sugestão mostra: ícone, padrão, motivo e quantidade de arquivos
+
+- **Melhorias UX - Comando AREA**:
+  - Suporte a busca por nome amigável: `ai-tool area Autenticação` → encontra "auth"
+  - Normalização de acentos e case-insensitive
+  - Mensagem informativa quando converte o nome: "💡 Buscando área 'Autenticação' (ID: auth)"
+
+- **Melhorias UX - Comando FUNCTIONS**:
+  - Feedback detalhado quando não detecta functions:
+    - Lista 5 possíveis causas com soluções
+    - Mostra padrões suportados
+    - Sugere `--no-cache` e `DEBUG_ANALYZE=true`
+  - Quando detecta, mostra dica de filtros disponíveis
+
+- **Melhorias UX - Comando FIND**:
+  - Permite listar todos de um tipo sem query: `ai-tool find --type=trigger --def`
+  - Modo listAll otimizado (ignora busca de imports)
+  - Mensagem informativa: "📋 Listando todos os símbolos do tipo: trigger"
+
+- **Melhorias UX - Comando AREAS INIT**:
+  - Detecta e sugere padrões para ignore automaticamente
+  - Mostra no output quantos padrões de ignore foram adicionados
+  - Configuração mais inteligente baseada na estrutura do projeto
+
 ## [0.7.0] - 2025-02-02
 
 ### Adicionado

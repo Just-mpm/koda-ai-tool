@@ -183,11 +183,27 @@ function formatFunctionsText(result: FunctionsResult): string {
   // Resumo
   out += `📊 RESUMO\n`;
   out += `   Total: ${result.summary.total} functions\n`;
-  out += `   Exportadas: ${result.summary.exported}\n\n`;
+  out += `   Exportadas: ${result.summary.exported}\n`;
+  
+  if (result.summary.total > 0) {
+    out += `\n   💡 Filtros disponíveis:\n`;
+    out += `      ai-tool functions --trigger=onCall\n`;
+    out += `      ai-tool functions --trigger=onDocumentCreated\n`;
+  }
+  out += `\n`;
 
   if (result.summary.total === 0) {
-    out += `   ⚠️  Nenhuma Cloud Function detectada.\n`;
-    out += `   Verifique se seus triggers usam padrão Firebase v2 (onCall, onDocumentCreated, etc).\n`;
+    out += `   ⚠️  NENHUMA CLOUD FUNCTION DETECTADA\n\n`;
+    out += `   Possíveis causas:\n`;
+    out += `      1. O projeto não é Firebase (não encontrou .firebaserc ou firebase.json)\n`;
+    out += `      2. Não há arquivo functions/src/index.ts\n`;
+    out += `      3. Os triggers não usam padrões v2 (onCall, onDocumentCreated, etc)\n`;
+    out += `      4. O cache está desatualizado → tente: ai-tool functions --no-cache\n`;
+    out += `      5. Para debug: DEBUG_ANALYZE=true ai-tool functions\n\n`;
+    out += `   Padrões suportados:\n`;
+    out += `      export const minhaFunc = onCall((request) => { ... })\n`;
+    out += `      export const minhaFunc = onDocumentCreated("path", (event) => { ... })\n\n`;
+    out += `   Documentação: https://firebase.google.com/docs/functions\n`;
     return out;
   }
 

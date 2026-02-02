@@ -246,10 +246,97 @@ export function formatDeadText(result: DeadResult): string {
     out += `\n`;
   }
 
-  out += `💡 SUGESTÃO\n`;
-  out += `   Execute 'npx knip --fix' para remover automaticamente.\n`;
+  out += `💡 COMO RESOLVER\n\n`;
+  out += `   1. Falsos positivos? Adicione ao .analyze/areas.config.json:\n`;
+  out += `      { "ignore": ["functions/lib/**", "**/*.test.ts"] }\n\n`;
+  out += `   2. Remover automaticamente:\n`;
+  out += `      npx knip --fix\n\n`;
+  out += `   3. Ver detalhes em JSON:\n`;
+  out += `      ai-tool dead --format=json\n`;
+
+  // Detectar e sugerir padrões comuns
+  const suggestions = generateIgnoreSuggestions(result);
+  if (suggestions.length > 0) {
+    out += `\n🎯 SUGESTÕES INTELIGENTES\n\n`;
+    for (const suggestion of suggestions) {
+      out += `   ${suggestion.icon} ${suggestion.pattern}\n`;
+      out += `      Motivo: ${suggestion.reason}\n`;
+      out += `      Arquivos afetados: ${suggestion.count}\n\n`;
+    }
+  }
 
   return out;
+}
+
+/**
+ * Gera sugestões de padrões para ignorar baseado nos arquivos encontrados
+ */
+function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pattern: string; reason: string; count: number}> {
+  const suggestions: Array<{icon: string; pattern: string; reason: string; count: number}> = [];
+  const files = result.files.map(f => f.path);
+
+  // Detectar functions/lib/
+  const libFiles = files.filter(f => f.includes("functions/lib/"));
+  if (libFiles.length > 0) {
+    suggestions.push({
+      icon: "📦",
+      pattern: "functions/lib/**",
+      reason: "Build compilado do Firebase Functions",
+      count: libFiles.length
+    });
+  }
+
+  // Detectar arquivos de teste
+  const testFiles = files.filter(f => /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f));
+  if (testFiles.length > 3) {
+    suggestions.push({
+      icon: "🧪",
+      pattern: "**/*.(test|spec).(ts|tsx|js|jsx)",
+      reason: "Arquivos de teste geralmente são entry points próprios",
+      count: testFiles.length
+    });
+  }
+
+  // Detectar arquivos de configuração/build
+  const configFiles = files.filter(f => 
+    f.includes("vite.config") || 
+    f.includes("next.config") ||
+    f.includes("tailwind.config") ||
+    f.includes("jest.config") ||
+    f.includes("eslint.config")
+  );
+  if (configFiles.length > 0) {
+    suggestions.push({
+      icon: "⚙️",
+      pattern: "**/*.config.(ts|js|mjs|cjs)",
+      reason: "Arquivos de configuração são entry points",
+      count: configFiles.length
+    });
+  }
+
+  // Detectar arquivos .d.ts
+  const dtsFiles = files.filter(f => f.endsWith(".d.ts"));
+  if (dtsFiles.length > 0) {
+    suggestions.push({
+      icon: "📘",
+      pattern: "**/*.d.ts",
+      reason: "Arquivos de definição TypeScript",
+      count: dtsFiles.length
+    });
+  }
+
+  // Detectar scripts
+  const scriptFiles = files.filter(f => f.startsWith("scripts/") || f.includes("/scripts/"));
+  if (scriptFiles.length > 0) {
+    suggestions.push({
+      icon: "📜",
+      pattern: "scripts/**",
+      reason: "Scripts de automação são entry points",
+      count: scriptFiles.length
+    });
+  }
+
+  return suggestions;
 }
 
 /**
@@ -719,18 +806,27 @@ export function formatFindText(result: FindResult): string {
   out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
 
   // Query e filtros
-  out += `🔍 "${result.query}"`;
-  if (result.filters.type) {
-    out += ` [type: ${result.filters.type}]`;
+  if (result.query) {
+    out += `🔍 "${result.query}"`;
+    if (result.filters.type) {
+      out += ` [type: ${result.filters.type}]`;
+    }
+    if (result.filters.area) {
+      out += ` [area: ${result.filters.area}]`;
+    }
+    out += `\n\n`;
+  } else {
+    // Modo listar todos
+    out += `📋 Listando todos os símbolos do tipo: ${result.filters.type || "all"}\n\n`;
   }
-  if (result.filters.area) {
-    out += ` [area: ${result.filters.area}]`;
-  }
-  out += `\n\n`;
 
   // Se não encontrou nada
-  if (!result.definition && result.references.length === 0) {
-    out += `❌ Nenhum resultado encontrado para "${result.query}"\n\n`;
+  if (!result.definition && result.references.length === 0 && result.summary.definitions === 0) {
+    if (result.query) {
+      out += `❌ Nenhum resultado encontrado para "${result.query}"\n\n`;
+    } else {
+      out += `❌ Nenhum símbolo do tipo "${result.filters.type}" encontrado\n\n`;
+    }
     out += `💡 Dicas:\n`;
     out += `   • Verifique a ortografia\n`;
     out += `   • Tente buscar parte do nome\n`;

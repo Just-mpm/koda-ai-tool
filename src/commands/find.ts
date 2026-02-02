@@ -86,8 +86,11 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
   const refsOnly = options.refs ?? false;
   const useCache = options.cache !== false;
 
-  if (!query || query.trim().length === 0) {
-    throw new Error("Query é obrigatória. Exemplo: ai-tool find useAuth");
+  // Permitir query vazio apenas quando defOnly=true e type !== "all"
+  const listAllMode = !query && defOnly && filterType && filterType !== "all";
+  
+  if (!query && !listAllMode) {
+    throw new Error("Query é obrigatória. Exemplo: ai-tool find useAuth\n   Ou use --def para listar todos de um tipo: ai-tool find --type=trigger --def");
   }
 
   try {
@@ -216,15 +219,18 @@ function searchInIndex(
   allowedFiles: Set<string> | null
 ): FindMatch[] {
   const matches: FindMatch[] = [];
-  const queryLower = query.toLowerCase();
+  const queryLower = query?.toLowerCase() || "";
   const processedSymbols = new Set<string>(); // Evitar duplicatas
+  const listAllMode = !query && filterType && filterType !== "all";
 
   // 1. Buscar por nome exato ou parcial no índice de símbolos
   for (const [name, symbols] of Object.entries(index.symbolsByName)) {
     const nameLower = name.toLowerCase();
 
-    // Match exato ou parcial
-    if (nameLower === queryLower || nameLower.includes(queryLower)) {
+    // Match exato ou parcial (ou listar todos se em modo listAll)
+    const shouldInclude = listAllMode || nameLower === queryLower || nameLower.includes(queryLower);
+    
+    if (shouldInclude) {
       for (const symbol of symbols) {
         // Filtrar por área
         if (allowedFiles && !allowedFiles.has(symbol.file)) continue;
@@ -251,28 +257,30 @@ function searchInIndex(
     }
   }
 
-  // 2. Buscar imports que contêm o termo
-  for (const [filePath, fileData] of Object.entries(index.files)) {
-    // Filtrar por área
-    if (allowedFiles && !allowedFiles.has(filePath)) continue;
+  // 2. Buscar imports que contêm o termo (apenas se não estiver em modo listAll)
+  if (!listAllMode) {
+    for (const [filePath, fileData] of Object.entries(index.files)) {
+      // Filtrar por área
+      if (allowedFiles && !allowedFiles.has(filePath)) continue;
 
-    for (const imp of fileData.imports) {
-      for (const spec of imp.specifiers) {
-        const specLower = spec.toLowerCase();
-        if (specLower === queryLower || specLower.includes(queryLower)) {
-          const key = `import:${filePath}:${spec}:${imp.source}`;
-          if (processedSymbols.has(key)) continue;
-          processedSymbols.add(key);
+      for (const imp of fileData.imports) {
+        for (const spec of imp.specifiers) {
+          const specLower = spec.toLowerCase();
+          if (specLower === queryLower || specLower.includes(queryLower)) {
+            const key = `import:${filePath}:${spec}:${imp.source}`;
+            if (processedSymbols.has(key)) continue;
+            processedSymbols.add(key);
 
-          matches.push({
-            file: filePath,
-            line: 1, // Imports geralmente estão no topo
-            column: 0,
-            code: `import { ${spec} } from '${imp.source}'`,
-            matchType: "import",
-            symbolType: inferSymbolTypeFromName(spec),
-            category: fileData.category,
-          });
+            matches.push({
+              file: filePath,
+              line: 1, // Imports geralmente estão no topo
+              column: 0,
+              code: `import { ${spec} } from '${imp.source}'`,
+              matchType: "import",
+              symbolType: inferSymbolTypeFromName(spec),
+              category: fileData.category,
+            });
+          }
         }
       }
     }

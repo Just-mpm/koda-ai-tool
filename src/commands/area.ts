@@ -14,6 +14,7 @@ import {
   inferFileDescription,
   isFileIgnored,
 } from "../areas/detector.js";
+import { AREA_NAMES } from "../areas/patterns.js";
 import { formatAreaDetailText } from "../formatters/text.js";
 import { formatAreaNotFound as formatAreaNotFoundError } from "../utils/errors.js";
 
@@ -39,6 +40,64 @@ const IGNORED_DIRS = new Set([
 ]);
 
 /**
+ * Resolve um nome de área (ID ou nome amigável) para o ID real
+ * Suporta: "auth" → "auth", "Autenticação" → "auth"
+ */
+function resolveAreaId(
+  target: string,
+  config: ReturnType<typeof readConfig>,
+  allFiles: string[]
+): string {
+  const targetLower = target.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // 1. Verificar se já é um ID válido
+  if (config.areas[target]) {
+    return target;
+  }
+
+  // 2. Verificar configuração manual (nome amigável)
+  for (const [id, areaConfig] of Object.entries(config.areas)) {
+    const name = areaConfig.name?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (name === targetLower) {
+      return id;
+    }
+  }
+
+  // 3. Verificar padrões predefinidos (AREA_NAMES)
+  for (const [id, name] of Object.entries(AREA_NAMES)) {
+    const nameNormalized = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (nameNormalized === targetLower) {
+      return id;
+    }
+  }
+
+  // 4. Match parcial no ID
+  for (const id of Object.keys(config.areas)) {
+    if (id.toLowerCase().includes(targetLower)) {
+      return id;
+    }
+  }
+
+  // 5. Match parcial em áreas detectadas automaticamente
+  const detectedAreas = new Set<string>();
+  for (const filePath of allFiles) {
+    const areas = detectFileAreas(filePath, config);
+    for (const areaId of areas) {
+      if (areaId.toLowerCase().includes(targetLower)) {
+        detectedAreas.add(areaId);
+      }
+    }
+  }
+
+  if (detectedAreas.size > 0) {
+    return [...detectedAreas][0];
+  }
+
+  // Retornar o target original (não encontrado)
+  return target;
+}
+
+/**
  * Executa o comando AREA
  */
 export async function area(target: string, options: AreaOptions = {}): Promise<string> {
@@ -57,13 +116,16 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
 
     // 2. Listar todos os arquivos de código
     const allFiles = getAllCodeFiles(cwd);
+    
+    // 3. Resolver nome amigável para ID
+    const resolvedTarget = resolveAreaId(target, config, allFiles);
 
-    // 3. Filtrar arquivos ignorados
+    // 4. Filtrar arquivos ignorados
     const filteredFiles = allFiles.filter((filePath) => !isFileIgnored(filePath, config));
 
-    // 4. Filtrar arquivos da área específica
+    // 5. Filtrar arquivos da área específica
     const areaFiles: AreaFile[] = [];
-    const targetLower = target.toLowerCase();
+    const targetLower = resolvedTarget.toLowerCase();
 
     for (const filePath of filteredFiles) {
       const fileAreas = detectFileAreas(filePath, config);
@@ -119,18 +181,24 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
       byCategory[cat]!.sort((a, b) => a.path.localeCompare(b.path));
     }
 
-    // 7. Encontrar o ID real da área (para nome e descrição corretos)
-    const realAreaId = findRealAreaId(target, filteredFiles, config);
+    // 7. Usar ID resolvido (ou o target original se não encontrou)
+    const realAreaId = resolvedTarget !== target ? resolvedTarget : findRealAreaId(target, filteredFiles, config);
+    const finalAreaId = realAreaId || resolvedTarget;
+    
+    // Mostrar mensagem informativa se houve conversão de nome
+    const nameConversionMsg = resolvedTarget !== target 
+      ? `\n💡 Buscando área "${getAreaName(finalAreaId, config)}" (ID: ${finalAreaId})\n`
+      : "";
 
     // 8. Montar resultado
     const detectedArea: DetectedArea = {
-      id: realAreaId || target,
-      name: getAreaName(realAreaId || target, config),
-      description: getAreaDescription(realAreaId || target, config),
+      id: finalAreaId,
+      name: getAreaName(finalAreaId, config),
+      description: getAreaDescription(finalAreaId, config),
       files: areaFiles,
       fileCount: areaFiles.length,
       categories,
-      isAutoDetected: !config.areas[realAreaId || target],
+      isAutoDetected: !config.areas[finalAreaId],
     };
 
     const result: AreaDetailResult = {
@@ -145,7 +213,8 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
       return JSON.stringify(result, null, 2);
     }
 
-    return formatAreaDetailText(result, { full, filterType });
+    const output = formatAreaDetailText(result, { full, filterType });
+    return nameConversionMsg + output;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar area: ${message}`);

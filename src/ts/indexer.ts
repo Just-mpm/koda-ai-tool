@@ -75,6 +75,21 @@ export interface ProjectIndex {
 const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 
 /**
+ * Flag de debug - habilita logs detalhados
+ * Pode ser ativado via env: DEBUG_ANALYZE=true
+ */
+const DEBUG = process.env.DEBUG_ANALYZE === "true";
+
+/**
+ * Log de debug condicional
+ */
+function debugLog(...args: unknown[]): void {
+  if (DEBUG) {
+    console.error("[analyze:debug]", ...args);
+  }
+}
+
+/**
  * Pastas a ignorar
  */
 const IGNORED_DIRS = new Set([
@@ -172,6 +187,13 @@ const FIREBASE_V2_TRIGGERS = new Set([
 export function indexProject(cwd: string): ProjectIndex {
   // 1. Listar todos os arquivos
   const allFiles = getAllCodeFiles(cwd);
+  debugLog(`Indexando ${allFiles.length} arquivos em ${cwd}`);
+  
+  // Contar arquivos em functions/src/ para diagnóstico
+  const functionFiles = allFiles.filter(f => f.includes("functions/src/"));
+  if (functionFiles.length > 0) {
+    debugLog(`Encontrados ${functionFiles.length} arquivos em functions/src/:`, functionFiles);
+  }
 
   // 2. Criar projeto ts-morph
   const project = createProject(cwd);
@@ -312,6 +334,15 @@ export function indexProject(cwd: string): ProjectIndex {
         // CallExpression - pode ser trigger Firebase (onCall, onDocumentCreated, etc)
         else if (initKind === SyntaxKind.CallExpression) {
           const triggerName = extractFirebaseTriggerName(init);
+          
+          // Debug: mostrar CallExpressions em arquivos de functions
+          if (DEBUG && filePath.includes("functions/src/")) {
+            const initText = init.getText().slice(0, 50);
+            debugLog(`[CF] Analisando: ${name} = ${initText}...`);
+            if (triggerName) {
+              debugLog(`[CF] ✓ Trigger detectado: ${triggerName}`);
+            }
+          }
 
           if (triggerName && FIREBASE_V2_TRIGGERS.has(triggerName)) {
             // É um trigger Firebase!
@@ -570,14 +601,21 @@ function inferSymbolKind(name: string, context: "function" | "const"): SymbolInf
  * - onCall(...) - chamada direta
  * - https.onCall(...) - com namespace
  * - functions.https.onCall(...) - chain completa
+ * - v2.https.onCall(...) - com import v2
+ * - onCall<{ ... }>(...) - com type parameters
  */
 function extractFirebaseTriggerName(init: { getKind(): SyntaxKind; getText(): string }): string | null {
   const text = init.getText();
 
   // Verificar todos os triggers conhecidos
   for (const trigger of FIREBASE_V2_TRIGGERS) {
-    // Pattern: trigger( ou .trigger(
-    const pattern = new RegExp(`(?:^|\\.)${trigger}\\s*\\(`);
+    // Pattern melhorado: trigger pode vir após:
+    // - ^ (início)
+    // - \. (ponto)
+    // - \s (espaço, para casos como "=> onCall")
+    // - < (type parameter)
+    // E pode ter type parameters: onCall<Request, Response>(
+    const pattern = new RegExp(`(?:^|\\.|\\s)${trigger}(?:<[^>]*>)?\\s*\\(`);
     if (pattern.test(text)) {
       return trigger;
     }
