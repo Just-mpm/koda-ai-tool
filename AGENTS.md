@@ -4,12 +4,25 @@ Pacote npm para analise de dependencias, codigo morto e areas funcionais em proj
 
 ## O que faz
 
+### Analise de Projeto
 - **`map`** - Resumo compacto do projeto: contagens, areas, alertas
 - **`map --full`** - Lista completa de arquivos e pastas
 - **`dead`** - Detecta arquivos orfaos, exports nao usados, deps npm mortas
+
+### Analise de Arquivos
 - **`impact <arquivo>`** - Analisa upstream/downstream de um arquivo especifico
 - **`suggest <arquivo>`** - Sugere arquivos para ler antes de modificar
 - **`context <arquivo>`** - Extrai assinaturas de funcoes e tipos (sem implementacao)
+- **`context --area=<nome>`** - Contexto consolidado de toda uma area (tipos, hooks, funcoes, etc)
+
+### Busca de Simbolos (novo em 0.6.0)
+- **`find <termo>`** - Busca simbolos no codigo (definicao + usos)
+- **`find <termo> --type=function|type|const|component|hook`** - Filtra por tipo
+- **`find <termo> --area=<nome>`** - Busca apenas em uma area
+- **`find <termo> --def`** - Mostra apenas definicoes
+- **`find <termo> --refs`** - Mostra apenas referencias/usos
+
+### Areas Funcionais
 - **`areas`** - Lista todas as areas/dominios funcionais do projeto
 - **`area <nome>`** - Mostra arquivos de uma area especifica
 - **`areas init`** - Gera arquivo de configuracao de areas
@@ -21,13 +34,16 @@ ai-tool --mcp  # Inicia servidor MCP via stdio
 ```
 
 Tools expostas:
-- `aitool_project_map`
-- `aitool_dead_code`
-- `aitool_impact_analysis`
-- `aitool_suggest_reads`
-- `aitool_file_context`
-- `aitool_list_areas`
-- `aitool_area_detail`
+- `aitool_project_map` - Mapa do projeto (resumo compacto)
+- `aitool_dead_code` - Detecta codigo morto
+- `aitool_impact_analysis` - Analise de impacto antes de modificar
+- `aitool_suggest_reads` - Sugere arquivos para ler antes de editar
+- `aitool_file_context` - Extrai assinaturas de um arquivo
+- `aitool_list_areas` - Lista areas funcionais do projeto
+- `aitool_area_detail` - Arquivos de uma area especifica
+- `aitool_areas_init` - Gera config de areas
+- `aitool_area_context` - Contexto consolidado de toda uma area (novo em 0.6.0)
+- `aitool_find` - Busca simbolos no codigo: definicao + usos (novo em 0.6.0)
 
 ## Frameworks suportados
 
@@ -50,12 +66,12 @@ Tools expostas:
 
 ```
 src/
-  commands/     # Comandos CLI (map, dead, impact, suggest, context, areas, area)
+  commands/     # Comandos CLI (map, dead, impact, suggest, context, find, areas, area)
   areas/        # Sistema de deteccao de areas
   mcp/          # Servidor MCP
-  ts/           # Extrator TypeScript (ts-morph)
+  ts/           # Extrator TypeScript (ts-morph) + indexador de simbolos
   formatters/   # Formatadores text/json
-  cache/        # Sistema de cache
+  cache/        # Sistema de cache (graph, dead, symbols)
   utils/        # Utilitarios (detect, firebase, similarity, errors)
 dist/           # Build compilado
 ```
@@ -80,6 +96,14 @@ npx ai-tool dead --fix             # Remove codigo morto
 npx ai-tool impact Button          # Impacto de mudanca
 npx ai-tool suggest Button         # Arquivos para ler antes de modificar
 npx ai-tool context Button         # Assinaturas do arquivo
+npx ai-tool context --area=auth    # Contexto consolidado da area auth
+
+# Busca de simbolos
+npx ai-tool find useAuth           # Definicao + usos de useAuth
+npx ai-tool find User --type=type  # Busca apenas tipos
+npx ai-tool find login --area=auth # Busca na area auth
+npx ai-tool find submit --def      # Apenas definicoes
+npx ai-tool find submit --refs     # Apenas referencias/usos
 
 # Areas funcionais
 npx ai-tool areas                  # Lista todas as areas
@@ -92,7 +116,7 @@ npx ai-tool area dashboard --full  # Todos os arquivos da area
 npx ai-tool --mcp                  # Servidor MCP
 ```
 
-Opcoes: `--format=text|json`, `--cwd=<path>`, `--no-cache`, `--limit=<n>`, `--type=<categoria>`, `--full`
+Opcoes: `--format=text|json`, `--cwd=<path>`, `--no-cache`, `--limit=<n>`, `--type=<categoria>`, `--full`, `--area=<nome>`, `--def`, `--refs`
 
 ## Configuracao de Areas
 
@@ -102,14 +126,14 @@ O arquivo `.analyze/areas.config.json` permite personalizar as areas:
 {
   "areas": {
     "auth": {
-      "name": "Autenticação",
-      "description": "Login, signup e gerenciamento de sessão",
+      "name": "Autenticacao",
+      "description": "Login, signup e gerenciamento de sessao",
       "patterns": ["src/pages/Auth/**", "src/components/auth/**"],
       "keywords": ["auth", "login", "signup"]
     }
   },
   "descriptions": {
-    "src/hooks/useAuth.ts": "Hook principal de autenticação"
+    "src/hooks/useAuth.ts": "Hook principal de autenticacao"
   },
   "settings": {
     "autoDetect": false
@@ -119,19 +143,19 @@ O arquivo `.analyze/areas.config.json` permite personalizar as areas:
 
 ### autoDetect
 
-- `true` (default): usa config manual + padrões automáticos
-- `false`: usa APENAS a configuração manual (recomendado para projetos com domínios específicos)
+- `true` (default): usa config manual + padroes automaticos
+- `false`: usa APENAS a configuracao manual (recomendado para projetos com dominios especificos)
 
-## Sugestões Inteligentes
+## Sugestoes Inteligentes
 
-Quando usuário digita errado, o sistema sugere correções:
+Quando usuario digita errado, o sistema sugere correcoes:
 
 ```bash
 $ ai-tool area auht
-❌ Área não encontrada: "auht"
+Erro: Area nao encontrada: "auht"
 
-💡 Você quis dizer?
-   → ai-tool area auth
+Voce quis dizer?
+   -> ai-tool area auth
 ```
 
-Funciona para arquivos e áreas, considerando tanto config manual quanto automática.
+Funciona para arquivos e areas, considerando tanto config manual quanto automatica.

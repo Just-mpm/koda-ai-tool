@@ -12,10 +12,11 @@ import { map } from "../commands/map.js";
 import { dead } from "../commands/dead.js";
 import { impact } from "../commands/impact.js";
 import { suggest } from "../commands/suggest.js";
-import { context } from "../commands/context.js";
+import { context, areaContext } from "../commands/context.js";
 import { areas } from "../commands/areas.js";
 import { area } from "../commands/area.js";
 import { areasInit } from "../commands/areas-init.js";
+import { find } from "../commands/find.js";
 import { VERSION } from "../index.js";
 import type { FileCategory } from "../types.js";
 
@@ -430,6 +431,118 @@ Use quando houver arquivos sem area ou precisar ajustar deteccao.`,
           {
             type: "text",
             text: `Erro ao executar areas init: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: aitool_find
+// ============================================================================
+
+server.registerTool(
+  "aitool_find",
+  {
+    title: "Find Symbol",
+    description: `Busca simbolos no codigo: funcoes, tipos, componentes, hooks, constantes.
+Retorna definicao + referencias/usos. Diferente de grep, entende o AST do TypeScript.`,
+    inputSchema: {
+      query: z
+        .string()
+        .min(1)
+        .describe("Termo a buscar (nome de funcao, tipo, componente, etc)"),
+      type: z
+        .enum(["function", "type", "const", "component", "hook", "all"])
+        .default("all")
+        .describe("Filtrar por tipo de simbolo"),
+      area: z
+        .string()
+        .optional()
+        .describe("Filtrar busca por area especifica"),
+      def: z
+        .boolean()
+        .default(false)
+        .describe("Mostrar apenas definicoes (onde e declarado)"),
+      refs: z
+        .boolean()
+        .default(false)
+        .describe("Mostrar apenas referencias (onde e usado)"),
+      cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
+    },
+    annotations: {
+      title: "Find Symbol",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params) => {
+    try {
+      const result = await find(params.query, {
+        type: params.type,
+        area: params.area,
+        def: params.def,
+        refs: params.refs,
+        cwd: params.cwd,
+        format: "text",
+      });
+      return { content: [{ type: "text", text: result }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Erro ao executar find: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: aitool_area_context
+// ============================================================================
+
+server.registerTool(
+  "aitool_area_context",
+  {
+    title: "Area Context",
+    description: `Contexto consolidado de toda uma area: tipos, hooks, funcoes, componentes, services, stores.
+Uma chamada = entender toda a feature. Muito mais eficiente que chamar context em cada arquivo.`,
+    inputSchema: {
+      area: z
+        .string()
+        .min(1)
+        .describe("Nome da area: auth, dashboard, payments, etc"),
+      cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
+    },
+    annotations: {
+      title: "Area Context",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params) => {
+    try {
+      const result = await areaContext(params.area, {
+        cwd: params.cwd,
+        format: "text",
+      });
+      return { content: [{ type: "text", text: result }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Erro ao executar area context: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],
         isError: true,

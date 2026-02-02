@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.6.0] - 2025-02-02
+
+### Adicionado
+
+- **Comando `find`**: Busca simbolos no codigo (funcoes, tipos, componentes, hooks, constantes)
+  - Retorna definicao + referencias/usos
+  - Diferente de grep: entende o AST do TypeScript
+  - Filtros: `--type=function|type|const|component|hook`, `--area=<nome>`, `--def`, `--refs`
+  - Exemplos: `ai-tool find useAuth`, `ai-tool find User --type=type`, `ai-tool find login --area=auth`
+
+- **Comando `context --area=<nome>`**: Contexto consolidado de toda uma area
+  - Uma chamada = entender toda a feature (tipos, hooks, funcoes, componentes, services, stores)
+  - Muito mais eficiente que chamar `context` em cada arquivo individualmente
+  - Exemplo: `ai-tool context --area=auth`
+
+- **Sistema de cache para simbolos**: Indexa todos os simbolos do projeto com cache
+  - Cache salvo em `.analyze/symbols.json`
+  - Invalidacao automatica quando arquivos mudam
+  - Performance: ~43% mais rapido em projetos pequenos, ~85-90% em projetos grandes (500-1000 arquivos)
+
+- **Tools MCP**:
+  - `aitool_find` - Busca simbolos no codigo
+  - `aitool_area_context` - Contexto consolidado de uma area
+
+- **Novo modulo `src/ts/indexer.ts`**: Sistema de indexacao de simbolos
+  - `indexProject(cwd)` - Indexa todos os arquivos do projeto
+  - `ProjectIndex` - Estrutura com `symbolsByName` para busca rapida
+
+### Alterado
+
+- **Funcao `context`** agora usa o indice de simbolos cacheado quando disponivel
+- **Cache** agora inclui `symbols.json` alem de `meta.json`, `graph.json`, `dead.json`
+
 ## [0.5.5] - 2025-02-02
 
 ### Corrigido

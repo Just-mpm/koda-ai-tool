@@ -11,8 +11,10 @@ import type {
   ContextResult,
   AreasResult,
   AreaDetailResult,
+  AreaContextResult,
   FileCategory,
 } from "../types.js";
+import type { FindResult } from "../commands/find.js";
 import { categoryIcons } from "../utils/detect.js";
 
 /**
@@ -690,6 +692,188 @@ export function formatAreaDetailText(
   if (!full && area.fileCount > 20) {
     out += `💡 Use --full para ver todos os arquivos\n`;
   }
+
+  return out;
+}
+
+/**
+ * Formata resultado do FIND para texto
+ */
+export function formatFindText(result: FindResult): string {
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    🔍 FIND                                   ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Query e filtros
+  out += `🔍 "${result.query}"`;
+  if (result.filters.type) {
+    out += ` [type: ${result.filters.type}]`;
+  }
+  if (result.filters.area) {
+    out += ` [area: ${result.filters.area}]`;
+  }
+  out += `\n\n`;
+
+  // Se não encontrou nada
+  if (!result.definition && result.references.length === 0) {
+    out += `❌ Nenhum resultado encontrado para "${result.query}"\n\n`;
+    out += `💡 Dicas:\n`;
+    out += `   • Verifique a ortografia\n`;
+    out += `   • Tente buscar parte do nome\n`;
+    out += `   • Remova filtros de tipo ou área\n`;
+    return out;
+  }
+
+  // Resumo
+  out += `📊 ${result.summary.definitions} definição, ${result.summary.references} referências em ${result.summary.files} arquivos\n\n`;
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Definição
+  if (result.definition) {
+    out += `📍 DEFINIÇÃO\n\n`;
+    const def = result.definition;
+    const icon = categoryIcons[def.category];
+    out += `   ${icon} ${def.file}:${def.line}\n`;
+    out += `      ${def.code}\n`;
+    out += `\n`;
+  }
+
+  // Referências
+  if (result.references.length > 0) {
+    // Agrupar por tipo de match
+    const imports = result.references.filter((r) => r.matchType === "import");
+    const usages = result.references.filter((r) => r.matchType === "usage");
+
+    if (imports.length > 0) {
+      out += `📥 IMPORTS (${imports.length})\n\n`;
+      for (const ref of imports.slice(0, 10)) {
+        const icon = categoryIcons[ref.category];
+        out += `   ${icon} ${ref.file}:${ref.line}\n`;
+        out += `      ${ref.code}\n`;
+      }
+      if (imports.length > 10) {
+        out += `   ... e mais ${imports.length - 10}\n`;
+      }
+      out += `\n`;
+    }
+
+    if (usages.length > 0) {
+      out += `⚡ USOS (${usages.length})\n\n`;
+      for (const ref of usages.slice(0, 15)) {
+        const icon = categoryIcons[ref.category];
+        out += `   ${icon} ${ref.file}:${ref.line}\n`;
+        out += `      ${ref.code}\n`;
+      }
+      if (usages.length > 15) {
+        out += `   ... e mais ${usages.length - 15}\n`;
+      }
+      out += `\n`;
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Formata resultado do CONTEXT --area para texto
+ */
+export function formatAreaContextText(result: AreaContextResult): string {
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    📦 AREA CONTEXT                          ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Header
+  out += `📦 ${result.area.name} - Contexto Consolidado (${result.area.fileCount} arquivos)\n`;
+  if (result.area.description) {
+    out += `   ${result.area.description}\n`;
+  }
+  out += `\n`;
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Types
+  if (result.types.length > 0) {
+    out += `🏷️ TYPES (${result.types.length})\n\n`;
+    for (const t of result.types) {
+      const filePart = t.file.split("/").pop() || t.file;
+      out += `   ${t.name}`.padEnd(45) + `[${filePart}:${t.line}]\n`;
+      out += `      ${t.definition}\n\n`;
+    }
+  }
+
+  // Hooks
+  if (result.hooks.length > 0) {
+    out += `🪝 HOOKS (${result.hooks.length})\n\n`;
+    for (const h of result.hooks) {
+      const filePart = h.file.split("/").pop() || h.file;
+      const params = h.params.length > 0 ? h.params.join(", ") : "";
+      out += `   ${h.name}(${params})`.padEnd(45) + `[${filePart}:${h.line}]\n`;
+      out += `      → ${h.returns}\n\n`;
+    }
+  }
+
+  // Functions
+  if (result.functions.length > 0) {
+    out += `⚡ FUNCTIONS (${result.functions.length})\n\n`;
+    for (const f of result.functions) {
+      const filePart = f.file.split("/").pop() || f.file;
+      const params = f.params.length > 0 ? f.params.join(", ") : "";
+      out += `   ${f.name}(${params})`.padEnd(45) + `[${filePart}:${f.line}]\n`;
+      out += `      → ${f.returns}\n\n`;
+    }
+  }
+
+  // Components
+  if (result.components.length > 0) {
+    out += `🧩 COMPONENTS (${result.components.length})\n\n`;
+    for (const c of result.components) {
+      const filePart = c.file.split("/").pop() || c.file;
+      out += `   ${c.name}`.padEnd(45) + `[${filePart}:${c.line}]\n`;
+      if (c.props) {
+        out += `      props: ${c.props}\n`;
+      }
+      out += `\n`;
+    }
+  }
+
+  // Services
+  if (result.services.length > 0) {
+    out += `🔧 SERVICES (${result.services.length})\n\n`;
+    for (const s of result.services) {
+      const filePart = s.file.split("/").pop() || s.file;
+      const params = s.params.length > 0 ? s.params.join(", ") : "";
+      out += `   ${s.name}(${params})`.padEnd(45) + `[${filePart}:${s.line}]\n`;
+      out += `      → ${s.returns}\n\n`;
+    }
+  }
+
+  // Stores
+  if (result.stores.length > 0) {
+    out += `🗃️ STORES (${result.stores.length})\n\n`;
+    for (const st of result.stores) {
+      const filePart = st.file.split("/").pop() || st.file;
+      out += `   ${st.name}`.padEnd(45) + `[${filePart}:${st.line}]\n`;
+      out += `      state: ${st.state}\n\n`;
+    }
+  }
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Resumo
+  out += `📊 RESUMO\n`;
+  out += `   Types: ${result.types.length}\n`;
+  out += `   Hooks: ${result.hooks.length}\n`;
+  out += `   Functions: ${result.functions.length}\n`;
+  out += `   Components: ${result.components.length}\n`;
+  out += `   Services: ${result.services.length}\n`;
+  out += `   Stores: ${result.stores.length}\n`;
 
   return out;
 }

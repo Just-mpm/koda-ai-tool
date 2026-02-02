@@ -22,12 +22,14 @@ import { map } from "./commands/map.js";
 import { dead, deadFix } from "./commands/dead.js";
 import { impact } from "./commands/impact.js";
 import { suggest } from "./commands/suggest.js";
-import { context } from "./commands/context.js";
+import { context, areaContext } from "./commands/context.js";
 import { areas } from "./commands/areas.js";
 import { area } from "./commands/area.js";
 import { areasInit } from "./commands/areas-init.js";
+import { find } from "./commands/find.js";
 import { VERSION } from "./index.js";
 import type { FileCategory } from "./types.js";
+import type { SymbolType } from "./commands/find.js";
 
 const HELP = `
 ai-tool v${VERSION} - Analise de dependencias e impacto
@@ -40,6 +42,8 @@ COMANDOS:
   impact <arquivo>       Analise de impacto antes de modificar
   suggest <arquivo>      Sugere arquivos para ler antes de modificar
   context <arquivo>      Extrai assinaturas de um arquivo (funcoes, tipos)
+  context --area=<nome>  Contexto consolidado de toda uma area
+  find <termo>           Busca simbolos no codigo (funcoes, tipos, etc)
 
 AREAS:
   areas                  Lista todas as areas/dominios do projeto
@@ -49,6 +53,13 @@ AREAS:
   area <nome> --type=hook   Filtra por categoria
   area <nome> --full     Mostra todos os arquivos
 
+BUSCA (find):
+  find <termo>           Busca definicao + usos de um simbolo
+  find <termo> --type=function|type|const|component|hook
+  find <termo> --area=auth   Busca apenas em uma area
+  find <termo> --def     Mostra apenas definicoes
+  find <termo> --refs    Mostra apenas referencias/usos
+
 MODOS:
   --mcp                  Inicia servidor MCP para integracao com Claude Desktop
 
@@ -57,8 +68,11 @@ OPCOES:
   --cwd=<path>           Diretorio do projeto (default: cwd)
   --no-cache             Ignora cache e forca regeneracao
   --limit=<n>            Limite de sugestoes (default: 10, apenas suggest)
-  --type=<categoria>     Filtra por categoria (apenas area)
+  --type=<categoria>     Filtra por categoria (area) ou tipo de simbolo (find)
   --full                 Lista completa (map: lista arquivos, area: todos arquivos)
+  --area=<nome>          Filtra por area (find, context)
+  --def                  Apenas definicoes (find)
+  --refs                 Apenas referencias (find)
   --help, -h             Mostra esta ajuda
   --version, -v          Mostra versao
 
@@ -70,17 +84,18 @@ CACHE:
 EXEMPLOS:
   ai-tool map                      # Resumo compacto
   ai-tool map --full               # Lista completa de arquivos
-  ai-tool map --format=json
   ai-tool dead
   ai-tool dead --fix
   ai-tool impact Button
   ai-tool suggest Button --limit=5
   ai-tool context Button
+  ai-tool context --area=auth      # Contexto de toda a area auth
+  ai-tool find useAuth             # Busca definicao e usos
+  ai-tool find User --type=type    # Busca apenas tipos
+  ai-tool find login --area=auth   # Busca na area auth
   ai-tool areas
-  ai-tool areas init
   ai-tool area auth
   ai-tool area auth --type=hook
-  ai-tool area dashboard --full
   ai-tool --mcp
 
 SOBRE:
@@ -174,13 +189,39 @@ async function main() {
         break;
 
       case "context":
+        // context --area=<nome> - contexto consolidado de área
+        if (flags.area) {
+          result = await areaContext(flags.area as string, { format, cwd, cache });
+          break;
+        }
+        // context <arquivo> - contexto de um arquivo
         if (!target) {
           console.error("❌ Erro: arquivo alvo é obrigatório para o comando context");
           console.error("   Exemplo: ai-tool context src/components/Button.tsx");
           console.error("   Exemplo: ai-tool context Button");
+          console.error("   Exemplo: ai-tool context --area=auth");
           process.exit(1);
         }
         result = await context(target, { format, cwd });
+        break;
+
+      case "find":
+        if (!target) {
+          console.error("❌ Erro: termo de busca é obrigatório para o comando find");
+          console.error("   Exemplo: ai-tool find useAuth");
+          console.error("   Exemplo: ai-tool find User --type=type");
+          console.error("   Exemplo: ai-tool find login --area=auth");
+          process.exit(1);
+        }
+        result = await find(target, {
+          format,
+          cwd,
+          cache,
+          type: flags.type as SymbolType | undefined,
+          area: flags.area as string | undefined,
+          def: !!flags.def,
+          refs: !!flags.refs,
+        });
         break;
 
       case "areas":

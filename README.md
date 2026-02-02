@@ -103,6 +103,7 @@ Extrai assinaturas de funcoes e tipos SEM a implementacao.
 ```bash
 ai-tool context Button
 ai-tool context src/hooks/useAuth.ts --format=json
+ai-tool context --area=auth   # Contexto consolidado de toda uma area
 ```
 
 **Extrai:**
@@ -112,6 +113,36 @@ ai-tool context src/hooks/useAuth.ts --format=json
 - Interfaces, types e enums com definicoes
 
 Ideal para entender rapidamente a API publica de um arquivo.
+
+**Contexto de Area** (`--area=<nome>`):
+- Tipos e interfaces da area
+- Hooks com parametros e retornos
+- Funcoes principais
+- Componentes React
+- Services e stores
+- Uma chamada = entender toda a feature
+
+### `find` - Busca de Simbolos
+
+Busca simbolos no codigo (funcoes, tipos, componentes, hooks, constantes).
+
+```bash
+ai-tool find useAuth              # Definicao + usos
+ai-tool find User --type=type     # Busca apenas tipos
+ai-tool find login --area=auth    # Busca na area auth
+ai-tool find submit --def         # Apenas definicoes
+ai-tool find submit --refs        # Apenas referencias/usos
+```
+
+**Tipos de simbolos:**
+- `function` - Funcoes e arrow functions
+- `type` - Types, interfaces e enums
+- `const` - Constantes e variaveis
+- `component` - Componentes React (funcao que retorna JSX)
+- `hook` - React hooks (funcao que comeca com `use`)
+- `all` - Todos os tipos (default)
+
+**Diferente de grep:** Entende o AST do TypeScript, encontra definicoes reais e onde sao usados.
 
 ### `areas` - Areas/Dominios Funcionais
 
@@ -205,14 +236,16 @@ ai-tool --mcp
 ```
 
 **Tools expostas:**
-- `aitool_project_map` - Mapa do projeto
-- `aitool_dead_code` - Codigo morto
-- `aitool_impact_analysis` - Analise de impacto
-- `aitool_suggest_reads` - Sugestao de leitura
-- `aitool_file_context` - Contexto do arquivo
-- `aitool_list_areas` - Lista areas funcionais
-- `aitool_area_detail` - Detalhe de uma area
+- `aitool_project_map` - Mapa do projeto (resumo compacto)
+- `aitool_dead_code` - Detecta codigo morto
+- `aitool_impact_analysis` - Analise de impacto antes de modificar
+- `aitool_suggest_reads` - Sugere arquivos para ler antes de editar
+- `aitool_file_context` - Extrai assinaturas de um arquivo
+- `aitool_list_areas` - Lista areas funcionais do projeto
+- `aitool_area_detail` - Arquivos de uma area especifica
 - `aitool_areas_init` - Gera config de areas
+- `aitool_area_context` - Contexto consolidado de toda uma area
+- `aitool_find` - Busca simbolos no codigo (definicao + usos)
 
 ### Configuracao Claude Code
 
@@ -250,7 +283,7 @@ Adicione ao `claude_desktop_config.json`:
 ## Uso Programatico
 
 ```typescript
-import { map, dead, impact, suggest, context, areas, area, areasInit } from "@justmpm/ai-tool";
+import { map, dead, impact, suggest, context, areaContext, find, areas, area, areasInit } from "@justmpm/ai-tool";
 
 // Mapa do projeto (resumo por padrao, full: true para lista completa)
 const projectMap = await map({ format: "json" });
@@ -267,6 +300,12 @@ const suggestions = await suggest("Button", { limit: 5 });
 
 // Contexto do arquivo
 const fileContext = await context("Button", { format: "json" });
+
+// Contexto de uma area inteira
+const authContext = await areaContext("auth", { format: "json" });
+
+// Busca de simbolos
+const symbolSearch = await find("useAuth", { type: "hook", area: "auth" });
 
 // Areas funcionais
 const projectAreas = await areas({ format: "json" });
@@ -288,7 +327,10 @@ await areasInit({ force: false });
 | `--full` | Lista completa (`map`: arquivos, `area`: todos) | `false` |
 | `--fix` | Remove codigo morto (so `dead`) | `false` |
 | `--limit=<n>` | Limite de sugestoes (so `suggest`) | `10` |
-| `--type=<cat>` | Filtra por categoria (so `area`) | - |
+| `--type=<cat>` | Filtra por categoria (`area`) ou tipo de simbolo (`find`) | - |
+| `--area=<nome>` | Filtra por area (`context`, `find`) | - |
+| `--def` | Mostra apenas definicoes (so `find`) | `false` |
+| `--refs` | Mostra apenas referencias/usos (so `find`) | `false` |
 | `--mcp` | Inicia servidor MCP | - |
 
 ## Categorias de Arquivos

@@ -1,12 +1,21 @@
 /**
  * Comando CONTEXT - Extrai assinaturas de funcoes e tipos de um arquivo
+ * Também suporta --area para contexto consolidado de toda uma área
  */
 
 import { existsSync, readdirSync, statSync } from "fs";
 import { join, resolve, basename, extname } from "path";
-import type { ContextOptions, ContextResult } from "../types.js";
+import type {
+  ContextOptions,
+  ContextResult,
+  AreaContextResult,
+  AreaContextTypeInfo,
+  AreaContextFunctionInfo,
+  AreaContextComponentInfo,
+  AreaContextStoreInfo,
+} from "../types.js";
 import { detectCategory } from "../utils/detect.js";
-import { formatContextText } from "../formatters/text.js";
+import { formatContextText, formatAreaContextText } from "../formatters/text.js";
 import {
   createProject,
   addSourceFile,
@@ -16,6 +25,20 @@ import {
   extractExports,
 } from "../ts/extractor.js";
 import { formatFileNotFound } from "../utils/errors.js";
+import { readConfig } from "../areas/config.js";
+import {
+  detectFileAreas,
+  getAreaName,
+  getAreaDescription,
+  isFileIgnored,
+} from "../areas/detector.js";
+import {
+  isCacheValid,
+  getCachedSymbolsIndex,
+  cacheSymbolsIndex,
+  updateCacheMeta,
+} from "../cache/index.js";
+import { indexProject, type ProjectIndex } from "../ts/indexer.js";
 
 /**
  * Executa o comando CONTEXT
@@ -197,4 +220,225 @@ function shouldIgnore(name: string): boolean {
 function formatNotFound(target: string, cwd: string): string {
   const allFiles = getAllCodeFiles(cwd);
   return formatFileNotFound({ target, allFiles, command: "context" });
+}
+
+// ============================================================================
+// AREA CONTEXT - Contexto consolidado de toda uma área
+// ============================================================================
+
+export interface AreaContextOptions {
+  cwd?: string;
+  format?: "text" | "json";
+  cache?: boolean;
+}
+
+/**
+ * Executa o comando CONTEXT --area
+ * Retorna contexto consolidado de todos os arquivos de uma área
+ * Usa cache de símbolos para performance
+ */
+export async function areaContext(areaName: string, options: AreaContextOptions = {}): Promise<string> {
+  const cwd = options.cwd || process.cwd();
+  const format = options.format || "text";
+  const useCache = options.cache !== false;
+
+  if (!areaName) {
+    throw new Error("Nome da área é obrigatório. Exemplo: ai-tool context --area=auth");
+  }
+
+  try {
+    // 1. Ler configuração
+    const config = readConfig(cwd);
+
+    // 2. Obter índice (do cache ou gerando)
+    let index: ProjectIndex;
+
+    if (useCache && isCacheValid(cwd)) {
+      const cached = getCachedSymbolsIndex<ProjectIndex>(cwd);
+      if (cached && cached.files) {
+        index = cached;
+      } else {
+        index = indexProject(cwd);
+        cacheSymbolsIndex(cwd, index);
+        updateCacheMeta(cwd);
+      }
+    } else {
+      index = indexProject(cwd);
+      if (useCache) {
+        cacheSymbolsIndex(cwd, index);
+        updateCacheMeta(cwd);
+      }
+    }
+
+    // 3. Filtrar arquivos da área específica
+    const areaLower = areaName.toLowerCase();
+    const areaFiles: string[] = [];
+
+    for (const filePath of Object.keys(index.files)) {
+      if (isFileIgnored(filePath, config)) continue;
+
+      const fileAreas = detectFileAreas(filePath, config);
+      const belongsToArea = fileAreas.some(
+        (a) => a.toLowerCase() === areaLower || a.toLowerCase().includes(areaLower)
+      );
+
+      if (belongsToArea) {
+        areaFiles.push(filePath);
+      }
+    }
+
+    if (areaFiles.length === 0) {
+      return format === "json"
+        ? JSON.stringify({ error: `Área não encontrada: "${areaName}"` })
+        : `❌ Área não encontrada: "${areaName}"\n\n💡 Use 'ai-tool areas' para listar áreas disponíveis`;
+    }
+
+    // 4. Coletar contexto de cada arquivo usando o índice
+    const types: AreaContextTypeInfo[] = [];
+    const hooks: AreaContextFunctionInfo[] = [];
+    const functions: AreaContextFunctionInfo[] = [];
+    const components: AreaContextComponentInfo[] = [];
+    const services: AreaContextFunctionInfo[] = [];
+    const stores: AreaContextStoreInfo[] = [];
+
+    for (const filePath of areaFiles) {
+      const fileData = index.files[filePath];
+      if (!fileData) continue;
+
+      const category = fileData.category;
+
+      for (const symbol of fileData.symbols) {
+        if (!symbol.isExported) continue;
+
+        switch (symbol.kind) {
+          case "type":
+          case "interface":
+          case "enum":
+            types.push({
+              name: symbol.name,
+              file: filePath,
+              line: symbol.line,
+              definition: symbol.definition || symbol.signature,
+            });
+            break;
+
+          case "hook":
+            hooks.push({
+              name: symbol.name,
+              file: filePath,
+              line: symbol.line,
+              params: symbol.params || [],
+              returns: symbol.returnType || "unknown",
+            });
+            break;
+
+          case "component":
+            components.push({
+              name: symbol.name,
+              file: filePath,
+              line: symbol.line,
+              props: symbol.params?.join(", "),
+            });
+            break;
+
+          case "function":
+            if (category === "service" || filePath.includes("service")) {
+              services.push({
+                name: symbol.name,
+                file: filePath,
+                line: symbol.line,
+                params: symbol.params || [],
+                returns: symbol.returnType || "unknown",
+              });
+            } else {
+              functions.push({
+                name: symbol.name,
+                file: filePath,
+                line: symbol.line,
+                params: symbol.params || [],
+                returns: symbol.returnType || "unknown",
+              });
+            }
+            break;
+
+          case "const":
+            // Verificar se é um store (zustand)
+            if (
+              (category === "store" || filePath.includes("store")) &&
+              symbol.name.startsWith("use")
+            ) {
+              stores.push({
+                name: symbol.name,
+                file: filePath,
+                line: symbol.line,
+                state: symbol.definition || "unknown",
+              });
+            }
+            break;
+        }
+      }
+    }
+
+    // 5. Encontrar ID real da área (para nome e descrição)
+    const realAreaId = findRealAreaIdFromIndex(areaName, areaFiles, config);
+
+    // 6. Montar resultado
+    const result: AreaContextResult = {
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      area: {
+        id: realAreaId || areaName,
+        name: getAreaName(realAreaId || areaName, config),
+        description: getAreaDescription(realAreaId || areaName, config),
+        fileCount: areaFiles.length,
+      },
+      types,
+      hooks,
+      functions,
+      components,
+      services,
+      stores,
+    };
+
+    // 7. Formatar output
+    if (format === "json") {
+      return JSON.stringify(result, null, 2);
+    }
+
+    return formatAreaContextText(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Erro ao executar context --area: ${message}`);
+  }
+}
+
+/**
+ * Encontra o ID real da área usando índice
+ */
+function findRealAreaIdFromIndex(
+  target: string,
+  areaFiles: string[],
+  config: ReturnType<typeof readConfig>
+): string | null {
+  const targetLower = target.toLowerCase();
+
+  // Verificar config primeiro
+  for (const areaId of Object.keys(config.areas)) {
+    if (areaId.toLowerCase() === targetLower || areaId.toLowerCase().includes(targetLower)) {
+      return areaId;
+    }
+  }
+
+  // Verificar áreas detectadas
+  const detectedAreas = new Set<string>();
+  for (const filePath of areaFiles) {
+    const areas = detectFileAreas(filePath, config);
+    for (const areaId of areas) {
+      if (areaId.toLowerCase() === targetLower || areaId.toLowerCase().includes(targetLower)) {
+        detectedAreas.add(areaId);
+      }
+    }
+  }
+
+  return detectedAreas.size > 0 ? [...detectedAreas][0] : null;
 }

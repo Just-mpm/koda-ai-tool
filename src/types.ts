@@ -291,3 +291,53 @@ export interface AreaOptions extends CommandOptions {
   full?: boolean;
   type?: FileCategory;
 }
+
+// ============================================================================
+// AREA CONTEXT TYPES
+// ============================================================================
+
+export interface AreaContextTypeInfo {
+  name: string;
+  file: string;
+  line: number;
+  definition: string;
+}
+
+export interface AreaContextFunctionInfo {
+  name: string;
+  file: string;
+  line: number;
+  params: string[];
+  returns: string;
+}
+
+export interface AreaContextComponentInfo {
+  name: string;
+  file: string;
+  line: number;
+  props?: string;
+}
+
+export interface AreaContextStoreInfo {
+  name: string;
+  file: string;
+  line: number;
+  state: string;
+}
+
+export interface AreaContextResult {
+  version: string;
+  timestamp: string;
+  area: {
+    id: string;
+    name: string;
+    description?: string;
+    fileCount: number;
+  };
+  types: AreaContextTypeInfo[];
+  hooks: AreaContextFunctionInfo[];
+  functions: AreaContextFunctionInfo[];
+  components: AreaContextComponentInfo[];
+  services: AreaContextFunctionInfo[];
+  stores: AreaContextStoreInfo[];
+}

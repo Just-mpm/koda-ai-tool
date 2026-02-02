@@ -21,6 +21,7 @@ const META_FILE = "meta.json";
 const GRAPH_FILE = "graph.json";
 const MAP_FILE = "map.json";
 const DEAD_FILE = "dead.json";
+const SYMBOLS_FILE = "symbols.json";
 
 interface CacheMeta {
   version: string;
@@ -244,5 +245,23 @@ export function invalidateCache(cwd: string): void {
   }
 }
 
-export { CACHE_DIR, META_FILE, GRAPH_FILE, MAP_FILE, DEAD_FILE };
+/**
+ * Salva índice de símbolos no cache
+ */
+export function cacheSymbolsIndex(cwd: string, index: unknown): void {
+  writeCache(cwd, SYMBOLS_FILE, index);
+  updateCacheMeta(cwd);
+}
+
+/**
+ * Lê índice de símbolos do cache
+ */
+export function getCachedSymbolsIndex<T>(cwd: string): T | null {
+  if (!isCacheValid(cwd)) {
+    return null;
+  }
+  return readCache<T>(cwd, SYMBOLS_FILE);
+}
+
+export { CACHE_DIR, META_FILE, GRAPH_FILE, MAP_FILE, DEAD_FILE, SYMBOLS_FILE };
 export type { CacheMeta, CachedGraph };
