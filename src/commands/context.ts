@@ -13,6 +13,7 @@ import type {
   AreaContextFunctionInfo,
   AreaContextComponentInfo,
   AreaContextStoreInfo,
+  AreaContextTriggerInfo,
 } from "../types.js";
 import { detectCategory } from "../utils/detect.js";
 import { formatContextText, formatAreaContextText } from "../formatters/text.js";
@@ -300,6 +301,7 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
     const components: AreaContextComponentInfo[] = [];
     const services: AreaContextFunctionInfo[] = [];
     const stores: AreaContextStoreInfo[] = [];
+    const triggers: AreaContextTriggerInfo[] = [];
 
     for (const filePath of areaFiles) {
       const fileData = index.files[filePath];
@@ -375,6 +377,18 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
               });
             }
             break;
+
+          case "trigger":
+            // Cloud Functions Firebase
+            triggers.push({
+              name: symbol.name,
+              file: filePath,
+              line: symbol.line,
+              triggerType: symbol.triggerInfo?.triggerType || "unknown",
+              triggerPath: symbol.triggerInfo?.triggerPath,
+              triggerSchedule: symbol.triggerInfo?.triggerSchedule,
+            });
+            break;
         }
       }
     }
@@ -398,6 +412,7 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
       components,
       services,
       stores,
+      triggers,
     };
 
     // 7. Formatar output

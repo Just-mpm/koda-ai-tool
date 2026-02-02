@@ -183,6 +183,14 @@ function collectSuggestions(
     });
   }
 
+  // 4. Cloud Functions: sugerir rules relacionados
+  const cloudFunctionSuggestions = suggestFirebaseRules(targetPath, allFiles);
+  for (const suggestion of cloudFunctionSuggestions) {
+    if (addedPaths.has(suggestion.path)) continue;
+    addedPaths.add(suggestion.path);
+    suggestions.push(suggestion);
+  }
+
   // Ordenar por prioridade e aplicar limite
   const priorityOrder: Record<SuggestionPriority, number> = {
     critical: 0,
@@ -285,6 +293,83 @@ function findTargetFile(target: string, allFiles: string[]): string | null {
   }
 
   return null;
+}
+
+/**
+ * Sugere arquivos Firebase rules quando o target é uma Cloud Function
+ */
+function suggestFirebaseRules(targetPath: string, allFiles: string[]): Suggestion[] {
+  const suggestions: Suggestion[] = [];
+
+  // Só sugerir para arquivos em functions/src/
+  if (!targetPath.includes("functions/src/")) {
+    return suggestions;
+  }
+
+  // Detectar tipo de trigger pelo conteúdo do path
+  const isFirestoreTrigger =
+    targetPath.toLowerCase().includes("firestore") ||
+    targetPath.toLowerCase().includes("document");
+
+  const isStorageTrigger = targetPath.toLowerCase().includes("storage");
+
+  // Procurar arquivos de rules no projeto
+  for (const file of allFiles) {
+    const fileName = file.split("/").pop()?.toLowerCase() || "";
+
+    // firestore.rules
+    if (fileName === "firestore.rules" || file.endsWith("firestore.rules")) {
+      if (isFirestoreTrigger) {
+        suggestions.push({
+          path: file,
+          category: "config",
+          reason: "Regras Firestore (trigger relacionado)",
+          priority: "high",
+        });
+      } else {
+        suggestions.push({
+          path: file,
+          category: "config",
+          reason: "Regras Firestore (Cloud Function)",
+          priority: "medium",
+        });
+      }
+    }
+
+    // storage.rules
+    if (fileName === "storage.rules" || file.endsWith("storage.rules")) {
+      if (isStorageTrigger) {
+        suggestions.push({
+          path: file,
+          category: "config",
+          reason: "Regras Storage (trigger relacionado)",
+          priority: "high",
+        });
+      } else {
+        suggestions.push({
+          path: file,
+          category: "config",
+          reason: "Regras Storage (Cloud Function)",
+          priority: "low",
+        });
+      }
+    }
+  }
+
+  // Sugerir functions/src/index.ts se não for o próprio
+  if (!targetPath.endsWith("index.ts")) {
+    const indexFile = allFiles.find((f) => f.includes("functions/src/index"));
+    if (indexFile) {
+      suggestions.push({
+        path: indexFile,
+        category: "config",
+        reason: "Exports de Cloud Functions",
+        priority: "high",
+      });
+    }
+  }
+
+  return suggestions;
 }
 
 /**

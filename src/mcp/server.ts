@@ -17,6 +17,7 @@ import { areas } from "../commands/areas.js";
 import { area } from "../commands/area.js";
 import { areasInit } from "../commands/areas-init.js";
 import { find } from "../commands/find.js";
+import { functions } from "../commands/functions.js";
 import { VERSION } from "../index.js";
 import type { FileCategory } from "../types.js";
 
@@ -543,6 +544,58 @@ Uma chamada = entender toda a feature. Muito mais eficiente que chamar context e
           {
             type: "text",
             text: `Erro ao executar area context: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ============================================================================
+// TOOL: aitool_list_functions
+// ============================================================================
+
+server.registerTool(
+  "aitool_list_functions",
+  {
+    title: "List Cloud Functions",
+    description: `Lista todas as Cloud Functions Firebase do projeto.
+Agrupa por tipo de trigger (onCall, onDocumentCreated, onSchedule, etc).
+Use para entender a arquitetura serverless antes de modificar triggers.`,
+    inputSchema: {
+      trigger: z
+        .string()
+        .optional()
+        .describe("Filtrar por tipo de trigger (ex: onCall, onDocumentCreated)"),
+      format: z
+        .enum(["text", "json"])
+        .default("text")
+        .describe("Formato de saida: text (legivel) ou json (estruturado)"),
+      cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
+    },
+    annotations: {
+      title: "List Cloud Functions",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async (params) => {
+    try {
+      const result = await functions({
+        format: params.format,
+        trigger: params.trigger,
+        cwd: params.cwd,
+      });
+      return { content: [{ type: "text", text: result }] };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Erro ao executar functions: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],
         isError: true,

@@ -27,6 +27,8 @@ export { context } from "./commands/context.js";
 export { areas } from "./commands/areas.js";
 export { area } from "./commands/area.js";
 export { areasInit } from "./commands/areas-init.js";
+export { functions } from "./commands/functions.js";
+export { find } from "./commands/find.js";
 
 // Tipos
 export type {
@@ -66,7 +68,27 @@ export type {
   AreaDetailResult,
   AreasOptions,
   AreaOptions,
+  // Area context types
+  AreaContextResult,
+  AreaContextTypeInfo,
+  AreaContextFunctionInfo,
+  AreaContextComponentInfo,
+  AreaContextStoreInfo,
+  AreaContextTriggerInfo,
 } from "./types.js";
+
+// Find command types
+export type { SymbolType, FindOptions, FindMatch, FindResult } from "./commands/find.js";
+
+// Functions command types
+export type {
+  CloudFunctionInfo,
+  FunctionsResult,
+  FunctionsOptions,
+} from "./commands/functions.js";
+
+// Indexer types (triggers)
+export type { TriggerInfo, SymbolInfo, ProjectIndex } from "./ts/indexer.js";
 
 // Utilitários
 export { detectCategory, categoryIcons, isEntryPoint, isCodeFile } from "./utils/detect.js";

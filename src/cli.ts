@@ -27,6 +27,7 @@ import { areas } from "./commands/areas.js";
 import { area } from "./commands/area.js";
 import { areasInit } from "./commands/areas-init.js";
 import { find } from "./commands/find.js";
+import { functions } from "./commands/functions.js";
 import { VERSION } from "./index.js";
 import type { FileCategory } from "./types.js";
 import type { SymbolType } from "./commands/find.js";
@@ -55,10 +56,14 @@ AREAS:
 
 BUSCA (find):
   find <termo>           Busca definicao + usos de um simbolo
-  find <termo> --type=function|type|const|component|hook
+  find <termo> --type=function|type|const|component|hook|trigger
   find <termo> --area=auth   Busca apenas em uma area
   find <termo> --def     Mostra apenas definicoes
   find <termo> --refs    Mostra apenas referencias/usos
+
+FIREBASE:
+  functions              Lista todas as Cloud Functions do projeto
+  functions --trigger=onCall   Filtra por tipo de trigger
 
 MODOS:
   --mcp                  Inicia servidor MCP para integracao com Claude Desktop
@@ -245,6 +250,15 @@ async function main() {
           cwd,
           type: flags.type as FileCategory | undefined,
           full: !!flags.full,
+        });
+        break;
+
+      case "functions":
+        result = await functions({
+          format,
+          cwd,
+          cache,
+          trigger: flags.trigger as string | undefined,
         });
         break;
 

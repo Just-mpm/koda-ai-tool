@@ -124,7 +124,7 @@ Ideal para entender rapidamente a API publica de um arquivo.
 
 ### `find` - Busca de Simbolos
 
-Busca simbolos no codigo (funcoes, tipos, componentes, hooks, constantes).
+Busca simbolos no codigo (funcoes, tipos, componentes, hooks, constantes, triggers).
 
 ```bash
 ai-tool find useAuth              # Definicao + usos
@@ -132,17 +132,62 @@ ai-tool find User --type=type     # Busca apenas tipos
 ai-tool find login --area=auth    # Busca na area auth
 ai-tool find submit --def         # Apenas definicoes
 ai-tool find submit --refs        # Apenas referencias/usos
+ai-tool find createUser --type=trigger  # Busca Cloud Functions
 ```
 
 **Tipos de simbolos:**
-- `function` - Funcoes e arrow functions
+- `function` - Funcoes e arrow functions (inclui triggers)
 - `type` - Types, interfaces e enums
 - `const` - Constantes e variaveis
 - `component` - Componentes React (funcao que retorna JSX)
 - `hook` - React hooks (funcao que comeca com `use`)
+- `trigger` - Firebase Cloud Functions (onCall, onDocumentCreated, etc.)
 - `all` - Todos os tipos (default)
 
 **Diferente de grep:** Entende o AST do TypeScript, encontra definicoes reais e onde sao usados.
+
+### `functions` - Firebase Cloud Functions
+
+Lista todas as Cloud Functions do projeto Firebase.
+
+```bash
+ai-tool functions                     # Lista todas as functions
+ai-tool functions --trigger=onCall    # Filtra por tipo de trigger
+ai-tool functions --format=json
+```
+
+**Output:**
+```
+⚡ CLOUD FUNCTIONS
+
+📊 RESUMO
+   Total: 12 functions
+   Exportadas: 10
+
+🌐 onCall (4)
+   createCheckoutSession
+      functions/src/stripe.ts:99
+
+⏰ onSchedule (2)
+   dailyCleanup
+      functions/src/cron.ts:10
+      schedule: every day 00:00
+
+🔥 onDocumentCreated (3)
+   onUserCreated
+      functions/src/users.ts:25
+      path: users/{userId}
+```
+
+**Triggers suportados (40+):**
+- HTTPS: `onCall`, `onRequest`
+- Firestore: `onDocumentCreated`, `onDocumentUpdated`, `onDocumentDeleted`, `onDocumentWritten` (+ variantes WithAuthContext)
+- Realtime Database: `onValueCreated`, `onValueUpdated`, `onValueDeleted`, `onValueWritten`
+- Scheduler: `onSchedule`
+- Storage: `onObjectFinalized`, `onObjectArchived`, `onObjectDeleted`, `onMetadataUpdated`
+- Pub/Sub: `onMessagePublished`
+- Identity: `beforeUserCreated`, `beforeUserSignedIn`, `beforeEmailSent`, `beforeSmsSent`
+- E mais: Crashlytics, Performance, Remote Config, Eventarc, Tasks, Test Lab
 
 ### `areas` - Areas/Dominios Funcionais
 
@@ -246,6 +291,7 @@ ai-tool --mcp
 - `aitool_areas_init` - Gera config de areas
 - `aitool_area_context` - Contexto consolidado de toda uma area
 - `aitool_find` - Busca simbolos no codigo (definicao + usos)
+- `aitool_list_functions` - Lista Cloud Functions Firebase
 
 ### Configuracao Claude Code
 
@@ -283,7 +329,7 @@ Adicione ao `claude_desktop_config.json`:
 ## Uso Programatico
 
 ```typescript
-import { map, dead, impact, suggest, context, areaContext, find, areas, area, areasInit } from "@justmpm/ai-tool";
+import { map, dead, impact, suggest, context, areaContext, find, functions, areas, area, areasInit } from "@justmpm/ai-tool";
 
 // Mapa do projeto (resumo por padrao, full: true para lista completa)
 const projectMap = await map({ format: "json" });
@@ -306,6 +352,9 @@ const authContext = await areaContext("auth", { format: "json" });
 
 // Busca de simbolos
 const symbolSearch = await find("useAuth", { type: "hook", area: "auth" });
+
+// Cloud Functions Firebase
+const cloudFunctions = await functions({ trigger: "onCall" });
 
 // Areas funcionais
 const projectAreas = await areas({ format: "json" });
@@ -348,6 +397,7 @@ await areasInit({ force: false });
 | `type` | Tipos TypeScript |
 | `config` | Configuracoes |
 | `test` | Testes |
+| `cloud-function` | Firebase Cloud Functions |
 | `other` | Outros |
 
 ## Cache

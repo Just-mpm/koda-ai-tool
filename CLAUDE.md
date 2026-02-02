@@ -17,10 +17,16 @@ Pacote npm para analise de dependencias, codigo morto e areas funcionais em proj
 
 ### Busca de Simbolos (novo em 0.6.0)
 - **`find <termo>`** - Busca simbolos no codigo (definicao + usos)
-- **`find <termo> --type=function|type|const|component|hook`** - Filtra por tipo
+- **`find <termo> --type=function|type|const|component|hook|trigger`** - Filtra por tipo
 - **`find <termo> --area=<nome>`** - Busca apenas em uma area
 - **`find <termo> --def`** - Mostra apenas definicoes
 - **`find <termo> --refs`** - Mostra apenas referencias/usos
+
+### Firebase Cloud Functions (novo em 0.7.0)
+- **`functions`** - Lista todas as Cloud Functions do projeto
+- **`functions --trigger=onCall`** - Filtra por tipo de trigger
+- **`find <nome> --type=trigger`** - Busca Cloud Functions especificas
+- **`find <nome> --type=function`** - Inclui Cloud Functions + funcoes normais
 
 ### Areas Funcionais
 - **`areas`** - Lista todas as areas/dominios funcionais do projeto
@@ -44,6 +50,7 @@ Tools expostas:
 - `aitool_areas_init` - Gera config de areas
 - `aitool_area_context` - Contexto consolidado de toda uma area (novo em 0.6.0)
 - `aitool_find` - Busca simbolos no codigo: definicao + usos (novo em 0.6.0)
+- `aitool_list_functions` - Lista Cloud Functions Firebase (novo em 0.7.0)
 
 ## Frameworks suportados
 
@@ -54,6 +61,7 @@ Tools expostas:
 - Nuxt
 - SvelteKit
 - Astro
+- Firebase Cloud Functions v2
 
 ## Stack interna
 
@@ -66,7 +74,7 @@ Tools expostas:
 
 ```
 src/
-  commands/     # Comandos CLI (map, dead, impact, suggest, context, find, areas, area)
+  commands/     # Comandos CLI (map, dead, impact, suggest, context, find, functions, areas, area)
   areas/        # Sistema de deteccao de areas
   mcp/          # Servidor MCP
   ts/           # Extrator TypeScript (ts-morph) + indexador de simbolos
@@ -111,6 +119,11 @@ npx ai-tool areas init             # Gera configuracao inicial
 npx ai-tool area auth              # Arquivos da area "auth"
 npx ai-tool area auth --type=hook  # Apenas hooks da area "auth"
 npx ai-tool area dashboard --full  # Todos os arquivos da area
+
+# Firebase Cloud Functions
+npx ai-tool functions                   # Lista todas as Cloud Functions
+npx ai-tool functions --trigger=onCall  # Filtra por tipo de trigger
+npx ai-tool find createUser --type=trigger  # Busca uma Cloud Function
 
 # MCP
 npx ai-tool --mcp                  # Servidor MCP
@@ -159,3 +172,54 @@ $ ai-tool area auht
 ```
 
 Funciona para arquivos e áreas, considerando tanto config manual quanto automática.
+
+## Firebase Cloud Functions (novo em 0.7.0)
+
+O ai-tool detecta automaticamente projetos Firebase e oferece suporte completo para Cloud Functions v2.
+
+### Triggers Suportados (40+)
+
+**HTTPS:**
+- `onCall`, `onRequest`
+
+**Firestore:**
+- `onDocumentCreated`, `onDocumentCreatedWithAuthContext`
+- `onDocumentUpdated`, `onDocumentUpdatedWithAuthContext`
+- `onDocumentDeleted`, `onDocumentDeletedWithAuthContext`
+- `onDocumentWritten`, `onDocumentWrittenWithAuthContext`
+
+**Realtime Database:**
+- `onValueCreated`, `onValueUpdated`, `onValueDeleted`, `onValueWritten`
+
+**Scheduler:**
+- `onSchedule`
+
+**Storage:**
+- `onObjectFinalized`, `onObjectArchived`, `onObjectDeleted`, `onMetadataUpdated`
+
+**Pub/Sub:**
+- `onMessagePublished`
+
+**Identity/Auth:**
+- `beforeUserCreated`, `beforeUserSignedIn`, `beforeEmailSent`, `beforeSmsSent`
+
+**Alerts (Crashlytics, Performance, etc):**
+- `onNewFatalIssuePublished`, `onNewNonfatalIssuePublished`, `onNewAnrIssuePublished`
+- `onRegressionAlertPublished`, `onStabilityDigestPublished`, `onVelocityAlertPublished`
+- `onThresholdAlertPublished`, `onPlanUpdatePublished`, `onPlanAutomatedUpdatePublished`
+
+**Outros:**
+- `onConfigUpdated` (Remote Config)
+- `onCustomEventPublished` (Eventarc)
+- `onTaskDispatched` (Tasks)
+- `onTestMatrixCompleted` (Test Lab)
+
+### Funcionalidades
+
+1. **Deteccao automatica**: Projetos Firebase sao detectados por `.firebaserc` ou `firebase.json`
+2. **Categoria cloud-function**: Arquivos em `functions/src/` sao categorizados automaticamente
+3. **Alertas no map**: Mostra contagem de Cloud Functions quando detectadas
+4. **Comando functions**: Lista todas as functions agrupadas por trigger
+5. **Busca por trigger**: `find --type=trigger` busca apenas Cloud Functions
+6. **Metadados**: Extrai path (Firestore) e schedule (cron) dos triggers
+7. **Sugestoes inteligentes**: Sugere `firestore.rules` e `storage.rules` quando relevante

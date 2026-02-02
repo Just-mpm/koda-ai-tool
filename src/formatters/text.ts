@@ -43,6 +43,7 @@ export function formatMapSummary(
     "layout",
     "route",
     "store",
+    "cloud-function",
     "other",
   ];
 
@@ -62,6 +63,14 @@ export function formatMapSummary(
 
   // Alertas e dicas contextuais
   out += `\n`;
+
+  // Alerta: Firebase Cloud Functions
+  const cloudFunctionCount = result.summary.categories["cloud-function"] || 0;
+  if (cloudFunctionCount > 0) {
+    out += `🔥 Firebase Cloud Functions detectado\n`;
+    out += `   ${cloudFunctionCount} function(s) em functions/src/\n`;
+    out += `   → Use 'ai-tool functions' para listar triggers\n\n`;
+  }
 
   // Alerta: dependências circulares
   if (result.circularDependencies.length > 0) {
@@ -115,6 +124,7 @@ export function formatMapText(result: MapResult): string {
     "type",
     "config",
     "test",
+    "cloud-function",
     "other",
   ];
 
@@ -122,7 +132,7 @@ export function formatMapText(result: MapResult): string {
     const count = result.summary.categories[cat];
     if (count) {
       const icon = categoryIcons[cat];
-      out += `   ${icon} ${cat.padEnd(12)} ${count}\n`;
+      out += `   ${icon} ${cat.padEnd(14)} ${count}\n`;
     }
   }
 
@@ -630,6 +640,7 @@ export function formatAreaDetailText(
     "type",
     "config",
     "test",
+    "cloud-function",
     "other",
   ];
 
@@ -864,6 +875,22 @@ export function formatAreaContextText(result: AreaContextResult): string {
     }
   }
 
+  // Triggers (Cloud Functions)
+  if (result.triggers && result.triggers.length > 0) {
+    out += `⚡ TRIGGERS (${result.triggers.length})\n\n`;
+    for (const t of result.triggers) {
+      const filePart = t.file.split("/").pop() || t.file;
+      out += `   ${t.name}`.padEnd(35) + `${t.triggerType.padEnd(25)}[${filePart}:${t.line}]\n`;
+      if (t.triggerPath) {
+        out += `      path: ${t.triggerPath}\n`;
+      }
+      if (t.triggerSchedule) {
+        out += `      schedule: ${t.triggerSchedule}\n`;
+      }
+      out += `\n`;
+    }
+  }
+
   out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   // Resumo
@@ -874,6 +901,9 @@ export function formatAreaContextText(result: AreaContextResult): string {
   out += `   Components: ${result.components.length}\n`;
   out += `   Services: ${result.services.length}\n`;
   out += `   Stores: ${result.stores.length}\n`;
+  if (result.triggers && result.triggers.length > 0) {
+    out += `   Triggers: ${result.triggers.length}\n`;
+  }
 
   return out;
 }

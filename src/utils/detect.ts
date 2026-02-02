@@ -124,6 +124,30 @@ export function detectCategory(filePath: string): FileCategory {
   }
 
   // ============================================================================
+  // FIREBASE CLOUD FUNCTIONS
+  // ============================================================================
+
+  // Firebase Cloud Functions v2 - functions/src/
+  if (normalized.includes("functions/src/") && !normalized.includes("/__tests__/")) {
+    // Ignorar index.ts (re-exports) e arquivos de tipos
+    if (!fileName.includes("index") && !normalized.includes("/types/")) {
+      return "cloud-function";
+    }
+  }
+
+  // Firebase Cloud Functions - patterns alternativos
+  if (
+    normalized.includes("/triggers/") ||
+    normalized.includes("/callable/") ||
+    normalized.includes("/scheduled/")
+  ) {
+    // Verificar se está em contexto de functions
+    if (normalized.includes("functions/") || normalized.includes("firebase/")) {
+      return "cloud-function";
+    }
+  }
+
+  // ============================================================================
   // API ROUTES (todos os frameworks)
   // ============================================================================
 
@@ -271,6 +295,7 @@ export const categoryIcons: Record<FileCategory, string> = {
   type: "📝",
   config: "⚙️",
   test: "🧪",
+  "cloud-function": "⚡",
   other: "📁",
 };
 

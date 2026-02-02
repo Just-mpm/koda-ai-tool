@@ -201,9 +201,17 @@ export const FOLDER_PATTERNS: Array<{ pattern: RegExp; area: string; priority: n
   { pattern: /store\/.*[Uu]ser/, area: "user", priority: 70 },
 
   // ============================================================================
-  // CLOUD FUNCTIONS
+  // FIREBASE CLOUD FUNCTIONS (expandido)
   // ============================================================================
   { pattern: /functions\/src\//, area: "cloud-functions", priority: 80 },
+  { pattern: /functions\/src\/triggers\//, area: "triggers", priority: 95 },
+  { pattern: /functions\/src\/callable\//, area: "callable", priority: 95 },
+  { pattern: /functions\/src\/scheduled\//, area: "scheduled", priority: 95 },
+  { pattern: /functions\/src\/firestore\//, area: "firestore-triggers", priority: 95 },
+  { pattern: /functions\/src\/auth\//, area: "auth-triggers", priority: 95 },
+  { pattern: /functions\/src\/storage\//, area: "storage-triggers", priority: 95 },
+  { pattern: /functions\/src\/pubsub\//, area: "pubsub", priority: 95 },
+  { pattern: /functions\/src\/https\//, area: "callable", priority: 95 },
 
   // ============================================================================
   // OUTROS
@@ -270,6 +278,17 @@ export const KEYWORD_PATTERNS: Array<{ keyword: RegExp; area: string; priority: 
   // PDF (genérico)
   { keyword: /[Pp]df[Ee]xport/, area: "export", priority: 60 },
   { keyword: /[Dd]ocx[Ee]xport/, area: "export", priority: 60 },
+
+  // Firebase Cloud Functions triggers
+  { keyword: /[Oo]nCall/, area: "callable", priority: 70 },
+  { keyword: /[Oo]nRequest/, area: "callable", priority: 70 },
+  { keyword: /[Oo]nSchedule/, area: "scheduled", priority: 70 },
+  { keyword: /[Oo]n[A-Z].*Created/, area: "triggers", priority: 70 },
+  { keyword: /[Oo]n[A-Z].*Updated/, area: "triggers", priority: 70 },
+  { keyword: /[Oo]n[A-Z].*Deleted/, area: "triggers", priority: 70 },
+  { keyword: /[Oo]n[A-Z].*Written/, area: "triggers", priority: 70 },
+  { keyword: /[Oo]nObject/, area: "storage-triggers", priority: 70 },
+  { keyword: /[Oo]nMessage/, area: "pubsub", priority: 70 },
 ];
 
 /**
@@ -327,6 +346,13 @@ export const AREA_NAMES: Record<string, string> = {
   layout: "Layout",
   "shared-ui": "UI Compartilhada",
   "cloud-functions": "Cloud Functions",
+  triggers: "Triggers Firebase",
+  callable: "Callable Functions",
+  scheduled: "Scheduled Functions",
+  "firestore-triggers": "Firestore Triggers",
+  "auth-triggers": "Auth Triggers",
+  "storage-triggers": "Storage Triggers",
+  pubsub: "Pub/Sub",
   assets: "Assets",
   scripts: "Scripts",
 
@@ -393,7 +419,14 @@ export const AREA_DESCRIPTIONS: Record<string, string> = {
   core: "Providers e configuração principal",
   layout: "Layout e navegação",
   "shared-ui": "Componentes de UI compartilhados",
-  "cloud-functions": "Cloud Functions (serverless)",
+  "cloud-functions": "Firebase Cloud Functions (serverless)",
+  triggers: "Event-driven Firebase triggers",
+  callable: "HTTPS callable functions (frontend SDK)",
+  scheduled: "Scheduled/cron functions",
+  "firestore-triggers": "Triggers para eventos do Firestore",
+  "auth-triggers": "Triggers para eventos de autenticação",
+  "storage-triggers": "Triggers para eventos do Storage",
+  pubsub: "Triggers para mensagens Pub/Sub",
   assets: "Assets públicos",
   scripts: "Scripts de automação",
 

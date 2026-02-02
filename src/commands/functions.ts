@@ -1,0 +1,277 @@
+/**
+ * Comando FUNCTIONS - Lista todas as Cloud Functions do projeto
+ *
+ * Agrupa por tipo de trigger e mostra metadados relevantes.
+ * Detecta automaticamente projetos Firebase e extrai informações
+ * de triggers como path (Firestore) e schedule (cron).
+ */
+
+import { hasFirebaseFunctions, isFirebaseProject } from "../utils/firebase.js";
+import { indexProject, type ProjectIndex } from "../ts/indexer.js";
+import {
+  isCacheValid,
+  getCachedSymbolsIndex,
+  cacheSymbolsIndex,
+  updateCacheMeta,
+} from "../cache/index.js";
+
+/**
+ * Informação de uma Cloud Function
+ */
+export interface CloudFunctionInfo {
+  name: string;
+  file: string;
+  line: number;
+  triggerType: string;
+  triggerPath?: string;
+  triggerSchedule?: string;
+  isExported: boolean;
+}
+
+/**
+ * Resultado do comando functions
+ */
+export interface FunctionsResult {
+  version: string;
+  timestamp: string;
+  cwd: string;
+  isFirebaseProject: boolean;
+  hasFunctions: boolean;
+  functions: CloudFunctionInfo[];
+  byTrigger: Record<string, CloudFunctionInfo[]>;
+  summary: {
+    total: number;
+    exported: number;
+    byTrigger: Record<string, number>;
+  };
+}
+
+/**
+ * Opções do comando functions
+ */
+export interface FunctionsOptions {
+  cwd?: string;
+  format?: "text" | "json";
+  cache?: boolean;
+  trigger?: string; // Filtrar por tipo de trigger
+}
+
+/**
+ * Executa o comando FUNCTIONS
+ */
+export async function functions(options: FunctionsOptions = {}): Promise<string> {
+  const cwd = options.cwd || process.cwd();
+  const format = options.format || "text";
+  const useCache = options.cache !== false;
+  const filterTrigger = options.trigger;
+
+  // Verificar se é projeto Firebase
+  if (!isFirebaseProject(cwd)) {
+    const errorMsg = "Este não é um projeto Firebase.\nNão foi encontrado .firebaserc ou firebase.json";
+    return format === "json"
+      ? JSON.stringify({ error: errorMsg })
+      : `❌ ${errorMsg}`;
+  }
+
+  if (!hasFirebaseFunctions(cwd)) {
+    const errorMsg = "Projeto Firebase sem Cloud Functions.\nNão foi encontrado functions/src/index.ts";
+    return format === "json"
+      ? JSON.stringify({ error: errorMsg })
+      : `❌ ${errorMsg}`;
+  }
+
+  try {
+    // Obter índice
+    let index: ProjectIndex;
+
+    if (useCache && isCacheValid(cwd)) {
+      const cached = getCachedSymbolsIndex<ProjectIndex>(cwd);
+      if (cached && cached.symbolsByName) {
+        index = cached;
+      } else {
+        index = indexProject(cwd);
+        cacheSymbolsIndex(cwd, index);
+        updateCacheMeta(cwd);
+      }
+    } else {
+      index = indexProject(cwd);
+      if (useCache) {
+        cacheSymbolsIndex(cwd, index);
+        updateCacheMeta(cwd);
+      }
+    }
+
+    // Extrair Cloud Functions (símbolos com kind === "trigger")
+    const funcs: CloudFunctionInfo[] = [];
+
+    for (const fileData of Object.values(index.files)) {
+      // Filtrar apenas arquivos em functions/src/
+      if (!fileData.path.includes("functions/src/")) continue;
+
+      for (const symbol of fileData.symbols) {
+        if (symbol.kind === "trigger") {
+          funcs.push({
+            name: symbol.name,
+            file: symbol.file,
+            line: symbol.line,
+            triggerType: symbol.triggerInfo?.triggerType || "unknown",
+            triggerPath: symbol.triggerInfo?.triggerPath,
+            triggerSchedule: symbol.triggerInfo?.triggerSchedule,
+            isExported: symbol.isExported,
+          });
+        }
+      }
+    }
+
+    // Filtrar por trigger se especificado
+    const filtered = filterTrigger
+      ? funcs.filter((f) =>
+          f.triggerType.toLowerCase().includes(filterTrigger.toLowerCase())
+        )
+      : funcs;
+
+    // Agrupar por tipo de trigger
+    const byTrigger: Record<string, CloudFunctionInfo[]> = {};
+    const triggerCounts: Record<string, number> = {};
+
+    for (const func of filtered) {
+      if (!byTrigger[func.triggerType]) {
+        byTrigger[func.triggerType] = [];
+        triggerCounts[func.triggerType] = 0;
+      }
+      byTrigger[func.triggerType].push(func);
+      triggerCounts[func.triggerType]++;
+    }
+
+    const result: FunctionsResult = {
+      version: "1.0.0",
+      timestamp: new Date().toISOString(),
+      cwd,
+      isFirebaseProject: true,
+      hasFunctions: true,
+      functions: filtered,
+      byTrigger,
+      summary: {
+        total: filtered.length,
+        exported: filtered.filter((f) => f.isExported).length,
+        byTrigger: triggerCounts,
+      },
+    };
+
+    if (format === "json") {
+      return JSON.stringify(result, null, 2);
+    }
+
+    return formatFunctionsText(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Erro ao executar functions: ${message}`);
+  }
+}
+
+/**
+ * Formata resultado em texto
+ */
+function formatFunctionsText(result: FunctionsResult): string {
+  let out = "";
+
+  out += `\n`;
+  out += `╔══════════════════════════════════════════════════════════════╗\n`;
+  out += `║                    ⚡ CLOUD FUNCTIONS                        ║\n`;
+  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+
+  // Resumo
+  out += `📊 RESUMO\n`;
+  out += `   Total: ${result.summary.total} functions\n`;
+  out += `   Exportadas: ${result.summary.exported}\n\n`;
+
+  if (result.summary.total === 0) {
+    out += `   ⚠️  Nenhuma Cloud Function detectada.\n`;
+    out += `   Verifique se seus triggers usam padrão Firebase v2 (onCall, onDocumentCreated, etc).\n`;
+    return out;
+  }
+
+  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  // Ordem de exibição dos triggers
+  const triggerOrder = [
+    // HTTPS
+    "onCall",
+    "onRequest",
+    // Firestore
+    "onDocumentCreated",
+    "onDocumentCreatedWithAuthContext",
+    "onDocumentUpdated",
+    "onDocumentUpdatedWithAuthContext",
+    "onDocumentDeleted",
+    "onDocumentDeletedWithAuthContext",
+    "onDocumentWritten",
+    "onDocumentWrittenWithAuthContext",
+    // Realtime Database
+    "onValueCreated",
+    "onValueUpdated",
+    "onValueDeleted",
+    "onValueWritten",
+    // Scheduler
+    "onSchedule",
+    // Storage
+    "onObjectFinalized",
+    "onObjectArchived",
+    "onObjectDeleted",
+    "onMetadataUpdated",
+    // Pub/Sub
+    "onMessagePublished",
+    // Identity
+    "beforeUserCreated",
+    "beforeUserSignedIn",
+  ];
+
+  // Ordenar triggers
+  const sortedTriggers = Object.keys(result.byTrigger).sort((a, b) => {
+    const aIdx = triggerOrder.indexOf(a);
+    const bIdx = triggerOrder.indexOf(b);
+    if (aIdx === -1 && bIdx === -1) return a.localeCompare(b);
+    if (aIdx === -1) return 1;
+    if (bIdx === -1) return -1;
+    return aIdx - bIdx;
+  });
+
+  for (const trigger of sortedTriggers) {
+    const funcs = result.byTrigger[trigger];
+    const icon = getTriggerIcon(trigger);
+
+    out += `${icon} ${trigger} (${funcs.length})\n\n`;
+
+    for (const func of funcs) {
+      const exportTag = func.isExported ? "" : " [não exportada]";
+      out += `   ${func.name}${exportTag}\n`;
+      out += `      📁 ${func.file}:${func.line}\n`;
+      if (func.triggerPath) {
+        out += `      📍 path: ${func.triggerPath}\n`;
+      }
+      if (func.triggerSchedule) {
+        out += `      ⏰ schedule: ${func.triggerSchedule}\n`;
+      }
+    }
+    out += `\n`;
+  }
+
+  return out;
+}
+
+/**
+ * Retorna ícone para cada tipo de trigger
+ */
+function getTriggerIcon(trigger: string): string {
+  if (trigger.includes("Call") || trigger.includes("Request")) return "🌐";
+  if (trigger.includes("Document") || trigger.includes("Value")) return "🔥";
+  if (trigger.includes("Schedule")) return "⏰";
+  if (trigger.includes("Object") || trigger.includes("Metadata")) return "📦";
+  if (trigger.includes("Message") || trigger.includes("Pub")) return "📨";
+  if (trigger.includes("User") || trigger.includes("before")) return "👤";
+  if (trigger.includes("Alert") || trigger.includes("Issue")) return "🚨";
+  if (trigger.includes("Config")) return "⚙️";
+  if (trigger.includes("Task")) return "📋";
+  if (trigger.includes("Test")) return "🧪";
+  return "⚡";
+}

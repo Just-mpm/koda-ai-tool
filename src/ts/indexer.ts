@@ -12,18 +12,28 @@ import type { FileCategory } from "../types.js";
 import { detectCategory } from "../utils/detect.js";
 
 /**
+ * Metadados de um trigger Firebase
+ */
+export interface TriggerInfo {
+  triggerType: string; // ex: "onDocumentCreated"
+  triggerPath?: string; // ex: "users/{userId}" para Firestore
+  triggerSchedule?: string; // ex: "every 5 minutes" para scheduler
+}
+
+/**
  * Informação de um símbolo (função, tipo, constante, etc)
  */
 export interface SymbolInfo {
   name: string;
   file: string;
   line: number;
-  kind: "function" | "type" | "interface" | "enum" | "const" | "component" | "hook";
+  kind: "function" | "type" | "interface" | "enum" | "const" | "component" | "hook" | "trigger";
   signature: string;
   isExported: boolean;
   params?: string[];
   returnType?: string;
   definition?: string;
+  triggerInfo?: TriggerInfo;
 }
 
 /**
@@ -78,6 +88,82 @@ const IGNORED_DIRS = new Set([
   ".turbo",
   ".vercel",
   ".analyze",
+]);
+
+/**
+ * Firebase Cloud Functions v2 - Todos os triggers suportados
+ *
+ * @see https://firebase.google.com/docs/functions
+ */
+const FIREBASE_V2_TRIGGERS = new Set([
+  // HTTPS (firebase-functions/v2/https)
+  "onCall",
+  "onRequest",
+
+  // Firestore (firebase-functions/v2/firestore)
+  "onDocumentCreated",
+  "onDocumentCreatedWithAuthContext",
+  "onDocumentUpdated",
+  "onDocumentUpdatedWithAuthContext",
+  "onDocumentDeleted",
+  "onDocumentDeletedWithAuthContext",
+  "onDocumentWritten",
+  "onDocumentWrittenWithAuthContext",
+
+  // Realtime Database (firebase-functions/v2/database)
+  "onValueCreated",
+  "onValueUpdated",
+  "onValueDeleted",
+  "onValueWritten",
+
+  // Scheduler (firebase-functions/v2/scheduler)
+  "onSchedule",
+
+  // Storage (firebase-functions/v2/storage)
+  "onObjectFinalized",
+  "onObjectArchived",
+  "onObjectDeleted",
+  "onMetadataUpdated",
+
+  // Pub/Sub (firebase-functions/v2/pubsub)
+  "onMessagePublished",
+
+  // Identity (firebase-functions/v2/identity)
+  "beforeUserCreated",
+  "beforeUserSignedIn",
+  "beforeEmailSent",
+  "beforeSmsSent",
+
+  // Alerts - Crashlytics (firebase-functions/v2/alerts/crashlytics)
+  "onNewFatalIssuePublished",
+  "onNewNonfatalIssuePublished",
+  "onNewAnrIssuePublished",
+  "onRegressionAlertPublished",
+  "onStabilityDigestPublished",
+  "onVelocityAlertPublished",
+
+  // Alerts - App Distribution (firebase-functions/v2/alerts/appDistribution)
+  "onNewTesterIosDevicePublished",
+  "onInAppFeedbackPublished",
+
+  // Alerts - Performance (firebase-functions/v2/alerts/performance)
+  "onThresholdAlertPublished",
+
+  // Alerts - Billing (firebase-functions/v2/alerts/billing)
+  "onPlanUpdatePublished",
+  "onPlanAutomatedUpdatePublished",
+
+  // Remote Config (firebase-functions/v2/remoteConfig)
+  "onConfigUpdated",
+
+  // Eventarc (firebase-functions/v2/eventarc)
+  "onCustomEventPublished",
+
+  // Tasks (firebase-functions/v2/tasks)
+  "onTaskDispatched",
+
+  // Test Lab (firebase-functions/v2/testLab)
+  "onTestMatrixCompleted",
 ]);
 
 /**
@@ -223,7 +309,61 @@ export function indexProject(cwd: string): ProjectIndex {
             exports.push(name);
           }
         }
-        // Constante (não função)
+        // CallExpression - pode ser trigger Firebase (onCall, onDocumentCreated, etc)
+        else if (initKind === SyntaxKind.CallExpression) {
+          const triggerName = extractFirebaseTriggerName(init);
+
+          if (triggerName && FIREBASE_V2_TRIGGERS.has(triggerName)) {
+            // É um trigger Firebase!
+            const triggerInfo = extractTriggerInfo(init, triggerName);
+
+            const symbol: SymbolInfo = {
+              name,
+              file: filePath,
+              line: varDecl.getStartLineNumber(),
+              kind: "trigger",
+              signature: `${isExported ? "export " : ""}const ${name} = ${triggerName}(...)`,
+              isExported,
+              triggerInfo,
+            };
+
+            symbols.push(symbol);
+
+            if (!symbolsByName[name]) {
+              symbolsByName[name] = [];
+            }
+            symbolsByName[name].push(symbol);
+
+            if (isExported) {
+              exports.push(name);
+            }
+          } else {
+            // CallExpression mas não é trigger Firebase - tratar como const
+            const declKind = varStatement.getDeclarationKind();
+            if (declKind.toString() === "const") {
+              const symbol: SymbolInfo = {
+                name,
+                file: filePath,
+                line: varDecl.getStartLineNumber(),
+                kind: "const",
+                signature: `${isExported ? "export " : ""}const ${name} = ${truncateCode(init.getText(), 40)}`,
+                isExported,
+              };
+
+              symbols.push(symbol);
+
+              if (!symbolsByName[name]) {
+                symbolsByName[name] = [];
+              }
+              symbolsByName[name].push(symbol);
+
+              if (isExported) {
+                exports.push(name);
+              }
+            }
+          }
+        }
+        // Constante (não função e não CallExpression)
         else {
           const declKind = varStatement.getDeclarationKind();
           if (declKind.toString() !== "const") continue;
@@ -421,6 +561,72 @@ function inferSymbolKind(name: string, context: "function" | "const"): SymbolInf
     return "component";
   }
   return context === "function" ? "function" : "const";
+}
+
+/**
+ * Extrai o nome do trigger Firebase de uma CallExpression
+ *
+ * Suporta patterns:
+ * - onCall(...) - chamada direta
+ * - https.onCall(...) - com namespace
+ * - functions.https.onCall(...) - chain completa
+ */
+function extractFirebaseTriggerName(init: { getKind(): SyntaxKind; getText(): string }): string | null {
+  const text = init.getText();
+
+  // Verificar todos os triggers conhecidos
+  for (const trigger of FIREBASE_V2_TRIGGERS) {
+    // Pattern: trigger( ou .trigger(
+    const pattern = new RegExp(`(?:^|\\.)${trigger}\\s*\\(`);
+    if (pattern.test(text)) {
+      return trigger;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extrai metadados do trigger (path, schedule, etc)
+ */
+function extractTriggerInfo(init: { getText(): string }, triggerName: string): TriggerInfo {
+  const text = init.getText();
+  const info: TriggerInfo = { triggerType: triggerName };
+
+  // Tentar extrair path para Firestore triggers
+  // Pattern: onDocumentCreated("users/{userId}", ...)
+  if (triggerName.startsWith("onDocument") || triggerName.startsWith("onValue")) {
+    const pathMatch = text.match(/\(\s*["'`]([^"'`]+)["'`]/);
+    if (pathMatch) {
+      info.triggerPath = pathMatch[1];
+    }
+  }
+
+  // Tentar extrair schedule para onSchedule
+  // Pattern: onSchedule("every 5 minutes", ...) ou onSchedule({ schedule: "..." }, ...)
+  if (triggerName === "onSchedule") {
+    // Pattern 1: onSchedule("schedule string", ...)
+    const scheduleMatch = text.match(/onSchedule\s*\(\s*["'`]([^"'`]+)["'`]/);
+    if (scheduleMatch) {
+      info.triggerSchedule = scheduleMatch[1];
+    } else {
+      // Pattern 2: onSchedule({ schedule: "..." }, ...)
+      const objectScheduleMatch = text.match(/schedule\s*:\s*["'`]([^"'`]+)["'`]/);
+      if (objectScheduleMatch) {
+        info.triggerSchedule = objectScheduleMatch[1];
+      }
+    }
+  }
+
+  // Tentar extrair bucket para Storage triggers
+  if (triggerName.startsWith("onObject") || triggerName === "onMetadataUpdated") {
+    const bucketMatch = text.match(/bucket\s*:\s*["'`]([^"'`]+)["'`]/);
+    if (bucketMatch) {
+      info.triggerPath = bucketMatch[1];
+    }
+  }
+
+  return info;
 }
 
 /**

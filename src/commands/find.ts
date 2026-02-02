@@ -23,7 +23,7 @@ import { indexProject, type ProjectIndex, type SymbolInfo } from "../ts/indexer.
 /**
  * Tipos de símbolo que podem ser buscados
  */
-export type SymbolType = "function" | "type" | "const" | "component" | "hook" | "all";
+export type SymbolType = "function" | "type" | "const" | "component" | "hook" | "trigger" | "all";
 
 /**
  * Opções do comando find
@@ -297,7 +297,9 @@ function matchesType(kind: SymbolInfo["kind"], filter: SymbolType): boolean {
 
   switch (filter) {
     case "function":
-      return kind === "function";
+      // IMPORTANTE: triggers são funções! Isso corrige o bug onde
+      // Cloud Functions não eram encontradas com --type=function
+      return kind === "function" || kind === "trigger";
     case "type":
       return kind === "type" || kind === "interface" || kind === "enum";
     case "const":
@@ -306,6 +308,8 @@ function matchesType(kind: SymbolInfo["kind"], filter: SymbolType): boolean {
       return kind === "component";
     case "hook":
       return kind === "hook";
+    case "trigger":
+      return kind === "trigger";
     default:
       return true;
   }
@@ -328,6 +332,8 @@ function mapKindToSymbolType(kind: SymbolInfo["kind"]): SymbolType {
       return "type";
     case "const":
       return "const";
+    case "trigger":
+      return "trigger";
     default:
       return "function";
   }

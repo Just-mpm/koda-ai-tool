@@ -16,6 +16,7 @@ export type FileCategory =
   | "type"
   | "config"
   | "test"
+  | "cloud-function"
   | "other";
 
 export interface CommandOptions {
@@ -325,6 +326,15 @@ export interface AreaContextStoreInfo {
   state: string;
 }
 
+export interface AreaContextTriggerInfo {
+  name: string;
+  file: string;
+  line: number;
+  triggerType: string;
+  triggerPath?: string;
+  triggerSchedule?: string;
+}
+
 export interface AreaContextResult {
   version: string;
   timestamp: string;
@@ -340,4 +350,5 @@ export interface AreaContextResult {
   components: AreaContextComponentInfo[];
   services: AreaContextFunctionInfo[];
   stores: AreaContextStoreInfo[];
+  triggers: AreaContextTriggerInfo[];
 }

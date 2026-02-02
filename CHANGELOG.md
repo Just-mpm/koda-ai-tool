@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.7.0] - 2025-02-02
+
+### Adicionado
+
+- **Suporte completo a Firebase Cloud Functions v2**: Deteccao automatica de 40+ triggers
+  - `onCall`, `onRequest` (HTTPS)
+  - `onDocumentCreated`, `onDocumentUpdated`, `onDocumentDeleted`, `onDocumentWritten` (Firestore)
+  - `onValueCreated`, `onValueUpdated`, `onValueDeleted`, `onValueWritten` (Realtime Database)
+  - `onSchedule` (Scheduler)
+  - `onObjectFinalized`, `onObjectArchived`, `onObjectDeleted`, `onMetadataUpdated` (Storage)
+  - `onMessagePublished` (Pub/Sub)
+  - `beforeUserCreated`, `beforeUserSignedIn` (Identity)
+  - Crashlytics, Performance, App Distribution, Test Lab alerts
+  - `onConfigUpdated`, `onCustomEventPublished`, `onTaskDispatched`, `onTestMatrixCompleted`
+
+- **Comando `functions`**: Lista todas as Cloud Functions do projeto
+  - Agrupa por tipo de trigger
+  - Mostra metadados (path para Firestore, schedule para cron)
+  - Filtra por trigger: `ai-tool functions --trigger=onCall`
+
+- **Tipo de simbolo `trigger`**: Busca Cloud Functions com o comando `find`
+  - `ai-tool find createUser --type=trigger` - busca apenas triggers
+  - `ai-tool find createUser --type=function` - inclui triggers + funcoes normais
+
+- **Categoria `cloud-function`**: Arquivos em `functions/src/` sao categorizados automaticamente
+
+- **Alerta Firebase no `map`**: Mostra contagem de Cloud Functions quando projeto Firebase e detectado
+
+- **Sugestoes inteligentes para Cloud Functions**: Comando `suggest` agora sugere:
+  - `firestore.rules` quando target e trigger Firestore
+  - `storage.rules` quando target e trigger Storage
+  - `functions/src/index.ts` para Cloud Functions
+
+- **Triggers no `context --area`**: Area context agora inclui Cloud Functions com metadados
+
+- **Tool MCP `aitool_list_functions`**: Lista Cloud Functions via servidor MCP
+
+### Alterado
+
+- **indexer.ts**: Detecta CallExpressions para identificar triggers Firebase
+- **find.ts**: `--type=function` agora inclui triggers (comportamento mais intuitivo)
+- **formatters/text.ts**: Adicionada categoria `cloud-function` em todas as listas
+
+### Tipos
+
+- `TriggerInfo`: Metadados de trigger (type, path, schedule)
+- `AreaContextTriggerInfo`: Trigger info para area context
+- `CloudFunctionInfo`, `FunctionsResult`, `FunctionsOptions`: Tipos do comando functions
+
 ## [0.6.1] - 2025-02-02
 
 ### Corrigido
