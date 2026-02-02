@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.1] - 2025-02-02
+
+### Corrigido
+
+- **Bug crítico no comando `find`**: Corrigido erro "Cannot read properties of undefined (reading 'escapedName')"
+  - Causa: ts-morph falhava ao resolver tipos de dependências externas ou caminhos de import quebrados
+  - Solução: Adicionado tratamento defensivo com try-catch em 4 pontos críticos do `indexer.ts`
+  - Funções afetadas: `getReturnType()`, `getType()` em funções, type aliases e propriedades de interface
+  - Agora retorna `"unknown"` para tipos não resolvidos em vez de crashar
+
 ## [0.6.0] - 2025-02-02
 
 ### Adicionado

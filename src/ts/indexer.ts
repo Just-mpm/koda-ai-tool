@@ -154,7 +154,7 @@ export function indexProject(cwd: string): ProjectIndex {
 
       const isExported = func.isExported();
       const params = func.getParameters().map((p) => p.getName());
-      const returnType = simplifyType(func.getReturnType().getText());
+      const returnType = simplifyType(safeGetReturnType(func));
       const kind = inferSymbolKind(name, "function");
 
       const symbol: SymbolInfo = {
@@ -198,7 +198,7 @@ export function indexProject(cwd: string): ProjectIndex {
           if (!funcLike) continue;
 
           const params = funcLike.getParameters().map((p) => p.getName());
-          const returnType = simplifyType(funcLike.getReturnType().getText());
+          const returnType = simplifyType(safeGetReturnType(funcLike));
           const kind = inferSymbolKind(name, "function");
 
           const symbol: SymbolInfo = {
@@ -290,7 +290,7 @@ export function indexProject(cwd: string): ProjectIndex {
         kind: "type",
         signature: `${isExported ? "export " : ""}type ${name}`,
         isExported,
-        definition: simplifyType(typeAlias.getType().getText()),
+        definition: simplifyType(safeGetTypeText(() => typeAlias.getType())),
       };
 
       symbols.push(symbol);
@@ -427,11 +427,38 @@ function inferSymbolKind(name: string, context: "function" | "const"): SymbolInf
  * Simplifica tipos longos
  */
 function simplifyType(typeText: string): string {
+  if (!typeText) return "unknown";
   let simplified = typeText.replace(/import\([^)]+\)\./g, "");
   if (simplified.length > 80) {
     simplified = simplified.slice(0, 77) + "...";
   }
   return simplified;
+}
+
+/**
+ * Obtém texto do tipo de forma segura (evita erro de escapedName)
+ */
+function safeGetTypeText(getTypeFn: () => { getText(): string }): string {
+  try {
+    const type = getTypeFn();
+    if (!type) return "unknown";
+    return type.getText();
+  } catch {
+    return "unknown";
+  }
+}
+
+/**
+ * Obtém return type de forma segura
+ */
+function safeGetReturnType(node: { getReturnType(): { getText(): string } }): string {
+  try {
+    const returnType = node.getReturnType();
+    if (!returnType) return "unknown";
+    return returnType.getText();
+  } catch {
+    return "unknown";
+  }
 }
 
 /**
@@ -459,7 +486,7 @@ function formatInterfaceDefinition(iface: {
 
   const props = iface.getProperties();
   for (const prop of props.slice(0, 10)) {
-    const propType = simplifyType(prop.getType().getText());
+    const propType = simplifyType(safeGetTypeText(() => prop.getType()));
     parts.push(`${prop.getName()}: ${propType}`);
   }
 
