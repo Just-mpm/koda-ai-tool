@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.5] - 2025-02-02
+
+### Corrigido
+
+- **Invalidação de cache ao editar `areas.config.json`**: Corrigido bug onde edições na configuração de áreas não invalidavam o cache do `map`
+  - Antes: `areas.config.json` estava na pasta `.analyze` que é ignorada pelo hash
+  - Agora: o arquivo de configuração é verificado explicitamente no cálculo do hash
+  - Resultado: o comando `map` agora reflete mudanças nas áreas imediatamente
+
 ## [0.5.4] - 2025-02-01
 
 ### Adicionado

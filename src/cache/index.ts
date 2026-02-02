@@ -5,7 +5,14 @@
  * quando nenhum arquivo mudou.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync, readdirSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  statSync,
+  readdirSync,
+} from "fs";
 import { join, extname } from "path";
 import { clearFirebaseCache } from "../utils/firebase.js";
 
@@ -23,7 +30,10 @@ interface CacheMeta {
 }
 
 interface CachedGraph {
-  graph: Record<string, { id: string; adjacentTo: string[]; body: Record<string, unknown> }>;
+  graph: Record<
+    string,
+    { id: string; adjacentTo: string[]; body: Record<string, unknown> }
+  >;
   files: string[];
   timestamp: string;
 }
@@ -72,6 +82,17 @@ function calculateFilesHash(cwd: string): string {
   }
 
   scanDir(cwd);
+
+  // FIX: Incluir areas.config.json no hash para invalidar cache quando config mudar
+  try {
+    const configPath = join(cwd, CACHE_DIR, "areas.config.json");
+    if (existsSync(configPath)) {
+      const stat = statSync(configPath);
+      timestamps.push(stat.mtimeMs);
+    }
+  } catch {
+    // Ignorar se não existir
+  }
 
   // Hash simples: soma dos timestamps + contagem
   const sum = timestamps.reduce((a, b) => a + b, 0);
