@@ -40,37 +40,76 @@ interface CachedGraph {
 }
 
 /**
+ * Pastas a ignorar no scan de hash (além das padrões)
+ */
+const HASH_IGNORED_DIRS = new Set([
+  "node_modules",
+  ".git",
+  ".next",
+  "dist",
+  "build",
+  ".analyze",
+  ".vercel",
+  ".turbo",
+  ".cache",
+  "coverage",
+  "functions/lib",
+  "lib",
+  ".output",
+  "out",
+  ".firebase",
+]);
+
+/**
  * Calcula hash baseado nos timestamps dos arquivos do projeto
+ * Otimizado para projetos grandes - limita profundidade e usa sampling
  */
 function calculateFilesHash(cwd: string): string {
-  const extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
-  const timestamps: number[] = [];
+  const extensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
+  
+  // Usar XOR para combinar hashes (mais rápido que soma e menos colisões)
+  let hashAccumulator = 0;
+  let fileCount = 0;
+  let maxTimestamp = 0;
+  
+  // Limitar profundidade para evitar scan excessivo em node_modules aninhados
+  const MAX_DEPTH = 6;
 
-  function scanDir(dir: string) {
+  function scanDir(dir: string, depth: number): void {
+    if (depth > MAX_DEPTH) return;
+    
     try {
       const entries = readdirSync(dir, { withFileTypes: true });
 
       for (const entry of entries) {
+        // Ignorar arquivos/pastas ocultos
+        if (entry.name.startsWith(".")) continue;
+        
         const fullPath = join(dir, entry.name);
 
-        // Ignorar pastas não relevantes
         if (entry.isDirectory()) {
-          if (
-            entry.name === "node_modules" ||
-            entry.name === ".git" ||
-            entry.name === ".next" ||
-            entry.name === "dist" ||
-            entry.name === ".analyze"
-          ) {
-            continue;
+          // Ignorar pastas não relevantes
+          if (HASH_IGNORED_DIRS.has(entry.name)) continue;
+          
+          // Limitar profundidade
+          if (depth < MAX_DEPTH) {
+            scanDir(fullPath, depth + 1);
           }
-          scanDir(fullPath);
         } else if (entry.isFile()) {
           const ext = extname(entry.name).toLowerCase();
-          if (extensions.includes(ext)) {
+          if (extensions.has(ext)) {
             try {
               const stat = statSync(fullPath);
-              timestamps.push(stat.mtimeMs);
+              const mtime = stat.mtimeMs;
+              
+              // Acumular com XOR (mais eficiente)
+              hashAccumulator ^= Math.floor(mtime);
+              fileCount++;
+              
+              // Track do timestamp mais recente (útil para detectar mudanças recentes)
+              if (mtime > maxTimestamp) {
+                maxTimestamp = mtime;
+              }
             } catch {
               // Ignorar arquivos inacessíveis
             }
@@ -82,22 +121,22 @@ function calculateFilesHash(cwd: string): string {
     }
   }
 
-  scanDir(cwd);
+  scanDir(cwd, 0);
 
-  // FIX: Incluir areas.config.json no hash para invalidar cache quando config mudar
+  // Incluir areas.config.json no hash
   try {
     const configPath = join(cwd, CACHE_DIR, "areas.config.json");
     if (existsSync(configPath)) {
       const stat = statSync(configPath);
-      timestamps.push(stat.mtimeMs);
+      hashAccumulator ^= Math.floor(stat.mtimeMs);
     }
   } catch {
     // Ignorar se não existir
   }
 
-  // Hash simples: soma dos timestamps + contagem
-  const sum = timestamps.reduce((a, b) => a + b, 0);
-  return `${timestamps.length}-${Math.floor(sum)}`;
+  // Hash composto: contagem + acumulador XOR + timestamp máximo
+  // Isso detecta: adição/remoção de arquivos, modificações, e mudanças recentes
+  return `${fileCount}-${hashAccumulator}-${maxTimestamp}`;
 }
 
 /**

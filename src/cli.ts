@@ -31,6 +31,7 @@ import { functions } from "./commands/functions.js";
 import { VERSION } from "./index.js";
 import type { FileCategory } from "./types.js";
 import type { SymbolType } from "./commands/find.js";
+import { resolve } from "path";
 
 const HELP = `
 ai-tool v${VERSION} - Analise de dependencias e impacto
@@ -149,7 +150,7 @@ async function main() {
   const command = positional[0];
   const target = positional[1];
   const format = (flags.format as "text" | "json") || "text";
-  const cwd = (flags.cwd as string) || process.cwd();
+  const cwd = flags.cwd ? resolve(flags.cwd as string) : process.cwd();
   const cache = !flags["no-cache"]; // default: true
 
   try {

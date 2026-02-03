@@ -116,7 +116,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/detect.ts"
       ],
       "body": {
-        "size": 32577,
+        "size": 35717,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -216,7 +216,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/detect.ts"
       ],
       "body": {
-        "size": 19113,
+        "size": 20444,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -241,11 +241,12 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/detect.ts",
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/config.ts",
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/detector.ts",
+        "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/patterns.ts",
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/formatters/text.ts",
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/errors.ts"
       ],
       "body": {
-        "size": 7312,
+        "size": 9448,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -257,7 +258,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/detector.ts"
       ],
       "body": {
-        "size": 5907,
+        "size": 7374,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -272,7 +273,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/ts/indexer.ts"
       ],
       "body": {
-        "size": 9524,
+        "size": 10030,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -285,7 +286,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/cache/index.ts"
       ],
       "body": {
-        "size": 8450,
+        "size": 9324,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -379,5 +380,5 @@
     "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/types.ts",
     "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp/server.ts"
   ],
-  "timestamp": "2026-02-02T23:38:33.976Z"
+  "timestamp": "2026-02-02T23:52:22.072Z"
 }

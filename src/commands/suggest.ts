@@ -255,41 +255,71 @@ function findRelatedTests(targetPath: string, allFiles: string[]): string[] {
  * Encontra o arquivo target no grafo
  */
 function findTargetFile(target: string, allFiles: string[]): string | null {
-  const normalizedTarget = target.replace(/\\/g, "/");
+  const normalizedTarget = target.replace(/\\/g, "/").toLowerCase();
 
   // Match exato
   if (allFiles.includes(normalizedTarget)) {
     return normalizedTarget;
   }
 
-  // Match por nome do arquivo
-  const targetName = normalizedTarget.split("/").pop()?.toLowerCase() || "";
-  const targetNameNoExt = targetName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
+  // Match exato (case-insensitive)
+  const exactMatch = allFiles.find(f => f.toLowerCase() === normalizedTarget);
+  if (exactMatch) {
+    return exactMatch;
+  }
 
-  const matches: string[] = [];
+  // Separar path e nome do arquivo do target
+  const targetParts = normalizedTarget.split("/");
+  const targetName = targetParts.pop() || "";
+  const targetNameNoExt = targetName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
+  const targetDir = targetParts.join("/"); // Path sem o nome do arquivo
+
+  const matches: Array<{ file: string; priority: number }> = [];
 
   for (const file of allFiles) {
-    const fileName = file.split("/").pop()?.toLowerCase() || "";
+    const fileLower = file.toLowerCase();
+    const fileParts = fileLower.split("/");
+    const fileName = fileParts.pop() || "";
     const fileNameNoExt = fileName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
+    const fileDir = fileParts.join("/");
 
-    // Match exato por nome
-    if (fileNameNoExt === targetNameNoExt) {
-      matches.unshift(file); // Prioridade
+    // Prioridade 1: Match exato de path completo (incluindo diretórios)
+    if (fileLower === normalizedTarget) {
+      matches.push({ file, priority: 1 });
     }
-    // Match parcial
-    else if (file.toLowerCase().includes(normalizedTarget.toLowerCase())) {
-      matches.push(file);
+    // Prioridade 2: Match por nome + diretório contém o path do target
+    // Ex: target=src/services/quota/index.ts, file=src/pages/LandingPages/index.ts
+    // O diretório do target (src/services/quota) deve estar contido no path do arquivo
+    else if (fileNameNoExt === targetNameNoExt) {
+      if (targetDir && fileDir.includes(targetDir)) {
+        matches.push({ file, priority: 2 });
+      } else if (targetDir && normalizedTarget.includes(fileDir)) {
+        // Path do target contém diretório do arquivo
+        matches.push({ file, priority: 3 });
+      } else {
+        // Mesmo nome mas diretório diferente - menor prioridade
+        matches.push({ file, priority: 4 });
+      }
+    }
+    // Prioridade 5: Match parcial no path completo
+    else if (fileLower.includes(normalizedTarget)) {
+      matches.push({ file, priority: 5 });
     }
   }
 
-  // Se so encontrou um, retorna ele
-  if (matches.length === 1) {
-    return matches[0];
+  // Se não encontrou nada, tentar match parcial mais flexível
+  if (matches.length === 0) {
+    for (const file of allFiles) {
+      if (file.toLowerCase().includes(targetNameNoExt)) {
+        matches.push({ file, priority: 6 });
+      }
+    }
   }
 
-  // Se encontrou multiplos, retorna o primeiro (mais especifico)
-  if (matches.length > 1) {
-    return matches[0];
+  // Ordenar por prioridade e retornar o melhor match
+  if (matches.length > 0) {
+    matches.sort((a, b) => a.priority - b.priority);
+    return matches[0].file;
   }
 
   return null;

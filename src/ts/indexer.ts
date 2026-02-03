@@ -81,11 +81,26 @@ const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const DEBUG = process.env.DEBUG_ANALYZE === "true";
 
 /**
+ * Flag de debug específico para Cloud Functions
+ * Pode ser ativado via env: DEBUG_FUNCTIONS=true
+ */
+const DEBUG_FUNCTIONS = process.env.DEBUG_FUNCTIONS === "true" || DEBUG;
+
+/**
  * Log de debug condicional
  */
 function debugLog(...args: unknown[]): void {
   if (DEBUG) {
     console.error("[analyze:debug]", ...args);
+  }
+}
+
+/**
+ * Log de debug para Cloud Functions
+ */
+function debugFunctions(...args: unknown[]): void {
+  if (DEBUG_FUNCTIONS) {
+    console.error("[functions:debug]", ...args);
   }
 }
 
@@ -103,6 +118,16 @@ const IGNORED_DIRS = new Set([
   ".turbo",
   ".vercel",
   ".analyze",
+  // Firebase Functions output
+  "functions/lib",
+  "lib",
+  // Outros outputs comuns
+  ".output",
+  "out",
+  ".firebase",
+  "firebase-debug.log",
+  "firestore-debug.log",
+  "pubsub-debug.log",
 ]);
 
 /**
@@ -193,19 +218,42 @@ export function indexProject(cwd: string): ProjectIndex {
   const functionFiles = allFiles.filter(f => f.includes("functions/src/"));
   if (functionFiles.length > 0) {
     debugLog(`Encontrados ${functionFiles.length} arquivos em functions/src/:`, functionFiles);
+    debugFunctions(`Arquivos em functions/src/:`);
+    functionFiles.forEach(f => debugFunctions(`  - ${f}`));
   }
 
   // 2. Criar projeto ts-morph
   const project = createProject(cwd);
 
   // 3. Adicionar arquivos ao projeto
+  let addedCount = 0;
+  let errorCount = 0;
   for (const file of allFiles) {
     try {
       project.addSourceFileAtPath(resolve(cwd, file));
+      addedCount++;
     } catch {
       // Ignorar arquivos que não podem ser parseados
+      errorCount++;
+      if (DEBUG && file.includes("functions/src/")) {
+        debugLog(`[indexer] Erro ao adicionar: ${file}`);
+      }
     }
   }
+  
+  debugLog(`[indexer] Total de arquivos encontrados: ${allFiles.length}`);
+  debugLog(`[indexer] Arquivos adicionados ao projeto: ${addedCount}`);
+  debugLog(`[indexer] Arquivos com erro: ${errorCount}`);
+  debugLog(`[indexer] SourceFiles no projeto: ${project.getSourceFiles().length}`);
+  
+  // Verificar se functions/src foi adicionado
+  const functionsInProject = project.getSourceFiles().filter(sf => 
+    sf.getFilePath().includes("functions/src/")
+  );
+  debugFunctions(`[indexer] Arquivos functions/src/ no projeto: ${functionsInProject.length}`);
+  functionsInProject.forEach(sf => {
+    debugFunctions(`  - ${sf.getFilePath()}`);
+  });
 
   // 4. Extrair símbolos de cada arquivo
   const files: Record<string, FileSymbols> = {};
@@ -299,6 +347,12 @@ export function indexProject(cwd: string): ProjectIndex {
         if (!init) continue;
 
         const initKind = init.getKind();
+        const initKindName = init.getKindName();
+        
+        // Debug: mostrar tipo de initializer em functions/src/
+        if (DEBUG_FUNCTIONS && filePath.includes("functions/src/")) {
+          debugFunctions(`[kind] ${name}: ${initKindName} (kind=${initKind})`);
+        }
 
         // Arrow function ou function expression
         if (initKind === SyntaxKind.ArrowFunction || initKind === SyntaxKind.FunctionExpression) {
@@ -333,14 +387,16 @@ export function indexProject(cwd: string): ProjectIndex {
         }
         // CallExpression - pode ser trigger Firebase (onCall, onDocumentCreated, etc)
         else if (initKind === SyntaxKind.CallExpression) {
-          const triggerName = extractFirebaseTriggerName(init);
+          const triggerName = extractFirebaseTriggerName(init, filePath, name);
           
           // Debug: mostrar CallExpressions em arquivos de functions
-          if (DEBUG && filePath.includes("functions/src/")) {
-            const initText = init.getText().slice(0, 50);
-            debugLog(`[CF] Analisando: ${name} = ${initText}...`);
+          if (DEBUG_FUNCTIONS && filePath.includes("functions/src/")) {
+            const initText = init.getText().slice(0, 80).replace(/\s+/g, ' ');
+            debugFunctions(`Analisando: ${filePath}:${varDecl.getStartLineNumber()} - ${name} = ${initText}...`);
             if (triggerName) {
-              debugLog(`[CF] ✓ Trigger detectado: ${triggerName}`);
+              debugFunctions(`  ✓✓✓ Trigger FINAL detectado: ${triggerName}`);
+            } else {
+              debugFunctions(`  ✗✗✗ Nenhum trigger detectado para: ${name}`);
             }
           }
 
@@ -526,19 +582,34 @@ export function indexProject(cwd: string): ProjectIndex {
 
 /**
  * Cria projeto ts-morph
+ * 
+ * NOTA: Sempre usa skipAddingFilesFromTsConfig=true porque:
+ * 1. O tsconfig pode ter "files": [] (project references)
+ * 2. O tsconfig pode excluir a pasta functions/
+ * 3. Nós adicionamos os arquivos manualmente via getAllCodeFiles
  */
 function createProject(cwd: string): Project {
+  // Criar projeto SEM depender do tsconfig para inclusão de arquivos
+  // O tsconfig é usado apenas para compilerOptions (paths, strict, etc)
   try {
-    return new Project({
+    const project = new Project({
       tsConfigFilePath: `${cwd}/tsconfig.json`,
       skipAddingFilesFromTsConfig: true,
     });
+    
+    debugLog(`Projeto ts-morph criado com tsconfig: ${cwd}/tsconfig.json`);
+    return project;
   } catch {
+    // Fallback se não conseguir ler o tsconfig
+    debugLog(`Falha ao ler tsconfig, criando projeto básico`);
     return new Project({
       skipAddingFilesFromTsConfig: true,
       compilerOptions: {
         allowJs: true,
         checkJs: false,
+        target: 2, // ES2020
+        module: 200, // ESNext
+        moduleResolution: 100, // Bundler
       },
     });
   }
@@ -604,19 +675,35 @@ function inferSymbolKind(name: string, context: "function" | "const"): SymbolInf
  * - v2.https.onCall(...) - com import v2
  * - onCall<{ ... }>(...) - com type parameters
  */
-function extractFirebaseTriggerName(init: { getKind(): SyntaxKind; getText(): string }): string | null {
-  const text = init.getText();
+function extractFirebaseTriggerName(init: { getKind(): SyntaxKind; getText(): string }, filePath?: string, varName?: string): string | null {
+  const text = init.getText().trim();
+  
+  // Debug: mostrar texto sendo analisado
+  const shouldDebug = DEBUG_FUNCTIONS && filePath && filePath.includes("functions/src/");
+  if (shouldDebug && varName) {
+    debugFunctions(`  [regex] Analisando texto: "${text.slice(0, 60)}..."`);
+  }
 
   // Verificar todos os triggers conhecidos
   for (const trigger of FIREBASE_V2_TRIGGERS) {
     // Pattern melhorado: trigger pode vir após:
-    // - ^ (início)
-    // - \. (ponto)
-    // - \s (espaço, para casos como "=> onCall")
-    // - < (type parameter)
+    // - ^ (início da string)
+    // - \. (ponto, para namespace)
+    // - \s (espaço)
+    // - \( (parêntese, para casos aninhados)
     // E pode ter type parameters: onCall<Request, Response>(
-    const pattern = new RegExp(`(?:^|\\.|\\s)${trigger}(?:<[^>]*>)?\\s*\\(`);
+    // Usar [\s\S] em vez de [^>] para suportar type parameters multiline
+    const pattern = new RegExp(`(?:^|\\.|\\s|\\()${trigger}(?:<[\\s\\S]*?>)?\\s*\\(`);
+    
+    if (shouldDebug && varName) {
+      const testResult = pattern.test(text);
+      debugFunctions(`  [regex] Testando ${trigger}: ${testResult ? "✓ MATCH" : "✗ no match"}`);
+    }
+    
     if (pattern.test(text)) {
+      if (shouldDebug && varName) {
+        debugFunctions(`  [regex] ✓✓✓ TRIGGER ENCONTRADO: ${trigger}`);
+      }
       return trigger;
     }
   }

@@ -1,5 +1,75 @@
 # Changelog
 
+## [0.7.5] - 2025-02-03
+
+### Corrigido
+
+- **Problema com tsconfig.json de projetos Firebase**:
+  - Projetos com `tsconfig.json` usando `"files": []` + project references (Vite, Next.js) não carregavam arquivos
+  - Adicionados logs detalhados de quantos arquivos foram encontrados vs adicionados ao projeto
+  - Logs mostram especificamente quantos arquivos `functions/src/` estão no projeto ts-morph
+  - Isso ajuda a diagnosticar quando o parser não consegue ler os sources
+
+### Adicionado
+
+- **Diagnósticos de indexação em DEBUG mode**:
+  - `[indexer] Total de arquivos encontrados: N`
+  - `[indexer] Arquivos adicionados ao projeto: N`
+  - `[indexer] Arquivos com erro: N`
+  - `[indexer] SourceFiles no projeto: N`
+  - `[indexer] Arquivos functions/src/ no projeto: N`
+
+## [0.7.4] - 2025-02-03
+
+### Adicionado
+
+- **Diagnósticos avançados para debug de Cloud Functions**:
+  - Logs detalhados do tipo de nó AST para cada variável em functions/src/
+  - Mostra se é CallExpression, ArrowFunction, FunctionExpression, etc
+  - Regex de detecção agora suporta type parameters multiline (`[\s\S]*?`)
+  - Debug mostra teste de cada trigger individualmente
+  - Exemplo: `DEBUG_FUNCTIONS=true ai-tool functions`
+
+## [0.7.3] - 2025-02-02
+
+### Adicionado
+
+- **Diagnósticos detalhados para Cloud Functions**:
+  - Nova variável de ambiente `DEBUG_FUNCTIONS=true` para debug específico de functions
+  - Logs detalhados mostram: arquivos encontrados, símbolos analisados, triggers detectados
+  - Quando não encontra funções, mostra estatísticas completas de indexação
+  - Exemplo: `DEBUG_FUNCTIONS=true ai-tool functions`
+
+### Corrigido
+
+## [0.7.2] - 2025-02-02
+
+### Corrigido
+
+- **Bug crítico: Cloud Functions não detectadas**:
+  - Adicionadas pastas de output compilado ao `IGNORED_DIRS`: `functions/lib`, `lib`, `.output`, `out`, `.firebase`
+  - Agora o indexador processa apenas arquivos TypeScript fonte em `functions/src/`, ignorando JavaScript compilado
+  - Isso resolve o problema onde 31 Cloud Functions existentes não apareciam no comando `functions`
+
+- **Bug de resolução de caminho com `index.ts`**:
+  - Reescrita lógica de matching em `suggest` e `impact` com sistema de prioridades
+  - Prioridade 1: Match exato de path completo
+  - Prioridade 2: Mesmo nome + diretório contém path do target
+  - Prioridade 3: Path do target contém diretório do arquivo
+  - Prioridade 4-6: Matches parciais e flexíveis
+  - Resolve problema onde `src/services/quota/index.ts` era confundido com `src/pages/LandingPages/index.ts`
+
+- **Timeout no comando `map` em projetos grandes**:
+  - Otimização do `calculateFilesHash` com limite de profundidade (`MAX_DEPTH = 6`)
+  - Substituição de soma por XOR para combinar hashes (mais rápido)
+  - Hash composto: `contagem + acumulador XOR + timestamp máximo`
+  - Uso de Set para extensões (lookup O(1))
+  - Ignora automaticamente arquivos ocultos (`.*`)
+
+- **Path normalization para Windows**:
+  - Adicionado `resolve()` no CLI para normalizar paths com forward slashes
+  - Resolve problema onde `--cwd="D:/caminho"` não funcionava no Windows
+
 ## [0.7.1] - 2025-02-02
 
 ### Corrigido
