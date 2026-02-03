@@ -101,20 +101,15 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
       }
     }
 
-    // Diagnóstico: contar arquivos em functions/src/
+    // Filtrar arquivos em functions/src/
     const functionFiles = Object.values(index.files).filter(f => f.path.includes("functions/src/"));
-    
+
     // Extrair Cloud Functions (símbolos com kind === "trigger")
     const funcs: CloudFunctionInfo[] = [];
-    let totalSymbolsInFunctions = 0;
-    let triggerSymbolsFound = 0;
 
     for (const fileData of functionFiles) {
-      totalSymbolsInFunctions += fileData.symbols.length;
-      
       for (const symbol of fileData.symbols) {
         if (symbol.kind === "trigger") {
-          triggerSymbolsFound++;
           funcs.push({
             name: symbol.name,
             file: symbol.file,
@@ -126,20 +121,6 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
           });
         }
       }
-    }
-    
-    // Adicionar diagnóstico se não encontrou funções
-    if (funcs.length === 0 && (process.env.DEBUG_FUNCTIONS === "true" || process.env.DEBUG_ANALYZE === "true")) {
-      console.error(`[functions:debug] Total de arquivos indexados: ${Object.keys(index.files).length}`);
-      console.error(`[functions:debug] Arquivos em functions/src/: ${functionFiles.length}`);
-      console.error(`[functions:debug] Total de símbolos em functions/src/: ${totalSymbolsInFunctions}`);
-      console.error(`[functions:debug] Símbolos do tipo 'trigger': ${triggerSymbolsFound}`);
-      functionFiles.forEach(f => {
-        console.error(`[functions:debug]   ${f.path}: ${f.symbols.length} símbolos`);
-        f.symbols.forEach(s => {
-          console.error(`[functions:debug]     - ${s.name} (${s.kind})${s.isExported ? ' [exported]' : ''}`);
-        });
-      });
     }
 
     // Filtrar por trigger se especificado
@@ -217,8 +198,8 @@ function formatFunctionsText(result: FunctionsResult): string {
     out += `      1. O projeto não é Firebase (não encontrou .firebaserc ou firebase.json)\n`;
     out += `      2. Não há arquivo functions/src/index.ts\n`;
     out += `      3. Os triggers não usam padrões v2 (onCall, onDocumentCreated, etc)\n`;
-    out += `      4. O cache está desatualizado → tente: ai-tool functions --no-cache\n`;
-    out += `      5. Para debug: DEBUG_ANALYZE=true ai-tool functions\n\n`;
+    out += `      4. O cache está desatualizado (ex: atualizou o ai-tool recentemente)\n`;
+    out += `         → Tente: ai-tool functions --no-cache\n\n`;
     out += `   Padrões suportados:\n`;
     out += `      export const minhaFunc = onCall((request) => { ... })\n`;
     out += `      export const minhaFunc = onDocumentCreated("path", (event) => { ... })\n\n`;

@@ -17,7 +17,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/firebase.ts"
       ],
       "body": {
-        "size": 6130,
+        "size": 7591,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -81,7 +81,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp/server.ts"
       ],
       "body": {
-        "size": 9447,
+        "size": 9497,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -144,7 +144,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/errors.ts"
       ],
       "body": {
-        "size": 10800,
+        "size": 12197,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -178,7 +178,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/errors.ts"
       ],
       "body": {
-        "size": 10058,
+        "size": 11458,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -216,7 +216,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/utils/detect.ts"
       ],
       "body": {
-        "size": 20444,
+        "size": 29679,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -258,7 +258,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/areas/detector.ts"
       ],
       "body": {
-        "size": 7374,
+        "size": 9082,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -286,7 +286,7 @@
         "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/cache/index.ts"
       ],
       "body": {
-        "size": 9324,
+        "size": 9330,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -350,6 +350,15 @@
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
+    },
+    "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/tests/fixtures/firebase-project/functions/src/index.ts": {
+      "id": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/tests/fixtures/firebase-project/functions/src/index.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 839,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
     }
   },
   "files": [
@@ -378,7 +387,8 @@
     "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/commands/functions.ts",
     "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/index.ts",
     "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/types.ts",
-    "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp/server.ts"
+    "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp/server.ts",
+    "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/tests/fixtures/firebase-project/functions/src/index.ts"
   ],
-  "timestamp": "2026-02-02T23:52:22.072Z"
+  "timestamp": "2026-02-03T03:37:08.436Z"
 }

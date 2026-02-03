@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.7] - 2025-02-03
+
+### Adicionado
+
+- **Logs de debug ultra-detalhados para diagnóstico de Cloud Functions**:
+  - Mostra todos os imports detectados por arquivo em functions/src/
+  - Para cada CallExpression, mostra variável, código (primeiros 100 chars), imports
+  - Em `extractFirebaseTriggerName`, mostra Node Kind, Expression Kind, se é Identifier/PropertyAccess
+  - Em PropertyAccess, mostra profundidade da chain e nome da raiz
+  - No comando `functions`, mostra estatísticas completas de indexação quando `DEBUG_FUNCTIONS=true`
+  - Ajuda a identificar exatamente onde a detecção de triggers está falhando
+
+## [0.7.6] - 2025-02-03
+
+### Adicionado
+
+- **Arquivo de documentação DEBUG_FUNCTIONS.md**: Guia para debug de Cloud Functions
+  - Lista possíveis causas quando triggers não são detectadas
+  - Instruções para habilitar debug: `DEBUG_FUNCTIONS=true ai-tool functions`
+  - Exemplo de teste manual com arquivo simples
+
 ## [0.7.5] - 2025-02-03
 
 ### Corrigido

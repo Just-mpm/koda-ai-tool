@@ -105,7 +105,13 @@ Ou edite manualmente o arquivo existente.
     // 6. Salvar configuração
     writeConfig(cwd, newConfig);
 
-    // 7. Montar output
+    // 7. Recalcular arquivos sem área com a nova configuração
+    // (após salvar, a nova config com as áreas geradas passa a valer)
+    const unmappedCount = allFiles.filter(
+      (f) => detectFileAreas(f, newConfig).length === 0
+    ).length;
+
+    // 8. Montar output
     const sortedAreas = [...areaCounts.entries()].sort((a, b) => b[1].size - a[1].size);
 
     let out = `
@@ -129,10 +135,6 @@ Ou edite manualmente o arquivo existente.
       out += `   ... e mais ${sortedAreas.length - 15}\n`;
     }
 
-    const unmappedCount = allFiles.filter(
-      (f) => detectFileAreas(f, currentConfig).length === 0
-    ).length;
-
     if (unmappedCount > 0) {
       out += `
 ⚠️ ${unmappedCount} arquivos sem área definida
@@ -149,13 +151,46 @@ Ou edite manualmente o arquivo existente.
     }
 
     out += `
-💡 Edite o arquivo para:
-   - Renomear áreas (campo "name")
-   - Adicionar descrições (campo "description")
-   - Ajustar padrões (campo "patterns")
-   - Adicionar/remover áreas
-   - Definir descrições específicas de arquivos (campo "descriptions")
-`;
+💡 Boas práticas:
+   - Ideal: 5-15 áreas (muitas áreas é difícil de navegar)
+   - Use patterns para pastas, keywords para arquivos espalhados
+   - Se uma área tem <3 arquivos, considere mesclar com outra
+   - Se tem >50 arquivos, considere dividir em sub-áreas
+
+📝 Como customizar:
+   1. Renomear áreas: altere o campo "name"
+   2. Ajustar padrões: edite "patterns" (glob) ou "keywords"
+   3. Adicionar descrições: campo "description" explica o domínio
+   4. Descrições de arquivos: use "descriptions" para documentos específicos
+
+💡 Exemplo de customização:
+
+Antes (nome genérico detectado):
+  "user-profile": { "name": "User Profile", ... }
+
+Depois (renomeado para domínio de negócio):
+  "meu-perfil": { "name": "Meu Perfil", "description": "Edição de perfil do usuário" }
+
+⚙️ Quando usar autoDetect: false
+   - Quando quer controle total das áreas
+   - Quando a detecção automática está muito imprecisa
+   - Quando o projeto tem domínios muito específicos
+
+💡 Casos especiais:
+   - Arquivos compartilhados: adicione a múltiplas áreas
+   - Utils globais: crie área 'shared' ou use 'ignore'
+   - Monorepo: use 'patterns' com caminhos relativos à raiz
+
+🔧 Manutenção:
+   - Atualize o config ao criar/mover arquivos
+   - Use 'ai-tool areas' para verificar arquivos sem área
+   - Use 'ai-tool area <nome>' para ver o que foi detectado
+
+📋 Próximos passos:
+   → Execute 'ai-tool areas' para ver o resultado
+   → Use 'ai-tool area <nome>' para validar uma área específica
+   → Execute 'ai-tool map' para ver o resumo atualizado
+ `;
 
     return out.trim();
   } catch (error) {
@@ -264,8 +299,12 @@ function getAllCodeFiles(dir: string, files: string[] = [], baseDir: string = di
           const ext = extname(entry).toLowerCase();
           if (CODE_EXTENSIONS.has(ext)) {
             // Caminho relativo ao baseDir
+            // Adiciona 1 para remover a barra separadora
             const relativePath = fullPath.slice(baseDir.length + 1).replace(/\\/g, "/");
-            files.push(relativePath);
+            // Verificação de segurança: ignora se o caminho relativo for invazio ou começar com ..
+            if (relativePath && !relativePath.startsWith("..")) {
+              files.push(relativePath);
+            }
           }
         }
       } catch {

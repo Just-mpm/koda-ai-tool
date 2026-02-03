@@ -1,14 +1,15 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-02-02T23:52:22.081Z",
+  "timestamp": "2026-02-03T03:37:08.443Z",
   "cwd": "D:\\Users\\Matheus Pimenta\\Pictures\\Pacotes-Pessoais\\ai-tool",
   "summary": {
-    "totalFiles": 26,
-    "totalFolders": 8,
+    "totalFiles": 27,
+    "totalFolders": 9,
     "categories": {
       "other": 21,
       "util": 4,
-      "type": 1
+      "type": 1,
+      "test": 1
     }
   },
   "folders": [
@@ -67,6 +68,13 @@
       "fileCount": 1,
       "categories": {
         "other": 1
+      }
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/tests/fixtures/firebase-project/functions/src",
+      "fileCount": 1,
+      "categories": {
+        "test": 1
       }
     }
   ],
@@ -199,6 +207,11 @@
     {
       "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/src/mcp/server.ts",
       "category": "other",
+      "size": 0
+    },
+    {
+      "path": "../../Users/Matheus Pimenta/Pictures/Pacotes-Pessoais/ai-tool/tests/fixtures/firebase-project/functions/src/index.ts",
+      "category": "test",
       "size": 0
     }
   ],

@@ -1,0 +1,187 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-02-03T02:14:24.292Z",
+  "files": {
+    "functions/src/index.ts": {
+      "path": "functions/src/index.ts",
+      "category": "other",
+      "symbols": [
+        {
+          "name": "test1",
+          "file": "functions/src/index.ts",
+          "line": 6,
+          "kind": "trigger",
+          "signature": "export const test1 = onCall(...)",
+          "isExported": true,
+          "triggerInfo": {
+            "triggerType": "onCall"
+          }
+        },
+        {
+          "name": "test2",
+          "file": "functions/src/index.ts",
+          "line": 11,
+          "kind": "trigger",
+          "signature": "export const test2 = onRequest(...)",
+          "isExported": true,
+          "triggerInfo": {
+            "triggerType": "onRequest"
+          }
+        },
+        {
+          "name": "test3",
+          "file": "functions/src/index.ts",
+          "line": 16,
+          "kind": "trigger",
+          "signature": "export const test3 = onDocumentCreated(...)",
+          "isExported": true,
+          "triggerInfo": {
+            "triggerType": "onDocumentCreated",
+            "triggerPath": "users/{userId}"
+          }
+        },
+        {
+          "name": "REGION",
+          "file": "functions/src/index.ts",
+          "line": 21,
+          "kind": "const",
+          "signature": "const REGION = \"southamerica-east1\"",
+          "isExported": false
+        },
+        {
+          "name": "healthCheck",
+          "file": "functions/src/index.ts",
+          "line": 22,
+          "kind": "trigger",
+          "signature": "export const healthCheck = onRequest(...)",
+          "isExported": true,
+          "triggerInfo": {
+            "triggerType": "onRequest"
+          }
+        },
+        {
+          "name": "test5",
+          "file": "functions/src/index.ts",
+          "line": 27,
+          "kind": "trigger",
+          "signature": "export const test5 = onCall(...)",
+          "isExported": true,
+          "triggerInfo": {
+            "triggerType": "onCall"
+          }
+        }
+      ],
+      "imports": [
+        {
+          "source": "firebase-functions/v2/https",
+          "specifiers": [
+            "onCall",
+            "onRequest"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "firebase-functions/v2/firestore",
+          "specifiers": [
+            "onDocumentCreated"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "firebase-functions/v2",
+          "specifiers": [
+            "* as v2"
+          ],
+          "isTypeOnly": false
+        }
+      ],
+      "exports": [
+        "test1",
+        "test2",
+        "test3",
+        "healthCheck",
+        "test5"
+      ]
+    }
+  },
+  "symbolsByName": {
+    "test1": [
+      {
+        "name": "test1",
+        "file": "functions/src/index.ts",
+        "line": 6,
+        "kind": "trigger",
+        "signature": "export const test1 = onCall(...)",
+        "isExported": true,
+        "triggerInfo": {
+          "triggerType": "onCall"
+        }
+      }
+    ],
+    "test2": [
+      {
+        "name": "test2",
+        "file": "functions/src/index.ts",
+        "line": 11,
+        "kind": "trigger",
+        "signature": "export const test2 = onRequest(...)",
+        "isExported": true,
+        "triggerInfo": {
+          "triggerType": "onRequest"
+        }
+      }
+    ],
+    "test3": [
+      {
+        "name": "test3",
+        "file": "functions/src/index.ts",
+        "line": 16,
+        "kind": "trigger",
+        "signature": "export const test3 = onDocumentCreated(...)",
+        "isExported": true,
+        "triggerInfo": {
+          "triggerType": "onDocumentCreated",
+          "triggerPath": "users/{userId}"
+        }
+      }
+    ],
+    "REGION": [
+      {
+        "name": "REGION",
+        "file": "functions/src/index.ts",
+        "line": 21,
+        "kind": "const",
+        "signature": "const REGION = \"southamerica-east1\"",
+        "isExported": false
+      }
+    ],
+    "healthCheck": [
+      {
+        "name": "healthCheck",
+        "file": "functions/src/index.ts",
+        "line": 22,
+        "kind": "trigger",
+        "signature": "export const healthCheck = onRequest(...)",
+        "isExported": true,
+        "triggerInfo": {
+          "triggerType": "onRequest"
+        }
+      }
+    ],
+    "test5": [
+      {
+        "name": "test5",
+        "file": "functions/src/index.ts",
+        "line": 27,
+        "kind": "trigger",
+        "signature": "export const test5 = onCall(...)",
+        "isExported": true,
+        "triggerInfo": {
+          "triggerType": "onCall"
+        }
+      }
+    ]
+  },
+  "fileCount": 1,
+  "symbolCount": 6
+}

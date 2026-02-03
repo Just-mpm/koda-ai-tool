@@ -53,6 +53,12 @@ export function detectFileAreas(
   // Verificar se autoDetect está habilitado (default: true)
   const autoDetect = config.settings?.autoDetect !== false;
 
+  // DEBUG: Log para verificar o valor
+  if (filePath.includes("useAuth.ts")) {
+    console.error(`[DEBUG] autoDetect for ${filePath}:`, autoDetect);
+    console.error(`[DEBUG] config.settings:`, JSON.stringify(config.settings));
+  }
+
   // 1. Verificar configuração manual (maior prioridade - SEMPRE executado)
   for (const [areaId, areaConfig] of Object.entries(config.areas)) {
     if (matchesAreaConfig(normalizedPath, areaConfig)) {

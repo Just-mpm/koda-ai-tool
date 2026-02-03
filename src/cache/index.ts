@@ -25,6 +25,7 @@ const SYMBOLS_FILE = "symbols.json";
 
 interface CacheMeta {
   version: string;
+  schemaVersion: string;
   createdAt: string;
   lastCheck: string;
   filesHash: string;
@@ -147,6 +148,12 @@ export function getCacheDir(cwd: string): string {
 }
 
 /**
+ * Versão mínima do schema de cache requerida.
+ * Incrementar quando houver mudanças incompatíveis no formato.
+ */
+const MIN_SCHEMA_VERSION = "2.0.0";
+
+/**
  * Verifica se o cache existe e é válido
  */
 export function isCacheValid(cwd: string): boolean {
@@ -159,6 +166,13 @@ export function isCacheValid(cwd: string): boolean {
 
   try {
     const meta: CacheMeta = JSON.parse(readFileSync(metaPath, "utf-8"));
+
+    // Verificar versão do schema (novo em v2.0.0)
+    if (!meta.schemaVersion || meta.schemaVersion < MIN_SCHEMA_VERSION) {
+      // Cache em formato antigo - precisará regenerar
+      return false;
+    }
+
     const currentHash = calculateFilesHash(cwd);
 
     // Cache válido se o hash dos arquivos não mudou
@@ -206,6 +220,7 @@ export function writeCache(cwd: string, file: string, data: unknown): void {
 export function updateCacheMeta(cwd: string): void {
   const meta: CacheMeta = {
     version: "1.0.0",
+    schemaVersion: "2.0.0",
     createdAt: new Date().toISOString(),
     lastCheck: new Date().toISOString(),
     filesHash: calculateFilesHash(cwd),

@@ -1,0 +1,99 @@
+{
+  "$schema": "./areas.schema.json",
+  "version": "1.0.0",
+  "ignore": ["node_modules/**", "dist/**", "build/**"],
+  "areas": {
+    "cli": {
+      "name": "CLI",
+      "description": "Entry point e interface de linha de comando",
+      "patterns": ["src/cli.ts", "src/index.ts"]
+    },
+    "commands": {
+      "name": "Commands",
+      "description": "Comandos CLI disponíveis (map, dead, impact, suggest, context, find, functions, areas, area, areas-init)",
+      "patterns": ["src/commands/**"],
+      "keywords": ["command", "cli"]
+    },
+    "areas-system": {
+      "name": "Areas System",
+      "description": "Sistema de detecção e configuração de áreas funcionais",
+      "patterns": ["src/areas/**"],
+      "keywords": ["areas", "detector", "patterns"]
+    },
+    "mcp": {
+      "name": "MCP Server",
+      "description": "Servidor MCP (Model Context Protocol) para integração",
+      "patterns": ["src/mcp/**"],
+      "keywords": ["mcp", "server", "protocol"]
+    },
+    "ts-analysis": {
+      "name": "TypeScript Analysis",
+      "description": "Análise AST TypeScript com ts-morph (extrator, indexador de símbolos)",
+      "patterns": ["src/ts/**"],
+      "keywords": ["ts-morph", "ast", "extractor", "indexer", "symbols"]
+    },
+    "cache": {
+      "name": "Cache",
+      "description": "Sistema de cache para grafo de dependências, código morto e símbolos",
+      "patterns": ["src/cache/**"],
+      "keywords": ["cache", "graph", "storage"]
+    },
+    "utils": {
+      "name": "Utils",
+      "description": "Utilitários compartilhados (detect, errors, firebase, similarity)",
+      "patterns": ["src/utils/**"],
+      "keywords": ["util", "helper"]
+    },
+    "formatters": {
+      "name": "Formatters",
+      "description": "Formatadores de saída (text, json)",
+      "patterns": ["src/formatters/**"],
+      "keywords": ["format", "output", "display"]
+    },
+    "types": {
+      "name": "Types",
+      "description": "Tipos TypeScript globais do projeto",
+      "patterns": ["src/types.ts"],
+      "keywords": ["type", "interface", "typedef"]
+    },
+    "tests": {
+      "name": "Tests",
+      "description": "Testes e fixtures para validação",
+      "patterns": ["tests/**"],
+      "keywords": ["test", "spec", "fixture"]
+    }
+  },
+  "descriptions": {
+    "src/cli.ts": "Entry point CLI com argument parsing",
+    "src/index.ts": "Exportações públicas do pacote",
+    "src/commands/map.ts": "Comando map - resumo do projeto",
+    "src/commands/dead.ts": "Comando dead - detecção de código morto",
+    "src/commands/impact.ts": "Comando impact - análise de impacto",
+    "src/commands/suggest.ts": "Comando suggest - sugestão de leitura",
+    "src/commands/context.ts": "Comando context - extração de assinaturas",
+    "src/commands/find.ts": "Comando find - busca de símbolos",
+    "src/commands/functions.ts": "Comando functions - lista Cloud Functions Firebase",
+    "src/commands/areas.ts": "Comando areas - lista áreas funcionais",
+    "src/commands/area.ts": "Comando area - detalhes de uma área",
+    "src/commands/areas-init.ts": "Comando areas-init - gera config de áreas",
+    "src/areas/detector.ts": "Detecção automática de áreas por padrões",
+    "src/areas/config.ts": "Gerenciamento de configuração de áreas",
+    "src/areas/patterns.ts": "Padrões globais de detecção",
+    "src/areas/index.ts": "Exportações do módulo areas",
+    "src/ts/extractor.ts": "Extrator AST com ts-morph",
+    "src/ts/indexer.ts": "Indexador de símbolos para busca",
+    "src/mcp/server.ts": "Servidor MCP com stdio",
+    "src/cache/index.ts": "Sistema de cache em disco",
+    "src/utils/detect.ts": "Detecção de framework/projeto",
+    "src/utils/errors.ts": "Tratamento de erros customizado",
+    "src/utils/firebase.ts": "Utilitários específicos para Firebase",
+    "src/utils/similarity.ts": "Algoritmo de similaridade de strings",
+    "src/formatters/text.ts": "Formatador de saída texto",
+    "src/types.ts": "Tipos globais do projeto"
+  },
+  "settings": {
+    "autoDetect": false,
+    "inferDescriptions": true,
+    "groupByCategory": true
+  }
+}

@@ -7,7 +7,7 @@
 
 import { readdirSync, statSync } from "fs";
 import { join, extname, resolve } from "path";
-import { Project, SyntaxKind } from "ts-morph";
+import { Project, SyntaxKind, Node } from "ts-morph";
 import type { FileCategory } from "../types.js";
 import { detectCategory } from "../utils/detect.js";
 
@@ -207,6 +207,41 @@ const FIREBASE_V2_TRIGGERS = new Set([
 ]);
 
 /**
+ * Constrói mapa de imports do arquivo
+ */
+function buildImportMap(sourceFile: any): Map<string, { name: string, module: string }> {
+  const map = new Map<string, { name: string, module: string }>();
+  
+  // Type guard simples pois sourceFile é any/complexo aqui
+  if (!sourceFile.getImportDeclarations) return map;
+
+  for (const decl of sourceFile.getImportDeclarations()) {
+    const module = decl.getModuleSpecifierValue();
+    
+    // Namespace: import * as v2 from ...
+    const ns = decl.getNamespaceImport();
+    if (ns) {
+      map.set(ns.getText(), { name: "*", module });
+    }
+
+    // Named: import { onCall, onRequest as req } ...
+    for (const named of decl.getNamedImports()) {
+      const alias = named.getAliasNode();
+      const name = named.getName();
+      const localName = alias ? alias.getText() : name;
+      map.set(localName, { name, module });
+    }
+    
+    // Default: import func from ...
+    const def = decl.getDefaultImport();
+    if (def) {
+      map.set(def.getText(), { name: "default", module });
+    }
+  }
+  return map;
+}
+
+/**
  * Indexa todo o projeto
  */
 export function indexProject(cwd: string): ProjectIndex {
@@ -387,12 +422,24 @@ export function indexProject(cwd: string): ProjectIndex {
         }
         // CallExpression - pode ser trigger Firebase (onCall, onDocumentCreated, etc)
         else if (initKind === SyntaxKind.CallExpression) {
-          const triggerName = extractFirebaseTriggerName(init, filePath, name);
-          
+          const importMap = buildImportMap(sourceFile);
+
+          // Debug: mostrar imports detectados
+          if (DEBUG_FUNCTIONS && filePath.includes("functions/src/")) {
+            const initText = init.getText().slice(0, 100).replace(/\s+/g, ' ');
+            debugFunctions(`\n[CallExpression] ${filePath}:${varDecl.getStartLineNumber()}`);
+            debugFunctions(`  Variável: ${name}`);
+            debugFunctions(`  Código: ${initText}...`);
+            debugFunctions(`  Imports encontrados: ${importMap.size}`);
+            importMap.forEach((info, key) => {
+              debugFunctions(`    - ${key} -> ${info.name} from ${info.module}`);
+            });
+          }
+
+          const triggerName = extractFirebaseTriggerName(init, filePath, name, importMap);
+
           // Debug: mostrar CallExpressions em arquivos de functions
           if (DEBUG_FUNCTIONS && filePath.includes("functions/src/")) {
-            const initText = init.getText().slice(0, 80).replace(/\s+/g, ' ');
-            debugFunctions(`Analisando: ${filePath}:${varDecl.getStartLineNumber()} - ${name} = ${initText}...`);
             if (triggerName) {
               debugFunctions(`  ✓✓✓ Trigger FINAL detectado: ${triggerName}`);
             } else {
@@ -675,11 +722,103 @@ function inferSymbolKind(name: string, context: "function" | "const"): SymbolInf
  * - v2.https.onCall(...) - com import v2
  * - onCall<{ ... }>(...) - com type parameters
  */
-function extractFirebaseTriggerName(init: { getKind(): SyntaxKind; getText(): string }, filePath?: string, varName?: string): string | null {
+function extractFirebaseTriggerName(
+  init: Node,
+  filePath?: string,
+  varName?: string,
+  importMap?: Map<string, { name: string, module: string }>
+): string | null {
   const text = init.getText().trim();
-  
+
   // Debug: mostrar texto sendo analisado
   const shouldDebug = DEBUG_FUNCTIONS && filePath && filePath.includes("functions/src/");
+
+  if (shouldDebug) {
+    debugFunctions(`[extractFirebaseTriggerName] Iniciando análise`);
+    debugFunctions(`  VarName: ${varName}`);
+    debugFunctions(`  Node Kind: ${init.getKindName()} (${init.getKind()})`);
+    debugFunctions(`  É CallExpression: ${Node.isCallExpression(init)}`);
+    debugFunctions(`  ImportMap disponível: ${importMap ? 'SIM' : 'NÃO'}`);
+  }
+
+  // 1. Tentativa via AST e Imports (Mais preciso)
+  if (importMap && Node.isCallExpression(init)) {
+    const expr = init.getExpression();
+
+    if (shouldDebug) {
+      debugFunctions(`  Expression Kind: ${expr.getKindName()} (${expr.getKind()})`);
+      debugFunctions(`  É Identifier: ${Node.isIdentifier(expr)}`);
+      debugFunctions(`  É PropertyAccess: ${Node.isPropertyAccessExpression(expr)}`);
+    }
+
+    // Caso 1: Chamada direta: onCall(...)
+    if (Node.isIdentifier(expr)) {
+      const name = expr.getText();
+      const importInfo = importMap.get(name);
+
+      if (shouldDebug) {
+        debugFunctions(`  [Caso 1: Identifier] Nome: ${name}`);
+        debugFunctions(`    ImportInfo: ${importInfo ? JSON.stringify(importInfo) : 'não encontrado'}`);
+      }
+
+      // Se importado de firebase-functions
+      if (importInfo && importInfo.module.includes("firebase-functions")) {
+        if (FIREBASE_V2_TRIGGERS.has(importInfo.name)) {
+          if (shouldDebug) debugFunctions(`    ✓ Import detectado: ${name} -> ${importInfo.name} from ${importInfo.module}`);
+          return importInfo.name;
+        }
+      }
+
+      // Se for um trigger conhecido (mesmo sem import detectado, assume global/auto-import)
+      if (FIREBASE_V2_TRIGGERS.has(name)) {
+        if (shouldDebug) debugFunctions(`    ✓ Trigger conhecido detectado: ${name}`);
+        return name;
+      }
+    }
+
+    // Caso 2: Property Access: v2.https.onCall(...) ou functions.https.onCall(...)
+    else if (Node.isPropertyAccessExpression(expr)) {
+      // Obter o nome final (ex: onCall, onRequest)
+      const lastPart = expr.getName();
+
+      if (shouldDebug) {
+        debugFunctions(`  [Caso 2: PropertyAccess] Última parte: ${lastPart}`);
+      }
+
+      if (FIREBASE_V2_TRIGGERS.has(lastPart)) {
+        // Verificar se a raiz vem do firebase
+        // Ex: v2.https.onCall -> raiz v2
+        let root = expr.getExpression();
+        let depth = 0;
+        while (Node.isPropertyAccessExpression(root) && depth < 10) {
+          root = root.getExpression();
+          depth++;
+        }
+
+        if (Node.isIdentifier(root)) {
+          const rootName = root.getText();
+          const importInfo = importMap.get(rootName);
+
+          if (shouldDebug) {
+            debugFunctions(`    Raiz: ${rootName} (profundidade: ${depth})`);
+            debugFunctions(`    ImportInfo da raiz: ${importInfo ? JSON.stringify(importInfo) : 'não encontrado'}`);
+          }
+
+          if (importInfo && importInfo.module.includes("firebase-functions")) {
+             if (shouldDebug) debugFunctions(`    ✓ Chain detectada: ${rootName}...${lastPart} from ${importInfo.module}`);
+             return lastPart;
+          }
+
+          // Heurística para v2, functions, firebase, admin
+          if (["v2", "functions", "firebase", "admin"].includes(rootName)) {
+             if (shouldDebug) debugFunctions(`    ✓ Heurística: raiz "${rootName}" é conhecida do Firebase`);
+             return lastPart;
+          }
+        }
+      }
+    }
+  }
+
   if (shouldDebug && varName) {
     debugFunctions(`  [regex] Analisando texto: "${text.slice(0, 60)}..."`);
   }
