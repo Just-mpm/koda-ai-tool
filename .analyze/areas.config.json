@@ -1,13 +1,13 @@
 {
   "$schema": "./areas.schema.json",
   "version": "1.0.0",
-  "ignore": ["node_modules/**", "dist/**", "build/**"],
+  "ignore": [
+    "node_modules/**",
+    "dist/**",
+    "*.config.js",
+    "*.config.ts"
+  ],
   "areas": {
-    "cli": {
-      "name": "CLI",
-      "description": "Entry point e interface de linha de comando",
-      "patterns": ["src/cli.ts", "src/index.ts"]
-    },
     "commands": {
       "name": "Commands",
       "description": "Comandos CLI disponíveis (map, dead, impact, suggest, context, find, functions, areas, area, areas-init)",
@@ -18,25 +18,19 @@
       "name": "Areas System",
       "description": "Sistema de detecção e configuração de áreas funcionais",
       "patterns": ["src/areas/**"],
-      "keywords": ["areas", "detector", "patterns"]
-    },
-    "mcp": {
-      "name": "MCP Server",
-      "description": "Servidor MCP (Model Context Protocol) para integração",
-      "patterns": ["src/mcp/**"],
-      "keywords": ["mcp", "server", "protocol"]
-    },
-    "ts-analysis": {
-      "name": "TypeScript Analysis",
-      "description": "Análise AST TypeScript com ts-morph (extrator, indexador de símbolos)",
-      "patterns": ["src/ts/**"],
-      "keywords": ["ts-morph", "ast", "extractor", "indexer", "symbols"]
+      "keywords": ["area", "detector"]
     },
     "cache": {
       "name": "Cache",
       "description": "Sistema de cache para grafo de dependências, código morto e símbolos",
       "patterns": ["src/cache/**"],
-      "keywords": ["cache", "graph", "storage"]
+      "keywords": ["cache"]
+    },
+    "typescript-analysis": {
+      "name": "TypeScript Analysis",
+      "description": "Análise AST TypeScript com ts-morph (extrator, indexador de símbolos)",
+      "patterns": ["src/ts/**"],
+      "keywords": ["ts-morph", "extractor", "indexer"]
     },
     "utils": {
       "name": "Utils",
@@ -48,48 +42,51 @@
       "name": "Formatters",
       "description": "Formatadores de saída (text, json)",
       "patterns": ["src/formatters/**"],
-      "keywords": ["format", "output", "display"]
+      "keywords": ["format", "output"]
+    },
+    "mcp-server": {
+      "name": "MCP Server",
+      "description": "Servidor MCP (Model Context Protocol) para integração",
+      "patterns": ["src/mcp/**"],
+      "keywords": ["mcp", "server"]
+    },
+    "cli": {
+      "name": "CLI",
+      "description": "Entry point e interface de linha de comando",
+      "patterns": ["src/cli.ts"],
+      "keywords": ["cli", "entry"]
     },
     "types": {
       "name": "Types",
       "description": "Tipos TypeScript globais do projeto",
       "patterns": ["src/types.ts"],
-      "keywords": ["type", "interface", "typedef"]
-    },
-    "tests": {
-      "name": "Tests",
-      "description": "Testes e fixtures para validação",
-      "patterns": ["tests/**"],
-      "keywords": ["test", "spec", "fixture"]
+      "keywords": ["types", "interfaces"]
     }
   },
   "descriptions": {
-    "src/cli.ts": "Entry point CLI com argument parsing",
-    "src/index.ts": "Exportações públicas do pacote",
-    "src/commands/map.ts": "Comando map - resumo do projeto",
-    "src/commands/dead.ts": "Comando dead - detecção de código morto",
-    "src/commands/impact.ts": "Comando impact - análise de impacto",
-    "src/commands/suggest.ts": "Comando suggest - sugestão de leitura",
-    "src/commands/context.ts": "Comando context - extração de assinaturas",
-    "src/commands/find.ts": "Comando find - busca de símbolos",
-    "src/commands/functions.ts": "Comando functions - lista Cloud Functions Firebase",
-    "src/commands/areas.ts": "Comando areas - lista áreas funcionais",
-    "src/commands/area.ts": "Comando area - detalhes de uma área",
-    "src/commands/areas-init.ts": "Comando areas-init - gera config de áreas",
-    "src/areas/detector.ts": "Detecção automática de áreas por padrões",
-    "src/areas/config.ts": "Gerenciamento de configuração de áreas",
-    "src/areas/patterns.ts": "Padrões globais de detecção",
-    "src/areas/index.ts": "Exportações do módulo areas",
-    "src/ts/extractor.ts": "Extrator AST com ts-morph",
-    "src/ts/indexer.ts": "Indexador de símbolos para busca",
-    "src/mcp/server.ts": "Servidor MCP com stdio",
-    "src/cache/index.ts": "Sistema de cache em disco",
-    "src/utils/detect.ts": "Detecção de framework/projeto",
-    "src/utils/errors.ts": "Tratamento de erros customizado",
+    "src/commands/map.ts": "Comando principal - gera mapa do projeto com Skott",
+    "src/commands/dead.ts": "Detecta código morto usando Knip",
+    "src/commands/impact.ts": "Analisa impacto de modificar um arquivo",
+    "src/commands/suggest.ts": "Sugere arquivos para ler antes de editar",
+    "src/commands/context.ts": "Extrai assinaturas de funções e tipos (sem implementação)",
+    "src/commands/find.ts": "Busca símbolos no código (definição + usos)",
+    "src/commands/functions.ts": "Lista Firebase Cloud Functions do projeto",
+    "src/commands/areas.ts": "Lista todas as áreas funcionais do projeto",
+    "src/commands/area.ts": "Mostra detalhes de uma área específica",
+    "src/commands/areas-init.ts": "Gera configuração inicial de áreas",
+    "src/areas/detector.ts": "Detecta áreas de arquivos baseado em configuração manual",
+    "src/areas/config.ts": "Gerencia configuração de áreas (leitura/escrita)",
+    "src/ts/extractor.ts": "Extrai assinaturas de TypeScript usando ts-morph",
+    "src/ts/indexer.ts": "Indexa símbolos para busca rápida (definição + usos)",
+    "src/cache/index.ts": "Sistema de cache para resultados de análise",
+    "src/mcp/server.ts": "Servidor MCP para integração com Claude Desktop",
+    "src/formatters/text.ts": "Formatador de saída em texto",
+    "src/utils/detect.ts": "Detecta categoria de arquivos (page, component, hook, etc)",
+    "src/utils/errors.ts": "Utilitários de erro e formatação de mensagens",
     "src/utils/firebase.ts": "Utilitários específicos para Firebase",
-    "src/utils/similarity.ts": "Algoritmo de similaridade de strings",
-    "src/formatters/text.ts": "Formatador de saída texto",
-    "src/types.ts": "Tipos globais do projeto"
+    "src/utils/similarity.ts": "Algoritmos de similaridade de strings",
+    "src/cli.ts": "Entry point CLI com commander",
+    "src/types.ts": "Tipos globais compartilhados"
   },
   "settings": {
     "autoDetect": false,

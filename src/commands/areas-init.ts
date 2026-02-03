@@ -1,12 +1,14 @@
 /**
  * Comando AREAS INIT - Gera configuração inicial de áreas
+ *
+ * Cria um arquivo de configuração com template completo
+ * que o usuário pode customizar manualmente
  */
 
 import { readdirSync, statSync } from "fs";
 import { join, extname } from "path";
-import type { AreasConfigFile, AreaConfig } from "../types.js";
-import { readConfig, writeConfig, configExists } from "../areas/config.js";
-import { detectFileAreas, getAreaName, getAreaDescription } from "../areas/detector.js";
+import type { AreasConfigFile } from "../types.js";
+import { writeConfig, configExists } from "../areas/config.js";
 
 /**
  * Extensões de código suportadas
@@ -35,6 +37,181 @@ interface InitOptions {
 }
 
 /**
+ * Template de configuração inicial com áreas comuns
+ */
+function createInitialConfig(files: string[]): AreasConfigFile {
+  // Detectar padrões de ignore sugeridos
+  const suggestedIgnore = detectSuggestedIgnorePatterns(files);
+
+  // Detectar framework usado
+  const framework = detectFramework(files);
+
+  return {
+    $schema: "./areas.schema.json",
+    version: "1.0.0",
+    ignore: suggestedIgnore,
+    areas: getFrameworkAreas(framework),
+    descriptions: {},
+    settings: {
+      autoDetect: false,
+      inferDescriptions: true,
+      groupByCategory: true,
+    },
+  };
+}
+
+/**
+ * Detecta o framework baseado na estrutura de pastas
+ */
+function detectFramework(files: string[]): string {
+  const hasAppDir = files.some(f => f.startsWith("app/"));
+  const hasPagesDir = files.some(f => f.startsWith("pages/"));
+  const hasSrcDir = files.some(f => f.startsWith("src/"));
+
+  if (hasAppDir) return "nextjs-app";
+  if (hasPagesDir) return "nextjs-pages";
+  if (hasSrcDir) return "vite";
+  return "generic";
+}
+
+/**
+ * Retorna áreas sugeridas baseadas no framework
+ */
+function getFrameworkAreas(framework: string): Record<string, any> {
+  switch (framework) {
+    case "nextjs-app":
+      return {
+        auth: {
+          name: "Autenticação",
+          description: "Login, signup e gerenciamento de sessão",
+          patterns: [
+            "app/**/auth/**",
+            "app/**/login/**",
+            "app/**/signup/**",
+            "app/**/cadastro/**",
+            "components/auth/**",
+          ],
+          keywords: ["auth", "login", "signup", "signin"],
+        },
+        dashboard: {
+          name: "Dashboard",
+          description: "Painel principal do usuário",
+          patterns: ["app/**/dashboard/**", "components/dashboard/**"],
+          keywords: ["dashboard"],
+        },
+        admin: {
+          name: "Administração",
+          description: "Painel administrativo",
+          patterns: ["app/**/admin/**", "components/admin/**"],
+          keywords: ["admin"],
+        },
+        profile: {
+          name: "Perfil",
+          description: "Perfil e configurações do usuário",
+          patterns: ["app/**/profile/**", "app/**/perfil/**", "app/**/settings/**", "app/**/configuracoes/**"],
+          keywords: ["profile", "perfil", "settings", "configuracoes"],
+        },
+        billing: {
+          name: "Pagamentos",
+          description: "Sistema de pagamentos e assinaturas",
+          patterns: ["components/stripe/**", "components/payment/**", "lib/stripe/**"],
+          keywords: ["stripe", "payment", "billing", "subscription", "checkout"],
+        },
+        checkout: {
+          name: "Checkout",
+          description: "Fluxo de checkout e finalização de compra",
+          patterns: ["app/**/checkout/**", "components/checkout/**"],
+          keywords: ["checkout"],
+        },
+        "shared-ui": {
+          name: "UI Compartilhada",
+          description: "Componentes de UI reutilizáveis (botões, inputs, etc)",
+          patterns: ["components/ui/**", "components/common/**", "components/shared/**"],
+          keywords: [],
+        },
+        api: {
+          name: "API Routes",
+          description: "Rotas de API do Next.js",
+          patterns: ["app/**/api/**"],
+          keywords: ["api"],
+        },
+      };
+
+    case "nextjs-pages":
+      return {
+        auth: {
+          name: "Autenticação",
+          description: "Login, signup e gerenciamento de sessão",
+          patterns: [
+            "pages/**/auth/**",
+            "pages/**/login/**",
+            "pages/**/signup/**",
+            "components/auth/**",
+          ],
+          keywords: ["auth", "login", "signup"],
+        },
+        dashboard: {
+          name: "Dashboard",
+          description: "Painel principal do usuário",
+          patterns: ["pages/**/dashboard/**", "components/dashboard/**"],
+          keywords: ["dashboard"],
+        },
+        api: {
+          name: "API Routes",
+          description: "Rotas de API do Next.js (pages/api)",
+          patterns: ["pages/api/**"],
+          keywords: ["api"],
+        },
+        "shared-ui": {
+          name: "UI Compartilhada",
+          description: "Componentes de UI reutilizáveis",
+          patterns: ["components/ui/**", "components/common/**"],
+          keywords: [],
+        },
+      };
+
+    case "vite":
+      return {
+        auth: {
+          name: "Autenticação",
+          description: "Login, signup e gerenciamento de sessão",
+          patterns: ["src/pages/**/auth/**", "src/pages/**/login/**", "components/auth/**"],
+          keywords: ["auth", "login", "signup"],
+        },
+        dashboard: {
+          name: "Dashboard",
+          description: "Painel principal do usuário",
+          patterns: ["src/pages/**/dashboard/**", "components/dashboard/**"],
+          keywords: ["dashboard"],
+        },
+        "shared-ui": {
+          name: "UI Compartilhada",
+          description: "Componentes de UI reutilizáveis",
+          patterns: ["components/ui/**", "components/common/**"],
+          keywords: [],
+        },
+      };
+
+    default:
+      // Generic - template mínimo
+      return {
+        auth: {
+          name: "Autenticação",
+          description: "Login e sessão",
+          patterns: ["**/auth/**", "**/login/**"],
+          keywords: ["auth", "login"],
+        },
+        "shared-ui": {
+          name: "UI Compartilhada",
+          description: "Componentes reutilizáveis",
+          patterns: ["components/ui/**", "components/common/**"],
+          keywords: [],
+        },
+      };
+  }
+}
+
+/**
  * Executa o comando AREAS INIT
  */
 export async function areasInit(options: InitOptions = {}): Promise<string> {
@@ -57,140 +234,88 @@ Ou edite manualmente o arquivo existente.
     // 2. Listar todos os arquivos
     const allFiles = getAllCodeFiles(cwd);
 
-    // 3. Detectar áreas e contar arquivos
-    const currentConfig = readConfig(cwd);
-    const areaCounts = new Map<string, Set<string>>();
+    // 3. Criar configuração inicial com template
+    const newConfig = createInitialConfig(allFiles);
 
-    for (const filePath of allFiles) {
-      const areas = detectFileAreas(filePath, currentConfig);
-      for (const areaId of areas) {
-        if (!areaCounts.has(areaId)) {
-          areaCounts.set(areaId, new Set());
-        }
-        areaCounts.get(areaId)!.add(filePath);
-      }
-    }
-
-    // 4. Gerar padrões para cada área detectada
-    const generatedAreas: Record<string, AreaConfig> = {};
-
-    for (const [areaId, files] of areaCounts) {
-      // Encontrar padrões comuns
-      const patterns = inferPatternsFromFiles([...files]);
-
-      generatedAreas[areaId] = {
-        name: getAreaName(areaId, currentConfig),
-        description: getAreaDescription(areaId, currentConfig),
-        patterns,
-      };
-    }
-
-    // 5. Detectar padrões sugeridos para ignore
-    const suggestedIgnore = detectSuggestedIgnorePatterns(allFiles);
-
-    // 6. Criar configuração
-    const newConfig: AreasConfigFile = {
-      $schema: "./areas.schema.json",
-      version: "1.0.0",
-      ignore: suggestedIgnore,
-      areas: generatedAreas,
-      descriptions: {},
-      settings: {
-        autoDetect: true,
-        inferDescriptions: true,
-        groupByCategory: true,
-      },
-    };
-
-    // 6. Salvar configuração
+    // 4. Salvar configuração
     writeConfig(cwd, newConfig);
 
-    // 7. Recalcular arquivos sem área com a nova configuração
-    // (após salvar, a nova config com as áreas geradas passa a valer)
-    const unmappedCount = allFiles.filter(
-      (f) => detectFileAreas(f, newConfig).length === 0
-    ).length;
+    // 5. Detectar framework
+    const framework = detectFramework(allFiles);
+    const frameworkName = {
+      "nextjs-app": "Next.js (App Router)",
+      "nextjs-pages": "Next.js (Pages Router)",
+      "vite": "Vite/CRA",
+      "generic": "Genérico",
+    }[framework] || framework;
 
-    // 8. Montar output
-    const sortedAreas = [...areaCounts.entries()].sort((a, b) => b[1].size - a[1].size);
+    // 6. Contar áreas criadas
+    const areasCount = Object.keys(newConfig.areas).length;
 
+    // 7. Montar output
     let out = `
 ✅ Arquivo criado: .analyze/areas.config.json
 
-📦 Áreas detectadas: ${sortedAreas.length}
+🎯 Framework detectado: ${frameworkName}
+📦 Áreas configuradas: ${areasCount}
 `;
 
     // Mostrar padrões de ignore se houver
-    if (suggestedIgnore.length > 0) {
-      out += `🚫 Padrões ignorados: ${suggestedIgnore.length}\n`;
-    }
-    out += `\n`;
-
-    for (const [areaId, files] of sortedAreas.slice(0, 15)) {
-      const name = getAreaName(areaId, newConfig);
-      out += `   ${name.padEnd(25)} ${files.size} arquivos\n`;
-    }
-
-    if (sortedAreas.length > 15) {
-      out += `   ... e mais ${sortedAreas.length - 15}\n`;
-    }
-
-    if (unmappedCount > 0) {
-      out += `
-⚠️ ${unmappedCount} arquivos sem área definida
-   Use 'ai-tool areas' para ver detalhes
-`;
-    }
-
-    if (suggestedIgnore.length > 0) {
-      out += `
-📋 Padrões adicionados ao ignore:\n`;
-      for (const pattern of suggestedIgnore) {
-        out += `   • ${pattern}\n`;
-      }
+    if (newConfig.ignore && newConfig.ignore.length > 0) {
+      out += `🚫 Padrões ignorados: ${newConfig.ignore.length}\n`;
     }
 
     out += `
-💡 Boas práticas:
-   - Ideal: 5-15 áreas (muitas áreas é difícil de navegar)
-   - Use patterns para pastas, keywords para arquivos espalhados
-   - Se uma área tem <3 arquivos, considere mesclar com outra
-   - Se tem >50 arquivos, considere dividir em sub-áreas
+📝 Próximos passos:
 
-📝 Como customizar:
-   1. Renomear áreas: altere o campo "name"
-   2. Ajustar padrões: edite "patterns" (glob) ou "keywords"
-   3. Adicionar descrições: campo "description" explica o domínio
-   4. Descrições de arquivos: use "descriptions" para documentos específicos
+1️⃣ Personalize as áreas:
+   Edite .analyze/areas.config.json e ajuste:
+   - Adicione suas áreas de negócio (ex: "pets", "veterinary", "activities")
+   - Ajuste os padrões (patterns) para cada área
+   - Renomeie áreas conforme seu domínio
 
-💡 Exemplo de customização:
+2️⃣ Adicione descrições (opcional):
+   "descriptions": {
+     "src/hooks/useAuth.ts": "Hook principal de autenticação",
+     "src/services/petService.ts": "Serviço de gerenciamento de pets"
+   }
 
-Antes (nome genérico detectado):
-  "user-profile": { "name": "User Profile", ... }
+3️⃣ Valide a configuração:
+   ai-tool areas              # Ver todas as áreas
+   ai-tool area auth          # Ver arquivos de uma área
+   ai-tool map                # Ver resumo do projeto
 
-Depois (renomeado para domínio de negócio):
-  "meu-perfil": { "name": "Meu Perfil", "description": "Edição de perfil do usuário" }
+💡 Dicas:
 
-⚙️ Quando usar autoDetect: false
-   - Quando quer controle total das áreas
-   - Quando a detecção automática está muito imprecisa
-   - Quando o projeto tem domínios muito específicos
+• Use patterns para pastas: "app/dashboard/**"
+• Use keywords para arquivos espalhados: ["auth", "login"]
+• Um arquivo pode pertencer a múltiplas áreas
+• Use "exclude" para remover arquivos específicos de uma área
 
-💡 Casos especiais:
-   - Arquivos compartilhados: adicione a múltiplas áreas
-   - Utils globais: crie área 'shared' ou use 'ignore'
-   - Monorepo: use 'patterns' com caminhos relativos à raiz
+📖 Exemplo completo:
 
-🔧 Manutenção:
-   - Atualize o config ao criar/mover arquivos
-   - Use 'ai-tool areas' para verificar arquivos sem área
-   - Use 'ai-tool area <nome>' para ver o que foi detectado
-
-📋 Próximos passos:
-   → Execute 'ai-tool areas' para ver o resultado
-   → Use 'ai-tool area <nome>' para validar uma área específica
-   → Execute 'ai-tool map' para ver o resumo atualizado
- `;
+{
+  "areas": {
+    "meus-pets": {
+      "name": "Meus Pets",
+      "description": "Listagem e gerenciamento de pets do usuário",
+      "patterns": [
+        "app/meus-pets/**",
+        "components/pets/**",
+        "hooks/usePets.*",
+        "services/petService.*"
+      ],
+      "keywords": ["pet", "animal"],
+      "exclude": ["components/pets/shared/**"] // opcional
+    },
+    "auth": {
+      "name": "Autenticação",
+      "patterns": ["app/**/auth/**", "components/auth/**"],
+      "keywords": ["auth", "login"]
+    }
+  }
+}
+`;
 
     return out.trim();
   } catch (error) {
@@ -200,72 +325,36 @@ Depois (renomeado para domínio de negócio):
 }
 
 /**
- * Infere padrões glob a partir de uma lista de arquivos
- */
-function inferPatternsFromFiles(files: string[]): string[] {
-  const patterns = new Set<string>();
-
-  // Agrupar por pasta pai
-  const folderGroups = new Map<string, string[]>();
-
-  for (const file of files) {
-    const parts = file.split("/");
-    if (parts.length > 1) {
-      // Pegar até 2 níveis de pasta
-      const folder = parts.slice(0, Math.min(3, parts.length - 1)).join("/");
-      if (!folderGroups.has(folder)) {
-        folderGroups.set(folder, []);
-      }
-      folderGroups.get(folder)!.push(file);
-    }
-  }
-
-  // Gerar padrões para pastas com múltiplos arquivos
-  for (const [folder, folderFiles] of folderGroups) {
-    if (folderFiles.length >= 2) {
-      patterns.add(`${folder}/**`);
-    } else {
-      // Arquivo único - adicionar caminho específico
-      patterns.add(folderFiles[0]);
-    }
-  }
-
-  // Adicionar arquivos na raiz
-  for (const file of files) {
-    if (!file.includes("/")) {
-      patterns.add(file);
-    }
-  }
-
-  return [...patterns].sort();
-}
-
-/**
  * Detecta padrões sugeridos para ignore baseado nos arquivos do projeto
  */
 function detectSuggestedIgnorePatterns(files: string[]): string[] {
   const patterns: string[] = [];
 
+  // Padrões básicos sempre incluídos
+  patterns.push("node_modules/**");
+
   // Verificar functions/lib/
-  if (files.some(f => f.includes("functions/lib/"))) {
+  if (files.some((f) => f.includes("functions/lib/"))) {
     patterns.push("functions/lib/**");
   }
 
   // Verificar arquivos de teste
-  const testCount = files.filter(f => /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f)).length;
+  const testCount = files.filter(
+    (f) => /\.(test|spec)\.(ts|tsx|js|jsx)$/.test(f)
+  ).length;
   if (testCount > 3) {
     patterns.push("**/*.test.{ts,tsx,js,jsx}");
     patterns.push("**/*.spec.{ts,tsx,js,jsx}");
   }
 
   // Verificar arquivos .d.ts
-  const dtsCount = files.filter(f => f.endsWith(".d.ts")).length;
+  const dtsCount = files.filter((f) => f.endsWith(".d.ts")).length;
   if (dtsCount > 2) {
     patterns.push("**/*.d.ts");
   }
 
   // Verificar configurações
-  const configCount = files.filter(f => 
+  const configCount = files.filter((f) =>
     /\.(config|conf)\.(ts|js|mjs|cjs)$/.test(f)
   ).length;
   if (configCount > 2) {
@@ -301,7 +390,7 @@ function getAllCodeFiles(dir: string, files: string[] = [], baseDir: string = di
             // Caminho relativo ao baseDir
             // Adiciona 1 para remover a barra separadora
             const relativePath = fullPath.slice(baseDir.length + 1).replace(/\\/g, "/");
-            // Verificação de segurança: ignora se o caminho relativo for invazio ou começar com ..
+            // Verificação de segurança: ignora se o caminho relativo for vazio ou começar com ..
             if (relativePath && !relativePath.startsWith("..")) {
               files.push(relativePath);
             }

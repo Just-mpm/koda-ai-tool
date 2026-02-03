@@ -14,7 +14,6 @@ import {
   inferFileDescription,
   isFileIgnored,
 } from "../areas/detector.js";
-import { AREA_NAMES } from "../areas/patterns.js";
 import { formatAreaDetailText } from "../formatters/text.js";
 import { formatAreaNotFound as formatAreaNotFoundError } from "../utils/errors.js";
 
@@ -63,22 +62,14 @@ function resolveAreaId(
     }
   }
 
-  // 3. Verificar padrões predefinidos (AREA_NAMES)
-  for (const [id, name] of Object.entries(AREA_NAMES)) {
-    const nameNormalized = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (nameNormalized === targetLower) {
-      return id;
-    }
-  }
-
-  // 4. Match parcial no ID
+  // 3. Match parcial no ID
   for (const id of Object.keys(config.areas)) {
     if (id.toLowerCase().includes(targetLower)) {
       return id;
     }
   }
 
-  // 5. Match parcial em áreas detectadas automaticamente
+  // 4. Match parcial em áreas detectadas
   const detectedAreas = new Set<string>();
   for (const filePath of allFiles) {
     const areas = detectFileAreas(filePath, config);

@@ -15,23 +15,22 @@ Pacote npm para analise de dependencias, codigo morto e areas funcionais em proj
 - **`context <arquivo>`** - Extrai assinaturas de funcoes e tipos (sem implementacao)
 - **`context --area=<nome>`** - Contexto consolidado de toda uma area (tipos, hooks, funcoes, etc)
 
-### Busca de Simbolos (novo em 0.6.0)
+### Busca de Simbolos
 - **`find <termo>`** - Busca simbolos no codigo (definicao + usos)
-- **`find <termo> --type=function|type|const|component|hook|trigger`** - Filtra por tipo
+- **`find <termo> --type=function|type|const|component|hook`** - Filtra por tipo
 - **`find <termo> --area=<nome>`** - Busca apenas em uma area
 - **`find <termo> --def`** - Mostra apenas definicoes
 - **`find <termo> --refs`** - Mostra apenas referencias/usos
 
-### Firebase Cloud Functions (novo em 0.7.0)
+### Firebase Cloud Functions
 - **`functions`** - Lista todas as Cloud Functions do projeto
 - **`functions --trigger=onCall`** - Filtra por tipo de trigger
 - **`find <nome> --type=trigger`** - Busca Cloud Functions especificas
-- **`find <nome> --type=function`** - Inclui Cloud Functions + funcoes normais
 
-### Areas Funcionais
+### Areas Funcionais (Configuração Manual Obrigatória)
 - **`areas`** - Lista todas as areas/dominios funcionais do projeto
-- **`area <nome>`** - Mostra arquivos de uma area especifica
-- **`areas init`** - Gera arquivo de configuracao de areas
+- **`area <nome>`** - Mostra arquivos de uma area especifica (use ID ou Name)
+- **`areas init`** - Gera template de configuracao de areas
 
 ## Servidor MCP
 
@@ -48,9 +47,9 @@ Tools expostas:
 - `aitool_list_areas` - Lista areas funcionais do projeto
 - `aitool_area_detail` - Arquivos de uma area especifica
 - `aitool_areas_init` - Gera config de areas
-- `aitool_area_context` - Contexto consolidado de toda uma area (novo em 0.6.0)
-- `aitool_find` - Busca simbolos no codigo: definicao + usos (novo em 0.6.0)
-- `aitool_list_functions` - Lista Cloud Functions Firebase (novo em 0.7.0)
+- `aitool_area_context` - Contexto consolidado de toda uma area
+- `aitool_find` - Busca simbolos no codigo: definicao + usos
+- `aitool_list_functions` - Lista Cloud Functions Firebase
 
 ## Frameworks suportados
 
@@ -75,12 +74,12 @@ Tools expostas:
 ```
 src/
   commands/     # Comandos CLI (map, dead, impact, suggest, context, find, functions, areas, area)
-  areas/        # Sistema de deteccao de areas
+  areas/        # Sistema de configuracao manual de areas
   mcp/          # Servidor MCP
   ts/           # Extrator TypeScript (ts-morph) + indexador de simbolos
   formatters/   # Formatadores text/json
   cache/        # Sistema de cache (graph, dead, symbols)
-  utils/        # Utilitarios (detect, firebase, similarity, errors)
+  utils/        # Utilitarios (detect, errors, firebase, similarity)
 dist/           # Build compilado
 ```
 
@@ -115,8 +114,9 @@ npx ai-tool find submit --refs     # Apenas referencias/usos
 
 # Areas funcionais
 npx ai-tool areas                  # Lista todas as areas
-npx ai-tool areas init             # Gera configuracao inicial
-npx ai-tool area auth              # Arquivos da area "auth"
+npx ai-tool areas init             # Gera configuracao inicial (TEMPLATE)
+npx ai-tool area auth              # Arquivos da area "auth" (use ID)
+npx ai-tool area "Autenticação"    # Tambem funciona (use Name)
 npx ai-tool area auth --type=hook  # Apenas hooks da area "auth"
 npx ai-tool area dashboard --full  # Todos os arquivos da area
 
@@ -133,31 +133,94 @@ Opcoes: `--format=text|json`, `--cwd=<path>`, `--no-cache`, `--limit=<n>`, `--ty
 
 ## Configuracao de Areas
 
-O arquivo `.analyze/areas.config.json` permite personalizar as areas:
+**IMPORTANTE**: A partir da versão 0.8.0, o sistema de areas usa **APENAS configuracao manual**.
+
+Primeiro, execute `areas init` para gerar o template:
+
+```bash
+ai-tool areas init
+```
+
+Isso cria `.analyze/areas.config.json` com um template baseado no framework detectado.
+
+### Estrutura do Config
 
 ```json
 {
+  "$schema": "./areas.schema.json",
+  "version": "1.0.0",
+  "ignore": [
+    "docs/brainstorming/**",
+    "functions/lib/**",
+    "**/*.test.ts"
+  ],
   "areas": {
     "auth": {
       "name": "Autenticação",
       "description": "Login, signup e gerenciamento de sessão",
       "patterns": ["src/pages/Auth/**", "src/components/auth/**"],
       "keywords": ["auth", "login", "signup"]
+    },
+    "meus-pets": {
+      "name": "Meus Pets",
+      "description": "Gerenciamento de pets do usuário",
+      "patterns": ["app/meus-pets/**", "components/pets/**"],
+      "keywords": ["pet", "animal"],
+      "exclude": ["components/pets/shared/**"]
     }
   },
   "descriptions": {
-    "src/hooks/useAuth.ts": "Hook principal de autenticação"
+    "src/hooks/useAuth.ts": "Hook principal de autenticação",
+    "src/services/petService.ts": "Serviço de gerenciamento de pets"
   },
   "settings": {
-    "autoDetect": false
+    "autoDetect": false,
+    "inferDescriptions": true,
+    "groupByCategory": true
   }
 }
 ```
 
-### autoDetect
+| Campo | Descrição |
+|-------|-----------|
+| `ignore` | Padrões glob para ignorar arquivos/pastas globalmente |
+| `areas` | Definição manual de áreas com patterns e keywords |
+| `areas.<id>.name` | Nome amigável da área |
+| `areas.<id>.description` | Descrição do domínio de negócio |
+| `areas.<id>.patterns` | Padrões glob que identificam arquivos da área |
+| `areas.<id>.keywords` | Keywords no caminho do arquivo |
+| `areas.<id>.exclude` | Padrões para excluir arquivos específicos |
+| `descriptions` | Descrições manuais para arquivos específicos |
+| `settings.autoDetect` | **Sempre `false`** - configuração manual obrigatória |
+| `settings.inferDescriptions` | Infere descrições automaticamente baseado no nome |
 
-- `true` (default): usa config manual + padrões automáticos
-- `false`: usa APENAS a configuração manual (recomendado para projetos com domínios específicos)
+### Boas Práticas
+
+- Ideal: 5-15 áreas (muitas áreas é difícil de navegar)
+- Use patterns para pastas: `"app/dashboard/**"`
+- Use keywords para arquivos espalhados: `["auth", "login"]`
+- Um arquivo pode pertencer a múltiplas áreas
+- Use `exclude` para remover arquivos específicos de uma área
+
+### Consultando Areas
+
+Use **sempre o ID** para consultas mais rápidas:
+
+```bash
+# ID (recomendado)
+ai-tool area areas-system
+ai-tool area commands
+ai-tool area utils
+
+# Name (também funciona, com aspas se tiver espaço)
+ai-tool area "Areas System"
+ai-tool area "MCP Server"
+```
+
+O sistema resolve automaticamente:
+1. ID exato: `areas-system`
+2. Name amigável: `"Areas System"`
+3. Match parcial: `area` → `areas-system`
 
 ## Sugestões Inteligentes
 
@@ -171,9 +234,9 @@ $ ai-tool area auht
    → ai-tool area auth
 ```
 
-Funciona para arquivos e áreas, considerando tanto config manual quanto automática.
+Funciona para arquivos e áreas.
 
-## Firebase Cloud Functions (novo em 0.7.0)
+## Firebase Cloud Functions
 
 O ai-tool detecta automaticamente projetos Firebase e oferece suporte completo para Cloud Functions v2.
 

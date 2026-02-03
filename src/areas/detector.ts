@@ -1,15 +1,16 @@
 /**
  * Detector de áreas
  *
- * Detecta automaticamente a área de cada arquivo baseado em:
- * 1. Configuração manual (areas.config.json)
- * 2. Padrões de pasta (se autoDetect estiver habilitado)
- * 3. Keywords no nome (se autoDetect estiver habilitado)
+ * Detecta áreas baseado APENAS em configuração manual.
+ *
+ * A configuração é feita em .analyze/areas.config.json:
+ * - areas.<id>.patterns: glob patterns
+ * - areas.<id>.keywords: keywords no caminho
+ * - areas.<id>.exclude: padrões para excluir
  */
 
 import { minimatch } from "minimatch";
-import type { AreaConfig, AreasConfigFile, FileCategory } from "../types.js";
-import { FOLDER_PATTERNS, KEYWORD_PATTERNS, AREA_NAMES, AREA_DESCRIPTIONS } from "./patterns.js";
+import type { AreaConfig, AreasConfigFile } from "../types.js";
 
 /**
  * Verifica se um arquivo deve ser ignorado baseado nos padrões de ignore
@@ -29,75 +30,25 @@ export function isFileIgnored(filePath: string, config: AreasConfigFile): boolea
   return false;
 }
 
-interface AreaMatch {
-  area: string;
-  priority: number;
-  source: "config" | "folder" | "keyword";
-}
-
 /**
- * Detecta a(s) área(s) de um arquivo
+ * Detecta a(s) área(s) de um arquivo baseado APENAS na configuração manual
  * Retorna array porque um arquivo pode pertencer a múltiplas áreas
- *
- * Respeita settings.autoDetect:
- * - true (default): usa config + padrões automáticos
- * - false: usa APENAS a configuração manual
  */
 export function detectFileAreas(
   filePath: string,
   config: AreasConfigFile
 ): string[] {
   const normalizedPath = filePath.replace(/\\/g, "/");
-  const matches: AreaMatch[] = [];
+  const matches: string[] = [];
 
-  // Verificar se autoDetect está habilitado (default: true)
-  const autoDetect = config.settings?.autoDetect !== false;
-
-  // DEBUG: Log para verificar o valor
-  if (filePath.includes("useAuth.ts")) {
-    console.error(`[DEBUG] autoDetect for ${filePath}:`, autoDetect);
-    console.error(`[DEBUG] config.settings:`, JSON.stringify(config.settings));
-  }
-
-  // 1. Verificar configuração manual (maior prioridade - SEMPRE executado)
+  // Verificar configuração manual de cada área
   for (const [areaId, areaConfig] of Object.entries(config.areas)) {
     if (matchesAreaConfig(normalizedPath, areaConfig)) {
-      matches.push({ area: areaId, priority: 200, source: "config" });
+      matches.push(areaId);
     }
   }
 
-  // Se autoDetect está desabilitado, retornar apenas matches da config
-  if (!autoDetect) {
-    const unique = [...new Set(matches.map((m) => m.area))];
-    return unique;
-  }
-
-  // 2. Verificar padrões de pasta (apenas se autoDetect = true)
-  for (const { pattern, area, priority } of FOLDER_PATTERNS) {
-    if (pattern.test(normalizedPath)) {
-      // Não adicionar se já existe da config
-      if (!matches.some((m) => m.area === area && m.source === "config")) {
-        matches.push({ area, priority, source: "folder" });
-      }
-    }
-  }
-
-  // 3. Verificar keywords no nome do arquivo (apenas se autoDetect = true)
-  const fileName = normalizedPath.split("/").pop() || "";
-  for (const { keyword, area, priority } of KEYWORD_PATTERNS) {
-    if (keyword.test(fileName) || keyword.test(normalizedPath)) {
-      // Não adicionar se já existe
-      if (!matches.some((m) => m.area === area)) {
-        matches.push({ area, priority, source: "keyword" });
-      }
-    }
-  }
-
-  // Ordenar por prioridade e retornar únicas
-  const sorted = matches.sort((a, b) => b.priority - a.priority);
-  const unique = [...new Set(sorted.map((m) => m.area))];
-
-  return unique;
+  return matches;
 }
 
 /**
@@ -137,14 +88,9 @@ function matchesAreaConfig(filePath: string, config: AreaConfig): boolean {
  * Obtém o nome amigável de uma área
  */
 export function getAreaName(areaId: string, config: AreasConfigFile): string {
-  // Primeiro verificar config
+  // Verificar config
   if (config.areas[areaId]?.name) {
     return config.areas[areaId].name;
-  }
-
-  // Depois padrões
-  if (AREA_NAMES[areaId]) {
-    return AREA_NAMES[areaId];
   }
 
   // Fallback: capitalizar o id
@@ -158,13 +104,7 @@ export function getAreaName(areaId: string, config: AreasConfigFile): string {
  * Obtém a descrição de uma área
  */
 export function getAreaDescription(areaId: string, config: AreasConfigFile): string | undefined {
-  // Primeiro verificar config
-  if (config.areas[areaId]?.description) {
-    return config.areas[areaId].description;
-  }
-
-  // Depois padrões
-  return AREA_DESCRIPTIONS[areaId];
+  return config.areas[areaId]?.description;
 }
 
 /**
@@ -172,7 +112,7 @@ export function getAreaDescription(areaId: string, config: AreasConfigFile): str
  */
 export function inferFileDescription(
   filePath: string,
-  category: FileCategory
+  category: string
 ): string | undefined {
   const fileName = filePath.split("/").pop() || "";
   const fileNameNoExt = fileName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
@@ -238,7 +178,7 @@ export function inferFileDescription(
   }
 
   // Fallback baseado na categoria
-  const categoryDescriptions: Partial<Record<FileCategory, string>> = {
+  const categoryDescriptions: Partial<Record<string, string>> = {
     page: "Página",
     layout: "Layout",
     route: "API Route",

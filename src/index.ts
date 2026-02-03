@@ -132,8 +132,8 @@ export {
   getAreaName,
   getAreaDescription,
   inferFileDescription,
+  isFileIgnored,
 } from "./areas/detector.js";
-export { FOLDER_PATTERNS, KEYWORD_PATTERNS, AREA_NAMES, AREA_DESCRIPTIONS } from "./areas/patterns.js";
 
 // Versão - lida do package.json em runtime
 import { createRequire } from "module";

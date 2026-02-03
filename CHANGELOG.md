@@ -1,5 +1,54 @@
 # Changelog
 
+## [0.8.0] - 2025-02-03
+
+### Mudanças Importantes
+
+- **Sistema de áreas agora usa APENAS configuração manual**: Removida detecção automática de áreas
+  - `autoDetect: false` agora é o default (antes era `true`)
+  - Comando `areas init` gera template de configuração baseado no framework detectado
+  - Remove ~600 linhas de código (arquivo `patterns.ts` com patterns hardcoded)
+  - Configuração manual é obrigatória e mais transparente
+
+### Removido
+
+- **Detecção automática de áreas**: Removido arquivo `src/areas/patterns.ts` (441 linhas)
+  - Removidos patterns hardcoded para frameworks (Next.js, Vite, Remix, etc)
+  - Removidas constantes `FOLDER_PATTERNS`, `KEYWORD_PATTERNS`, `AREA_NAMES`, `AREA_DESCRIPTIONS`
+  - Removida lógica de `autoDetect` do `detector.ts` (agora usa apenas config manual)
+
+### Alterado
+
+- **`DEFAULT_CONFIG`**: `autoDetect` alterado de `true` para `false`
+- **`detector.ts`**: Simplificado para usar APENAS configuração manual
+  - Mantida função `inferFileDescription` para inferir descrições de arquivos
+  - Mantidas funções `getAreaName` e `getAreaDescription` (usam config)
+- **`areas init`**: Gera template robusto baseado no framework detectado
+  - Next.js (App Router e Pages Router): template com auth, dashboard, shared-ui, api
+  - Vite/CRA: template com auth, dashboard, shared-ui
+  - Genérico: template mínimo com auth e shared-ui
+
+### Corrigido
+
+- **Resolução de nomes de áreas**: Sistema aceita tanto ID quanto Name
+  - ID: `ai-tool area auth`
+  - Name: `ai-tool area "Autenticação"`
+  - Match parcial: `ai-tool area area` → resolve para `areas-system`
+
+### Adicionado
+
+- **Mensagem de erro clara**: Quando projeto não tem áreas configuradas
+  - Mostra "X arquivo(s) sem área definida"
+  - Sugere usar `areas init` para configurar
+- **Dicas de uso no README**: Como consultar áreas por ID ou Name
+
+### Benefícios
+
+✅ **Simplicidade** - 600 linhas a menos de código para manter
+✅ **Transparência** - Usuário vê exatamente o que está configurado
+✅ **Controle** - Domínios específicos funcionam perfeitamente
+✅ **Manutenibilidade** - Sem patterns genéricos para atualizar
+
 ## [0.7.10] - 2025-02-03
 
 ### Adicionado

@@ -13,7 +13,7 @@ const CONFIG_FILE = "areas.config.json";
 const CACHE_FILE = "areas.json";
 
 /**
- * Configuração padrão
+ * Configuração padrão com autoDetect desabilitado
  */
 export const DEFAULT_CONFIG: AreasConfigFile = {
   $schema: "./areas.schema.json",
@@ -22,7 +22,7 @@ export const DEFAULT_CONFIG: AreasConfigFile = {
   areas: {},
   descriptions: {},
   settings: {
-    autoDetect: true,
+    autoDetect: false,
     inferDescriptions: true,
     groupByCategory: true,
   },
@@ -63,7 +63,7 @@ export function readConfig(cwd: string): AreasConfigFile {
     const content = readFileSync(configPath, "utf-8");
     const config = JSON.parse(content) as AreasConfigFile;
 
-    // Merge com defaults para garantir que todas as propriedades existem
+    // Merge com defaults para garantir que todas as propriedades existam
     return {
       ...DEFAULT_CONFIG,
       ...config,

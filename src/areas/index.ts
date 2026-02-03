@@ -6,4 +6,3 @@
 
 export * from "./config.js";
 export * from "./detector.js";
-export * from "./patterns.js";
