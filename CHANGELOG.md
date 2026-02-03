@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.10] - 2025-02-03
+
+### Adicionado
+
+- **Melhorias na detecção de áreas**: Sistema de áreas agora detecta automaticamente mais padrões de organização
+
+### Corrigido
+
+- **Pequenas correções de bug e ajustes de performance**
+
 ## [0.7.7] - 2025-02-03
 
 ### Adicionado
