@@ -22,5 +22,7 @@ coverage/
 # Cache
 .cache/
 *.tsbuildinfo
+knip.json
+.knip.ai-tool.json
 
 IDEAS.md

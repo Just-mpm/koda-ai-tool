@@ -17,7 +17,7 @@
         "src/utils/firebase.ts"
       ],
       "body": {
-        "size": 7591,
+        "size": 7649,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -114,11 +114,12 @@
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
+        "src/areas/config.ts",
         "src/cache/index.ts",
         "src/utils/firebase.ts"
       ],
       "body": {
-        "size": 5141,
+        "size": 6296,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -374,5 +375,5 @@
     "src/mcp/server.ts",
     "tests/fixtures/firebase-project/functions/src/index.ts"
   ],
-  "timestamp": "2026-02-03T04:39:15.116Z"
+  "timestamp": "2026-02-04T18:03:35.275Z"
 }

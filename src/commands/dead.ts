@@ -6,9 +6,12 @@
  */
 
 import { execSync } from "child_process";
+import { writeFileSync, unlinkSync, existsSync } from "fs";
+import { join } from "path";
 import type { DeadOptions, DeadResult, DeadFile } from "../types.js";
 import { detectCategory } from "../utils/detect.js";
 import { formatDeadText } from "../formatters/text.js";
+import { getIgnorePatterns } from "../areas/config.js";
 import {
   isCacheValid,
   getCachedDeadResult,
@@ -38,6 +41,27 @@ interface KnipOutput {
 }
 
 /**
+ * Gera arquivo knip.json temporário baseado no ignore do areas.config
+ */
+function generateKnipConfig(cwd: string): string | null {
+  const ignorePatterns = getIgnorePatterns(cwd);
+
+  if (ignorePatterns.length === 0) {
+    return null; // Nenhum ignore, usar config do Knip
+  }
+
+  const knipConfig = {
+    $schema: "https://unpkg.com/knip@5/schema.json",
+    ignore: ignorePatterns,
+  };
+
+  const configPath = join(cwd, ".knip.ai-tool.json");
+  writeFileSync(configPath, JSON.stringify(knipConfig, null, 2), "utf-8");
+
+  return configPath;
+}
+
+/**
  * Executa o comando DEAD
  */
 export async function dead(options: DeadOptions = {}): Promise<string> {
@@ -62,8 +86,12 @@ export async function dead(options: DeadOptions = {}): Promise<string> {
     // Executar Knip com output JSON
     let knipOutput: KnipOutput;
 
+    // Gerar config temporária baseada no ignore do areas.config
+    const knipConfigPath = generateKnipConfig(cwd);
+    const configFlag = knipConfigPath ? `--config=${knipConfigPath}` : "";
+
     try {
-      const output = execSync("npx knip --reporter=json", {
+      const output = execSync(`npx knip ${configFlag} --reporter=json`, {
         cwd,
         encoding: "utf-8",
         maxBuffer: 50 * 1024 * 1024,
@@ -83,6 +111,15 @@ export async function dead(options: DeadOptions = {}): Promise<string> {
         }
       } else {
         knipOutput = {};
+      }
+    } finally {
+      // Limpar config temporária após execução
+      if (knipConfigPath && existsSync(knipConfigPath)) {
+        try {
+          unlinkSync(knipConfigPath);
+        } catch {
+          // Ignorar erro na remoção
+        }
       }
     }
 

@@ -5,7 +5,9 @@
     "node_modules/**",
     "dist/**",
     "*.config.js",
-    "*.config.ts"
+    "*.config.ts",
+    "src/test-unused.ts",
+    "DEAD_TEST.ts"
   ],
   "areas": {
     "commands": {
@@ -92,5 +94,6 @@
     "autoDetect": false,
     "inferDescriptions": true,
     "groupByCategory": true
-  }
+  },
+  "test": "modification"
 }

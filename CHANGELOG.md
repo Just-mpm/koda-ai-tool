@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.8.1] - 2025-02-04
+
+### Corrigido
+
+- **Bug crítico: Cache não atualiza corretamente**: Substituído hash XOR por soma aditiva para evitar colisões
+  - XOR causava colisões quando múltiplos arquivos mudavam (ex: 2 arquivos [1000, 2000] e 3 arquivos [500, 1228, 0] tinham mesmo XOR)
+  - Soma elimina colisões práticas e garante que cache seja invalidado corretamente
+  - Adicionado indicador de existência do `areas.config.json` no hash para detectar criação/remoção
+
+- **Bug: Ignore do areas.config não respeitado pelo Knip**: Comando `dead` agora gera config temporária do Knip baseada nos padrões `ignore`
+  - Antes: `ai-tool dead` executava Knip sem passar os ignores do `areas.config.json`
+  - Agora: Gera arquivo `.knip.ai-tool.json` temporário com os padrões de ignore
+  - Arquivo temporário é removido automaticamente após execução
+  - Resolve falsos positivos de código morto em arquivos ignorados
+
+### Adicionado
+
+- **Entradas no .gitignore**: `knip.json` e `.knip.ai-tool.json` para evitar commit de configs temporárias
+
 ## [0.8.0] - 2025-02-03
 
 ### Mudanças Importantes

@@ -67,31 +67,31 @@ const HASH_IGNORED_DIRS = new Set([
  */
 function calculateFilesHash(cwd: string): string {
   const extensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
-  
-  // Usar XOR para combinar hashes (mais rápido que soma e menos colisões)
+
+  // Usar soma para combinar hashes (evita colisões do XOR)
   let hashAccumulator = 0;
   let fileCount = 0;
   let maxTimestamp = 0;
-  
+
   // Limitar profundidade para evitar scan excessivo em node_modules aninhados
   const MAX_DEPTH = 6;
 
   function scanDir(dir: string, depth: number): void {
     if (depth > MAX_DEPTH) return;
-    
+
     try {
       const entries = readdirSync(dir, { withFileTypes: true });
 
       for (const entry of entries) {
         // Ignorar arquivos/pastas ocultos
         if (entry.name.startsWith(".")) continue;
-        
+
         const fullPath = join(dir, entry.name);
 
         if (entry.isDirectory()) {
           // Ignorar pastas não relevantes
           if (HASH_IGNORED_DIRS.has(entry.name)) continue;
-          
+
           // Limitar profundidade
           if (depth < MAX_DEPTH) {
             scanDir(fullPath, depth + 1);
@@ -102,11 +102,11 @@ function calculateFilesHash(cwd: string): string {
             try {
               const stat = statSync(fullPath);
               const mtime = stat.mtimeMs;
-              
-              // Acumular com XOR (mais eficiente)
-              hashAccumulator ^= Math.floor(mtime);
+
+              // Acumular com soma (evita colisões do XOR)
+              hashAccumulator += Math.floor(mtime); // TESTE CACHE
               fileCount++;
-              
+
               // Track do timestamp mais recente (útil para detectar mudanças recentes)
               if (mtime > maxTimestamp) {
                 maxTimestamp = mtime;
@@ -125,17 +125,19 @@ function calculateFilesHash(cwd: string): string {
   scanDir(cwd, 0);
 
   // Incluir areas.config.json no hash
-  try {
-    const configPath = join(cwd, CACHE_DIR, "areas.config.json");
-    if (existsSync(configPath)) {
-      const stat = statSync(configPath);
-      hashAccumulator ^= Math.floor(stat.mtimeMs);
+  const configExists = existsSync(join(cwd, CACHE_DIR, "areas.config.json"));
+  hashAccumulator += configExists ? 1 : 0; // Marca existência no hash
+
+  if (configExists) {
+    try {
+      const stat = statSync(join(cwd, CACHE_DIR, "areas.config.json"));
+      hashAccumulator += Math.floor(stat.mtimeMs);
+    } catch {
+      // Ignorar erros de stat
     }
-  } catch {
-    // Ignorar se não existir
   }
 
-  // Hash composto: contagem + acumulador XOR + timestamp máximo
+  // Hash composto: contagem + acumulador + timestamp máximo
   // Isso detecta: adição/remoção de arquivos, modificações, e mudanças recentes
   return `${fileCount}-${hashAccumulator}-${maxTimestamp}`;
 }
