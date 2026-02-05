@@ -1,5 +1,76 @@
 # Changelog
 
+## [0.9.1] - 2026-02-05
+
+### Fixed
+- **Bug crítico: Comando `describe` não estava exposto no CLI**
+  - Adicionado import de `describe.ts` no `cli.ts`
+  - Adicionado case no switch para processar o comando
+  - Atualizada documentação no HELP
+  - Removido parâmetro `cache` (não existe em `DescribeOptions`)
+  - CLI agora reconhece comando `describe`
+
+### Added
+- **Documentação completa**: Todos os arquivos de documentação atualizados (README, CHANGELOG, CLAUDE.md, AGENTS.md)
+  - Documentação do comando `describe` no README
+  - Novidades v0.9.0 documentadas no CLAUDE.md
+  - Workflow atualizado no AGENTS.md
+  - Package.json com descrição atualizada
+
+### Technical Details
+- **Arquivo modificado**: `src/cli.ts`
+- **Arquivo modificado**: `package.json` (v0.9.0 → v0.9.1)
+- **Arquivo modificado**: `CHANGELOG.md`
+- **Arquivo modificado**: `README.md`
+- **Arquivo modificado**: `CLAUDE.md`
+- **Arquivo criado**: `docs/plan/melhorias-ai-tool.md`
+
+## [0.9.0] - 2026-02-05
+
+### Added
+- **Busca por descrição** (`describe` command) - permite buscar áreas por keywords em linguagem natural com correções via Levenshtein
+  - Ex: `npx ai-tool describe "autenticação"` → encontra área de autenticação
+  - Correções automáticas: "autenticacao" → "autenticação"
+  - Sugestões quando não encontra nada
+
+- **Integração Git** - histórico de commits para análise de impacto
+  - Comando `impact` agora mostra últimos commits do arquivo
+  - Funções: `getCommitsForFile()`, `getBlameInfo()`, `hasGitRepo()`
+  - Novo módulo: `src/integrations/git.ts`
+
+- **Testes inteligentes** - sugestões de testes baseadas em arquivos afetados
+  - Comando `suggest` agora inclui sugestões de testes
+  - Detecta testes relacionados aos arquivos modificados
+  - Sugere criar testes quando não existirem
+
+### Changed
+- **Refatoração crítica** - `src/mcp/server.ts` reduzido de 674 para 36 linhas (95% de redução)
+  - Lógica MCP movida para `src/mcp/tools.ts` (557 linhas, bem organizado)
+  - Registro de 13 ferramentas MCP separado em módulo dedicado
+
+- **Type safety** - validação Zod para cache com migração automática
+  - `schemaVersion=2.0.0` para detectar caches antigos
+  - Caches invalidados automaticamente quando schema muda
+
+- **Resultados expandidos**:
+  - `SuggestResult.testSuggestions` - sugestões de testes (novo)
+  - `ImpactResult.gitHistory` - histórico de commits Git (novo)
+
+### Improved
+- **Performance** - comandos mais rápidos com cache otimizado
+- **Manutenibilidade** - código mais modular e organizado
+- **UX** - sugestões mais inteligentes baseadas no tipo de arquivo (tipos críticos, serviços, etc)
+
+### Technical Details
+- **Novo arquivo**: `src/commands/describe.ts` (busca por descrição)
+- **Novo arquivo**: `src/integrations/git.ts` (integração Git)
+- **Novo arquivo**: `src/mcp/tools.ts` (registro de ferramentas MCP)
+- **Arquivo reduzido**: `src/mcp/server.ts` (de 674 para 36 linhas)
+- **Type adicionado**: `SuggestResult.testSuggestions`
+- **Type adicionado**: `ImpactResult.gitHistory`
+- **Type adicionado**: `CommitInfo`, `BlameInfo` (Git)
+- **README atualizado**: documentação do comando `describe`
+
 ## [0.8.2] - 2025-02-05
 
 ### Melhorado

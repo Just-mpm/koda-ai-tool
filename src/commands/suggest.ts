@@ -19,13 +19,14 @@ import {
   type CachedGraph,
 } from "../cache/index.js";
 import { formatFileNotFound } from "../utils/errors.js";
+import { findTargetFile } from "../utils/file-matcher.js";
+import { parseCommandOptions, formatOutput } from "./base.js";
 
 /**
  * Executa o comando SUGGEST
  */
 export async function suggest(target: string, options: SuggestOptions = {}): Promise<string> {
-  const cwd = options.cwd || process.cwd();
-  const format = options.format || "text";
+  const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false;
   const limit = options.limit || 10;
 
@@ -81,11 +82,14 @@ export async function suggest(target: string, options: SuggestOptions = {}): Pro
     const targetPath = findTargetFile(target, allFiles);
 
     if (!targetPath) {
-      return formatNotFound(target, allFiles);
+      return formatFileNotFound({ target, allFiles, command: "suggest" });
     }
 
     // Coletar sugestoes
     const suggestions = collectSuggestions(targetPath, graph, allFiles, limit);
+
+    // Gerar sugestoes de testes
+    const testSuggestions = generateTestSuggestions(suggestions, allFiles);
 
     // Montar resultado
     const result: SuggestResult = {
@@ -94,15 +98,11 @@ export async function suggest(target: string, options: SuggestOptions = {}): Pro
       target: targetPath,
       category: detectCategory(targetPath),
       suggestions,
+      testSuggestions,
     };
 
     // Formatar output
-    if (format === "json") {
-      return JSON.stringify(result, null, 2);
-    }
-
-    const output = formatSuggestText(result);
-    return fromCache ? output + "\n\n(grafo do cache)" : output;
+    return formatOutput(result, format, formatSuggestText, fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar suggest: ${message}`);
@@ -252,80 +252,6 @@ function findRelatedTests(targetPath: string, allFiles: string[]): string[] {
 }
 
 /**
- * Encontra o arquivo target no grafo
- */
-function findTargetFile(target: string, allFiles: string[]): string | null {
-  const normalizedTarget = target.replace(/\\/g, "/").toLowerCase();
-
-  // Match exato
-  if (allFiles.includes(normalizedTarget)) {
-    return normalizedTarget;
-  }
-
-  // Match exato (case-insensitive)
-  const exactMatch = allFiles.find(f => f.toLowerCase() === normalizedTarget);
-  if (exactMatch) {
-    return exactMatch;
-  }
-
-  // Separar path e nome do arquivo do target
-  const targetParts = normalizedTarget.split("/");
-  const targetName = targetParts.pop() || "";
-  const targetNameNoExt = targetName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
-  const targetDir = targetParts.join("/"); // Path sem o nome do arquivo
-
-  const matches: Array<{ file: string; priority: number }> = [];
-
-  for (const file of allFiles) {
-    const fileLower = file.toLowerCase();
-    const fileParts = fileLower.split("/");
-    const fileName = fileParts.pop() || "";
-    const fileNameNoExt = fileName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
-    const fileDir = fileParts.join("/");
-
-    // Prioridade 1: Match exato de path completo (incluindo diretórios)
-    if (fileLower === normalizedTarget) {
-      matches.push({ file, priority: 1 });
-    }
-    // Prioridade 2: Match por nome + diretório contém o path do target
-    // Ex: target=src/services/quota/index.ts, file=src/pages/LandingPages/index.ts
-    // O diretório do target (src/services/quota) deve estar contido no path do arquivo
-    else if (fileNameNoExt === targetNameNoExt) {
-      if (targetDir && fileDir.includes(targetDir)) {
-        matches.push({ file, priority: 2 });
-      } else if (targetDir && normalizedTarget.includes(fileDir)) {
-        // Path do target contém diretório do arquivo
-        matches.push({ file, priority: 3 });
-      } else {
-        // Mesmo nome mas diretório diferente - menor prioridade
-        matches.push({ file, priority: 4 });
-      }
-    }
-    // Prioridade 5: Match parcial no path completo
-    else if (fileLower.includes(normalizedTarget)) {
-      matches.push({ file, priority: 5 });
-    }
-  }
-
-  // Se não encontrou nada, tentar match parcial mais flexível
-  if (matches.length === 0) {
-    for (const file of allFiles) {
-      if (file.toLowerCase().includes(targetNameNoExt)) {
-        matches.push({ file, priority: 6 });
-      }
-    }
-  }
-
-  // Ordenar por prioridade e retornar o melhor match
-  if (matches.length > 0) {
-    matches.sort((a, b) => a.priority - b.priority);
-    return matches[0].file;
-  }
-
-  return null;
-}
-
-/**
  * Sugere arquivos Firebase rules quando o target é uma Cloud Function
  */
 function suggestFirebaseRules(targetPath: string, allFiles: string[]): Suggestion[] {
@@ -403,9 +329,75 @@ function suggestFirebaseRules(targetPath: string, allFiles: string[]): Suggestio
 }
 
 /**
- * Formata mensagem de "nao encontrado"
- * Usa módulo compartilhado com sugestões "você quis dizer?"
+ * Gera sugestões de testes baseadas nas sugestões coletadas
  */
-function formatNotFound(target: string, allFiles: string[]): string {
-  return formatFileNotFound({ target, allFiles, command: "suggest" });
+function generateTestSuggestions(suggestions: Suggestion[], allFiles: string[]): string[] {
+  const testSuggestions: string[] = [];
+
+  // Encontrar testes relacionados aos arquivos sugeridos
+  const relatedTests = allFiles.filter((f) => {
+    // Verificar se é um arquivo de teste
+    const isTestFile =
+      f.includes(".test.") ||
+      f.includes(".spec.") ||
+      f.startsWith("tests/") ||
+      f.includes("/__tests__/");
+
+    if (!isTestFile) return false;
+
+    // Verificar se o teste está relacionado a algum arquivo sugerido
+    const testName = f.split("/").pop()?.toLowerCase() || "";
+
+    for (const suggestion of suggestions) {
+      const suggestedName = suggestion.path.split("/").pop()?.toLowerCase() || "";
+      const suggestedNameNoExt = suggestedName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
+      const testNameNoExt = testName.replace(/\.(test|spec)\.(tsx?|jsx?|mjs|cjs)$/, "");
+
+      if (testNameNoExt.includes(suggestedNameNoExt) || suggestedNameNoExt.includes(testNameNoExt)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+
+  // Adicionar sugestões para os testes encontrados
+  if (relatedTests.length > 0) {
+    const testNames = relatedTests
+      .slice(0, 3)
+      .map((f) => f.split("/").pop())
+      .join(", ");
+
+    testSuggestions.push(`🧪 Teste os arquivos modificados: ${testNames}`);
+
+    if (relatedTests.length > 3) {
+      testSuggestions.push(`   ... e mais ${relatedTests.length - 3} teste(s)`);
+    }
+  } else {
+    // Se não encontrou testes específicos, verificar se existem testes gerais
+    const hasTestDirectory = allFiles.some((f) => f.startsWith("tests/") || f.includes("/__tests__/"));
+
+    if (hasTestDirectory) {
+      testSuggestions.push(`🧪 Rode a suíte de testes completa: npm test`);
+    } else {
+      // Sugerir criar testes se não existirem
+      testSuggestions.push(`⚠️ Nenhum teste encontrado para os arquivos modificados`);
+      testSuggestions.push(`💡 Considere criar testes para garantir qualidade`);
+    }
+  }
+
+  // Sugestão específica para arquivos críticos
+  const hasCritical = suggestions.some((s) => s.priority === "critical" && s.category === "type");
+  if (hasCritical) {
+    testSuggestions.push(`🔴 Arquivos de tipos modificados - considere adicionar testes de tipagem`);
+  }
+
+  const hasHighPriority = suggestions.some((s) => s.priority === "high" && s.category === "service");
+  if (hasHighPriority) {
+    testSuggestions.push(`🟡 Serviços modificados - verifique testes de integração`);
+  }
+
+  return testSuggestions;
 }
+
+

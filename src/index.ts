@@ -88,7 +88,8 @@ export type {
 } from "./commands/functions.js";
 
 // Indexer types (triggers)
-export type { TriggerInfo, SymbolInfo, ProjectIndex } from "./ts/indexer.js";
+export type { TriggerInfo } from "./ts/triggers.js";
+export type { SymbolInfo, ProjectIndex } from "./ts/cache.js";
 
 // Utilitários
 export { detectCategory, categoryIcons, isEntryPoint, isCodeFile } from "./utils/detect.js";

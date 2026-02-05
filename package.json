@@ -1,7 +1,7 @@
 {
   "name": "@justmpm/ai-tool",
-  "version": "0.8.2",
-  "description": "Ferramenta de análise de dependências e impacto para projetos TypeScript/JavaScript. Usa Skott + Knip internamente.",
+  "version": "0.9.1",
+  "description": "Ferramenta de análise de dependências e impacto para projetos TypeScript/JavaScript. Usa Skott + Knip internamente. Inclui busca por descrição, integração Git e testes inteligentes.",
   "keywords": [
     "dependency-analysis",
     "impact-analysis",
@@ -39,7 +39,7 @@
     "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts src/cli.ts --format esm --dts --watch",
     "prepublishOnly": "npm run build",
-    "test": "node --test",
+    "test": "tsx --test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
+    "tsx": "^4.19.0",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   },

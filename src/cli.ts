@@ -27,6 +27,7 @@ import { areas } from "./commands/areas.js";
 import { area } from "./commands/area.js";
 import { areasInit } from "./commands/areas-init.js";
 import { find } from "./commands/find.js";
+import { describe } from "./commands/describe.js";
 import { functions } from "./commands/functions.js";
 import { VERSION } from "./index.js";
 import type { FileCategory } from "./types.js";
@@ -46,6 +47,7 @@ COMANDOS:
   context <arquivo>      Extrai assinaturas de um arquivo (funcoes, tipos)
   context --area=<nome>  Contexto consolidado de toda uma area
   find <termo>           Busca simbolos no codigo (funcoes, tipos, etc)
+  describe <termo>       Busca areas por descricao em linguagem natural
 
 AREAS:
   areas                  Lista todas as areas/dominios do projeto
@@ -99,6 +101,7 @@ EXEMPLOS:
   ai-tool find useAuth             # Busca definicao e usos
   ai-tool find User --type=type    # Busca apenas tipos
   ai-tool find login --area=auth   # Busca na area auth
+  ai-tool describe cache           # Busca areas por descricao
   ai-tool areas
   ai-tool area auth
   ai-tool area auth --type=hook
@@ -261,6 +264,16 @@ async function main() {
           cache,
           trigger: flags.trigger as string | undefined,
         });
+        break;
+
+      case "describe":
+        if (!target) {
+          console.error("❌ Erro: termo de busca é obrigatório para o comando describe");
+          console.error("   Exemplo: ai-tool describe cache");
+          console.error("   Exemplo: ai-tool describe login");
+          process.exit(1);
+        }
+        result = await describe(target, { format, cwd });
         break;
 
       default:

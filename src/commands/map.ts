@@ -21,13 +21,13 @@ import {
 } from "../cache/index.js";
 import { readConfig } from "../areas/config.js";
 import { detectFileAreas, getAreaName, isFileIgnored } from "../areas/detector.js";
+import { parseCommandOptions } from "./base.js";
 
 /**
  * Executa o comando MAP
  */
 export async function map(options: MapOptions = {}): Promise<string> {
-  const cwd = options.cwd || process.cwd();
-  const format = options.format || "text";
+  const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false; // default: true
   const full = options.full ?? false; // default: resumo compacto
 

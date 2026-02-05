@@ -4,6 +4,7 @@
 
 import { Project, SourceFile, SyntaxKind, Node } from "ts-morph";
 import type { FunctionInfo, TypeInfo, ImportInfo, ParamInfo } from "../types.js";
+import { simplifyType, formatInterfaceDefinition } from "./utils.js";
 
 /**
  * Cria um projeto ts-morph configurado
@@ -98,21 +99,6 @@ function extractParams(params: { getName(): string; getType(): { getText(node?: 
     name: p.getName(),
     type: simplifyType(p.getType().getText()),
   }));
-}
-
-/**
- * Simplifica tipos muito longos para melhor legibilidade
- */
-function simplifyType(typeText: string): string {
-  // Remove import(...) prefixes que ts-morph adiciona
-  let simplified = typeText.replace(/import\([^)]+\)\./g, "");
-
-  // Se ainda for muito longo (> 80 chars), truncar
-  if (simplified.length > 80) {
-    simplified = simplified.slice(0, 77) + "...";
-  }
-
-  return simplified;
 }
 
 /**
@@ -219,39 +205,6 @@ export function extractTypes(sourceFile: SourceFile): TypeInfo[] {
   }
 
   return types;
-}
-
-/**
- * Formata a definicao de uma interface de forma legivel
- */
-function formatInterfaceDefinition(iface: {
-  getProperties(): { getName(): string; getType(): { getText(): string } }[];
-  getMethods(): { getName(): string; getReturnType(): { getText(): string } }[];
-  getExtends(): { getText(): string }[];
-}): string {
-  const parts: string[] = [];
-
-  // Heranca
-  const extendsClauses = iface.getExtends();
-  if (extendsClauses.length > 0) {
-    parts.push(`extends ${extendsClauses.map((e) => e.getText()).join(", ")}`);
-  }
-
-  // Propriedades
-  const props = iface.getProperties();
-  for (const prop of props) {
-    const propType = simplifyType(prop.getType().getText());
-    parts.push(`${prop.getName()}: ${propType}`);
-  }
-
-  // Metodos
-  const methods = iface.getMethods();
-  for (const method of methods) {
-    const returnType = simplifyType(method.getReturnType().getText());
-    parts.push(`${method.getName()}(): ${returnType}`);
-  }
-
-  return parts.length > 0 ? `{ ${parts.join("; ")} }` : "{}";
 }
 
 /**

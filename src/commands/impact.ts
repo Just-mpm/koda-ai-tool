@@ -19,13 +19,15 @@ import {
   type CachedGraph,
 } from "../cache/index.js";
 import { formatFileNotFound } from "../utils/errors.js";
+import { findTargetFile } from "../utils/file-matcher.js";
+import { parseCommandOptions, formatOutput } from "./base.js";
+import { hasGitRepo, getCommitsForFile } from "../integrations/git.js";
 
 /**
  * Executa o comando IMPACT
  */
 export async function impact(target: string, options: ImpactOptions = {}): Promise<string> {
-  const cwd = options.cwd || process.cwd();
-  const format = options.format || "text";
+  const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false; // default: true
 
   if (!target) {
@@ -85,7 +87,7 @@ export async function impact(target: string, options: ImpactOptions = {}): Promi
     const targetPath = findTargetFile(target, allFiles);
 
     if (!targetPath) {
-      return formatNotFound(target, allFiles);
+      return formatFileNotFound({ target, allFiles, command: "impact" });
     }
 
     // Calcular dependências a partir do grafo
@@ -100,6 +102,23 @@ export async function impact(target: string, options: ImpactOptions = {}): Promi
 
     // Gerar sugestões
     const suggestions = generateSuggestions(dependingOn, dependencies, risks);
+
+    // Obter histórico Git se disponível
+    const gitHistory = hasGitRepo(cwd)
+      ? {
+          hasGitRepo: true,
+          recentCommits: await getCommitsForFile(targetPath, cwd, 5),
+        }
+      : {
+          hasGitRepo: false,
+          recentCommits: [] as Array<{
+            hash: string;
+            shortHash: string;
+            message: string;
+            date: string;
+            author: string;
+          }>,
+        };
 
     // Montar resultado
     const result: ImpactResult = {
@@ -119,15 +138,11 @@ export async function impact(target: string, options: ImpactOptions = {}): Promi
       },
       risks,
       suggestions,
+      gitHistory,
     };
 
     // Formatar output
-    if (format === "json") {
-      return JSON.stringify(result, null, 2);
-    }
-
-    const output = formatImpactText(result);
-    return fromCache ? output + "\n\n📦 (grafo do cache)" : output;
+    return formatOutput(result, format, formatImpactText, fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar impact: ${message}`);
@@ -255,88 +270,6 @@ function findCircularFromGraph(graph: CachedGraph["graph"]): string[][] {
   }
 
   return cycles;
-}
-
-/**
- * Encontra o arquivo target no grafo
- */
-function findTargetFile(target: string, allFiles: string[]): string | null {
-  const normalizedTarget = target.replace(/\\/g, "/").toLowerCase();
-
-  // Match exato
-  if (allFiles.includes(normalizedTarget)) {
-    return normalizedTarget;
-  }
-
-  // Match exato (case-insensitive)
-  const exactMatch = allFiles.find(f => f.toLowerCase() === normalizedTarget);
-  if (exactMatch) {
-    return exactMatch;
-  }
-
-  // Separar path e nome do arquivo do target
-  const targetParts = normalizedTarget.split("/");
-  const targetName = targetParts.pop() || "";
-  const targetNameNoExt = targetName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
-  const targetDir = targetParts.join("/"); // Path sem o nome do arquivo
-
-  const matches: Array<{ file: string; priority: number }> = [];
-
-  for (const file of allFiles) {
-    const fileLower = file.toLowerCase();
-    const fileParts = fileLower.split("/");
-    const fileName = fileParts.pop() || "";
-    const fileNameNoExt = fileName.replace(/\.(tsx?|jsx?|mjs|cjs)$/, "");
-    const fileDir = fileParts.join("/");
-
-    // Prioridade 1: Match exato de path completo (incluindo diretórios)
-    if (fileLower === normalizedTarget) {
-      matches.push({ file, priority: 1 });
-    }
-    // Prioridade 2: Match por nome + diretório contém o path do target
-    // Ex: target=src/services/quota/index.ts, file=src/pages/LandingPages/index.ts
-    // O diretório do target (src/services/quota) deve estar contido no path do arquivo
-    else if (fileNameNoExt === targetNameNoExt) {
-      if (targetDir && fileDir.includes(targetDir)) {
-        matches.push({ file, priority: 2 });
-      } else if (targetDir && normalizedTarget.includes(fileDir)) {
-        // Path do target contém diretório do arquivo
-        matches.push({ file, priority: 3 });
-      } else {
-        // Mesmo nome mas diretório diferente - menor prioridade
-        matches.push({ file, priority: 4 });
-      }
-    }
-    // Prioridade 5: Match parcial no path completo
-    else if (fileLower.includes(normalizedTarget)) {
-      matches.push({ file, priority: 5 });
-    }
-  }
-
-  // Se não encontrou nada, tentar match parcial mais flexível
-  if (matches.length === 0) {
-    for (const file of allFiles) {
-      if (file.toLowerCase().includes(targetNameNoExt)) {
-        matches.push({ file, priority: 6 });
-      }
-    }
-  }
-
-  // Ordenar por prioridade e retornar o melhor match
-  if (matches.length > 0) {
-    matches.sort((a, b) => a.priority - b.priority);
-    return matches[0].file;
-  }
-
-  return null;
-}
-
-/**
- * Formata mensagem de "não encontrado"
- * Usa módulo compartilhado com sugestões "você quis dizer?"
- */
-function formatNotFound(target: string, allFiles: string[]): string {
-  return formatFileNotFound({ target, allFiles, command: "impact" });
 }
 
 /**

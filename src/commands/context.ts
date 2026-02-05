@@ -39,14 +39,14 @@ import {
   cacheSymbolsIndex,
   updateCacheMeta,
 } from "../cache/index.js";
-import { indexProject, type ProjectIndex } from "../ts/indexer.js";
+import { indexProject, type ProjectIndex } from "../ts/cache.js";
+import { parseCommandOptions, formatOutput } from "./base.js";
 
 /**
  * Executa o comando CONTEXT
  */
 export async function context(target: string, options: ContextOptions = {}): Promise<string> {
-  const cwd = options.cwd || process.cwd();
-  const format = options.format || "text";
+  const { cwd, format } = parseCommandOptions(options);
 
   if (!target) {
     throw new Error("Target e obrigatorio. Exemplo: ai-tool context src/components/Button.tsx");
@@ -57,7 +57,8 @@ export async function context(target: string, options: ContextOptions = {}): Pro
     const targetPath = findTargetFile(target, cwd);
 
     if (!targetPath) {
-      return formatNotFound(target, cwd);
+      const allFiles = getAllCodeFiles(cwd);
+      return formatFileNotFound({ target, allFiles, command: "context" });
     }
 
     // 2. Criar projeto ts-morph
@@ -86,11 +87,7 @@ export async function context(target: string, options: ContextOptions = {}): Pro
     };
 
     // 6. Formatar output
-    if (format === "json") {
-      return JSON.stringify(result, null, 2);
-    }
-
-    return formatContextText(result);
+    return formatOutput(result, format, formatContextText);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar context: ${message}`);
@@ -212,15 +209,6 @@ function shouldIgnore(name: string): boolean {
     ".vercel",
   ];
   return ignoredDirs.includes(name) || name.startsWith(".");
-}
-
-/**
- * Formata mensagem de "nao encontrado"
- * Usa módulo compartilhado com sugestões "você quis dizer?"
- */
-function formatNotFound(target: string, cwd: string): string {
-  const allFiles = getAllCodeFiles(cwd);
-  return formatFileNotFound({ target, allFiles, command: "context" });
 }
 
 // ============================================================================

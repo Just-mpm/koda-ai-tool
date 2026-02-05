@@ -146,6 +146,48 @@ ai-tool find createUser --type=trigger  # Busca Cloud Functions
 
 **Diferente de grep:** Entende o AST do TypeScript, encontra definições reais e onde são usados.
 
+### `describe` - Busca por Descrição
+
+Busca áreas funcionais por descrição em linguagem natural usando keywords + correções via Levenshtein.
+
+```bash
+ai-tool describe "autenticação"
+ai-tool describe login --format=json
+ai-tool describe "onde implementou checkout"
+```
+
+**Output:**
+```
+🔍 Busca: "autenticação"
+
+## Autenticação (auth)
+Sistema de login, signup e gerenciamento de sessão
+📁 15 arquivo(s)
+
+Arquivos:
+   • [Use 'ai-tool area auth' para ver arquivos completos]
+
+📖 Próximos passos:
+   → ai-tool area <id> - ver detalhes de uma área
+   → ai-tool context --area=<id> - contexto completo de uma área
+```
+
+**Sem resultados:**
+```
+❌ Nenhuma área encontrada para: "autenticaçao"
+
+💡 Você quis dizer?
+   → ai-tool describe autenticação
+   → ai-tool describe auth
+
+📖 Dica: Use 'ai-tool areas' para listar todas as áreas disponíveis
+```
+
+**Funcionalidades:**
+- Busca por keywords em descrições, nomes e IDs de áreas
+- Correções automáticas via Levenshtein ("autenticacao" → "autenticação")
+- Sugestões de buscas alternativas quando não encontra nada
+
 ### `functions` - Firebase Cloud Functions
 
 Lista todas as Cloud Functions do projeto Firebase.
@@ -320,6 +362,7 @@ ai-tool --mcp
 - `aitool_area_detail` - Arquivos de uma área específica
 - `aitool_areas_init` - Gera config de áreas
 - `aitool_area_context` - Contexto consolidado de toda uma área
+- `aitool_describe` - Busca áreas por descrição (keywords + Levenshtein)
 - `aitool_find` - Busca símbolos no código (definição + usos)
 - `aitool_list_functions` - Lista Cloud Functions Firebase
 
@@ -359,7 +402,7 @@ Adicione ao `claude_desktop_config.json`:
 ## Uso Programático
 
 ```typescript
-import { map, dead, impact, suggest, context, areaContext, find, functions, areas, area, areasInit } from "@justmpm/ai-tool";
+import { map, dead, impact, suggest, context, describe, areaContext, find, functions, areas, area, areasInit } from "@justmpm/ai-tool";
 
 // Mapa do projeto (resumo por padrão, full: true para lista completa)
 const projectMap = await map({ format: "json" });
@@ -382,6 +425,9 @@ const authContext = await areaContext("auth", { format: "json" });
 
 // Busca de símbolos
 const symbolSearch = await find("useAuth", { type: "hook", area: "auth" });
+
+// Busca por descrição
+const authAreaSearch = await describe("autenticação");
 
 // Cloud Functions Firebase
 const cloudFunctions = await functions({ trigger: "onCall" });

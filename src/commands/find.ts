@@ -18,7 +18,8 @@ import {
   cacheSymbolsIndex,
   updateCacheMeta,
 } from "../cache/index.js";
-import { indexProject, type ProjectIndex, type SymbolInfo } from "../ts/indexer.js";
+import { indexProject, type ProjectIndex, type SymbolInfo } from "../ts/cache.js";
+import { parseCommandOptions, formatOutput } from "./base.js";
 
 /**
  * Tipos de símbolo que podem ser buscados
@@ -78,8 +79,7 @@ export interface FindResult {
  * Executa o comando FIND
  */
 export async function find(query: string, options: FindOptions = {}): Promise<string> {
-  const cwd = options.cwd || process.cwd();
-  const format = options.format || "text";
+  const { cwd, format } = parseCommandOptions(options);
   const filterType = options.type || "all";
   const filterArea = options.area;
   const defOnly = options.def ?? false;
@@ -198,11 +198,7 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
     };
 
     // 8. Formatar output
-    if (format === "json") {
-      return JSON.stringify(result, null, 2);
-    }
-
-    return formatFindText(result);
+    return formatOutput(result, format, formatFindText, fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar find: ${message}`);

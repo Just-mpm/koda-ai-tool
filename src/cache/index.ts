@@ -15,6 +15,11 @@ import {
 } from "fs";
 import { join, extname } from "path";
 import { clearFirebaseCache } from "../utils/firebase.js";
+import {
+  mapResultSchema,
+  deadResultSchema,
+  projectIndexSchema,
+} from "./schemas.js";
 
 const CACHE_DIR = ".analyze";
 const META_FILE = "meta.json";
@@ -186,8 +191,13 @@ export function isCacheValid(cwd: string): boolean {
 
 /**
  * Lê dados do cache
+ *
+ * @param cwd - Diretório de trabalho do projeto
+ * @param file - Nome do arquivo no cache
+ * @param schema - Schema Zod opcional para validação dos dados
+ * @returns Dados do cache validados, ou null se não existir ou for inválido
  */
-export function readCache<T>(cwd: string, file: string): T | null {
+export function readCache<T>(cwd: string, file: string, schema?: { parse: (data: unknown) => T }): T | null {
   const cachePath = join(getCacheDir(cwd), file);
 
   if (!existsSync(cachePath)) {
@@ -195,8 +205,16 @@ export function readCache<T>(cwd: string, file: string): T | null {
   }
 
   try {
-    return JSON.parse(readFileSync(cachePath, "utf-8"));
-  } catch {
+    const data = JSON.parse(readFileSync(cachePath, "utf-8"));
+    // Validar com schema se fornecido
+    return schema ? schema.parse(data) : (data as T);
+  } catch (error) {
+    // Se for erro de Zod, logar e retornar null (cache inválido)
+    if (error && typeof error === "object" && "name" in error && error.name === "ZodError") {
+      // Cache inválido - será regenerado na próxima execução
+      return null;
+    }
+    // Outros erros - também retornar null
     return null;
   }
 }
@@ -263,7 +281,7 @@ export function getCachedMapResult<T>(cwd: string): T | null {
   if (!isCacheValid(cwd)) {
     return null;
   }
-  return readCache<T>(cwd, MAP_FILE);
+  return readCache(cwd, MAP_FILE, mapResultSchema) as T | null;
 }
 
 /**
@@ -280,7 +298,7 @@ export function getCachedDeadResult<T>(cwd: string): T | null {
   if (!isCacheValid(cwd)) {
     return null;
   }
-  return readCache<T>(cwd, DEAD_FILE);
+  return readCache(cwd, DEAD_FILE, deadResultSchema) as T | null;
 }
 
 /**
@@ -316,7 +334,7 @@ export function getCachedSymbolsIndex<T>(cwd: string): T | null {
   if (!isCacheValid(cwd)) {
     return null;
   }
-  return readCache<T>(cwd, SYMBOLS_FILE);
+  return readCache(cwd, SYMBOLS_FILE, projectIndexSchema) as T | null;
 }
 
 export { CACHE_DIR, META_FILE, GRAPH_FILE, MAP_FILE, DEAD_FILE, SYMBOLS_FILE };

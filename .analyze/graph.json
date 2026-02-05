@@ -14,10 +14,11 @@
     "src/cache/index.ts": {
       "id": "src/cache/index.ts",
       "adjacentTo": [
-        "src/utils/firebase.ts"
+        "src/utils/firebase.ts",
+        "src/cache/schemas.ts"
       ],
       "body": {
-        "size": 7649,
+        "size": 8510,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -27,6 +28,15 @@
       "adjacentTo": [],
       "body": {
         "size": 5118,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/cache/schemas.ts": {
+      "id": "src/cache/schemas.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 3154,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -64,12 +74,13 @@
         "src/commands/area.ts",
         "src/commands/areas-init.ts",
         "src/commands/find.ts",
+        "src/commands/describe.ts",
         "src/commands/functions.ts",
         "src/index.ts",
         "src/mcp/server.ts"
       ],
       "body": {
-        "size": 9497,
+        "size": 10059,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -81,10 +92,11 @@
         "src/formatters/text.ts",
         "src/cache/index.ts",
         "src/areas/config.ts",
-        "src/areas/detector.ts"
+        "src/areas/detector.ts",
+        "src/commands/base.ts"
       ],
       "body": {
-        "size": 5484,
+        "size": 5502,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -104,7 +116,16 @@
         "src/utils/detect.ts"
       ],
       "body": {
-        "size": 35717,
+        "size": 36890,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/base.ts": {
+      "id": "src/commands/base.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 2185,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -116,10 +137,11 @@
         "src/formatters/text.ts",
         "src/areas/config.ts",
         "src/cache/index.ts",
-        "src/utils/firebase.ts"
+        "src/utils/firebase.ts",
+        "src/commands/base.ts"
       ],
       "body": {
-        "size": 6296,
+        "size": 6175,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -130,10 +152,13 @@
         "src/utils/detect.ts",
         "src/formatters/text.ts",
         "src/cache/index.ts",
-        "src/utils/errors.ts"
+        "src/utils/errors.ts",
+        "src/utils/file-matcher.ts",
+        "src/commands/base.ts",
+        "src/integrations/git.ts"
       ],
       "body": {
-        "size": 12197,
+        "size": 9909,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -158,16 +183,36 @@
         "builtinDependencies": []
       }
     },
+    "src/utils/file-matcher.ts": {
+      "id": "src/utils/file-matcher.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 3592,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/integrations/git.ts": {
+      "id": "src/integrations/git.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 6823,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
     "src/commands/suggest.ts": {
       "id": "src/commands/suggest.ts",
       "adjacentTo": [
         "src/utils/detect.ts",
         "src/formatters/text.ts",
         "src/cache/index.ts",
-        "src/utils/errors.ts"
+        "src/utils/errors.ts",
+        "src/utils/file-matcher.ts",
+        "src/commands/base.ts"
       ],
       "body": {
-        "size": 11458,
+        "size": 11396,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -182,30 +227,77 @@
         "src/areas/config.ts",
         "src/areas/detector.ts",
         "src/cache/index.ts",
-        "src/ts/indexer.ts"
+        "src/ts/cache.ts",
+        "src/commands/base.ts"
       ],
       "body": {
-        "size": 13063,
+        "size": 12821,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
     },
     "src/ts/extractor.ts": {
       "id": "src/ts/extractor.ts",
-      "adjacentTo": [],
+      "adjacentTo": [
+        "src/ts/utils.ts"
+      ],
       "body": {
-        "size": 8789,
+        "size": 7445,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
     },
-    "src/ts/indexer.ts": {
-      "id": "src/ts/indexer.ts",
+    "src/ts/utils.ts": {
+      "id": "src/ts/utils.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 3050,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/ts/cache.ts": {
+      "id": "src/ts/cache.ts",
       "adjacentTo": [
-        "src/utils/detect.ts"
+        "src/utils/detect.ts",
+        "src/ts/utils.ts",
+        "src/ts/index.ts",
+        "src/utils/logger.ts",
+        "src/ts/triggers.ts"
       ],
       "body": {
-        "size": 29679,
+        "size": 15172,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/ts/index.ts": {
+      "id": "src/ts/index.ts",
+      "adjacentTo": [
+        "src/utils/logger.ts"
+      ],
+      "body": {
+        "size": 6290,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/logger.ts": {
+      "id": "src/utils/logger.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 1973,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/ts/triggers.ts": {
+      "id": "src/ts/triggers.ts",
+      "adjacentTo": [
+        "src/utils/logger.ts"
+      ],
+      "body": {
+        "size": 9759,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -257,10 +349,24 @@
         "src/areas/detector.ts",
         "src/formatters/text.ts",
         "src/cache/index.ts",
-        "src/ts/indexer.ts"
+        "src/ts/cache.ts",
+        "src/commands/base.ts"
       ],
       "body": {
-        "size": 10030,
+        "size": 10011,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/commands/describe.ts": {
+      "id": "src/commands/describe.ts",
+      "adjacentTo": [
+        "src/areas/config.ts",
+        "src/commands/base.ts",
+        "src/utils/similarity.ts"
+      ],
+      "body": {
+        "size": 6821,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -269,11 +375,11 @@
       "id": "src/commands/functions.ts",
       "adjacentTo": [
         "src/utils/firebase.ts",
-        "src/ts/indexer.ts",
+        "src/ts/cache.ts",
         "src/cache/index.ts"
       ],
       "body": {
-        "size": 9330,
+        "size": 9328,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -292,7 +398,8 @@
         "src/commands/functions.ts",
         "src/commands/find.ts",
         "src/types.ts",
-        "src/ts/indexer.ts",
+        "src/ts/triggers.ts",
+        "src/ts/cache.ts",
         "src/utils/detect.ts",
         "src/utils/similarity.ts",
         "src/utils/errors.ts",
@@ -302,7 +409,7 @@
         "src/areas/detector.ts"
       ],
       "body": {
-        "size": 3474,
+        "size": 3512,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -311,13 +418,25 @@
       "id": "src/types.ts",
       "adjacentTo": [],
       "body": {
-        "size": 7735,
+        "size": 7956,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
     },
     "src/mcp/server.ts": {
       "id": "src/mcp/server.ts",
+      "adjacentTo": [
+        "src/mcp/tools.ts",
+        "src/index.ts"
+      ],
+      "body": {
+        "size": 1074,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/mcp/tools.ts": {
+      "id": "src/mcp/tools.ts",
       "adjacentTo": [
         "src/commands/map.ts",
         "src/commands/dead.ts",
@@ -329,10 +448,52 @@
         "src/commands/areas-init.ts",
         "src/commands/find.ts",
         "src/commands/functions.ts",
-        "src/index.ts"
+        "src/commands/describe.ts"
       ],
       "body": {
-        "size": 18082,
+        "size": 19846,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/basic.test.ts": {
+      "id": "tests/basic.test.ts",
+      "adjacentTo": [
+        "tests/setup.ts"
+      ],
+      "body": {
+        "size": 2532,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/setup.ts": {
+      "id": "tests/setup.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 3917,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/commands/base.test.ts": {
+      "id": "tests/commands/base.test.ts",
+      "adjacentTo": [
+        "src/commands/base.ts"
+      ],
+      "body": {
+        "size": 5207,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/commands/describe.test.ts": {
+      "id": "tests/commands/describe.test.ts",
+      "adjacentTo": [
+        "src/commands/describe.ts"
+      ],
+      "body": {
+        "size": 5842,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -345,35 +506,122 @@
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
+    },
+    "tests/integration/cli.test.ts": {
+      "id": "tests/integration/cli.test.ts",
+      "adjacentTo": [
+        "src/cli.ts"
+      ],
+      "body": {
+        "size": 2425,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/integration/mcp.test.ts": {
+      "id": "tests/integration/mcp.test.ts",
+      "adjacentTo": [
+        "src/mcp/server.ts",
+        "src/mcp/tools.ts"
+      ],
+      "body": {
+        "size": 1267,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/integrations/git.test.ts": {
+      "id": "tests/integrations/git.test.ts",
+      "adjacentTo": [
+        "src/integrations/git.ts"
+      ],
+      "body": {
+        "size": 5468,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/ts/utils.test.ts": {
+      "id": "tests/ts/utils.test.ts",
+      "adjacentTo": [
+        "src/ts/utils.ts"
+      ],
+      "body": {
+        "size": 6695,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/utils/file-matcher.test.ts": {
+      "id": "tests/utils/file-matcher.test.ts",
+      "adjacentTo": [
+        "src/utils/file-matcher.ts"
+      ],
+      "body": {
+        "size": 4109,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "tests/utils/logger.test.ts": {
+      "id": "tests/utils/logger.test.ts",
+      "adjacentTo": [
+        "src/utils/logger.ts"
+      ],
+      "body": {
+        "size": 5177,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
     }
   },
   "files": [
     "src/areas/config.ts",
     "src/cache/index.ts",
     "src/utils/firebase.ts",
+    "src/cache/schemas.ts",
     "src/areas/detector.ts",
     "src/areas/index.ts",
     "src/cli.ts",
     "src/commands/map.ts",
     "src/utils/detect.ts",
     "src/formatters/text.ts",
+    "src/commands/base.ts",
     "src/commands/dead.ts",
     "src/commands/impact.ts",
     "src/utils/errors.ts",
     "src/utils/similarity.ts",
+    "src/utils/file-matcher.ts",
+    "src/integrations/git.ts",
     "src/commands/suggest.ts",
     "src/commands/context.ts",
     "src/ts/extractor.ts",
-    "src/ts/indexer.ts",
+    "src/ts/utils.ts",
+    "src/ts/cache.ts",
+    "src/ts/index.ts",
+    "src/utils/logger.ts",
+    "src/ts/triggers.ts",
     "src/commands/areas.ts",
     "src/commands/area.ts",
     "src/commands/areas-init.ts",
     "src/commands/find.ts",
+    "src/commands/describe.ts",
     "src/commands/functions.ts",
     "src/index.ts",
     "src/types.ts",
     "src/mcp/server.ts",
-    "tests/fixtures/firebase-project/functions/src/index.ts"
+    "src/mcp/tools.ts",
+    "tests/basic.test.ts",
+    "tests/setup.ts",
+    "tests/commands/base.test.ts",
+    "tests/commands/describe.test.ts",
+    "tests/fixtures/firebase-project/functions/src/index.ts",
+    "tests/integration/cli.test.ts",
+    "tests/integration/mcp.test.ts",
+    "tests/integrations/git.test.ts",
+    "tests/ts/utils.test.ts",
+    "tests/utils/file-matcher.test.ts",
+    "tests/utils/logger.test.ts"
   ],
-  "timestamp": "2026-02-04T18:03:35.275Z"
+  "timestamp": "2026-02-05T22:40:14.161Z"
 }

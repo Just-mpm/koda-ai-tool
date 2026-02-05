@@ -7,7 +7,7 @@
  */
 
 import { hasFirebaseFunctions, isFirebaseProject } from "../utils/firebase.js";
-import { indexProject, type ProjectIndex } from "../ts/indexer.js";
+import { indexProject, type ProjectIndex } from "../ts/cache.js";
 import {
   isCacheValid,
   getCachedSymbolsIndex,

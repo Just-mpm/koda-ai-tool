@@ -436,6 +436,27 @@ export function formatImpactText(result: ImpactResult): string {
     }
   }
 
+  // Histórico Git
+  if (result.gitHistory && result.gitHistory.hasGitRepo) {
+    out += `\n📜 HISTÓRICO GIT (últimos ${result.gitHistory.recentCommits.length} commits)\n\n`;
+
+    if (result.gitHistory.recentCommits.length === 0) {
+      out += `   Arquivo não está no repositório Git ou sem histórico.\n`;
+    } else {
+      for (const commit of result.gitHistory.recentCommits) {
+        const date = commit.date;
+        const author = commit.author;
+        const hash = commit.shortHash;
+        const message = commit.message.length > 60
+          ? commit.message.substring(0, 60) + "..."
+          : commit.message;
+
+        out += `   ${date} ${author}\n`;
+        out += `      ${hash} ${message}\n\n`;
+      }
+    }
+  }
+
   return out;
 }
 
@@ -535,6 +556,15 @@ export function formatSuggestText(result: SuggestResult): string {
   }
   if (byPriority.low.length > 0) {
     out += `   🟢 Opcionais: ${byPriority.low.length}\n`;
+  }
+
+  // Sugestões de testes
+  if (result.testSuggestions.length > 0) {
+    out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    out += `🧪 TESTES E VERIFICAÇÕES\n\n`;
+    for (const testSuggestion of result.testSuggestions) {
+      out += `   ${testSuggestion}\n`;
+    }
   }
 
   return out;

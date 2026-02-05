@@ -22,6 +22,7 @@ import {
   filterCloudFunctionsFalsePositives,
   hasFirebaseFunctions,
 } from "../utils/firebase.js";
+import { parseCommandOptions, formatOutput } from "./base.js";
 
 interface KnipIssue {
   file: string;
@@ -65,8 +66,7 @@ function generateKnipConfig(cwd: string): string | null {
  * Executa o comando DEAD
  */
 export async function dead(options: DeadOptions = {}): Promise<string> {
-  const cwd = options.cwd || process.cwd();
-  const format = options.format || "text";
+  const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false; // default: true
 
   // Tentar usar cache
@@ -75,10 +75,7 @@ export async function dead(options: DeadOptions = {}): Promise<string> {
     if (cached) {
       const result = { ...cached, timestamp: new Date().toISOString(), fromCache: true };
 
-      if (format === "json") {
-        return JSON.stringify(result, null, 2);
-      }
-      return formatDeadText(result) + "\n\n📦 (resultado do cache)";
+      return formatOutput(result, format, formatDeadText, true);
     }
   }
 
@@ -189,11 +186,7 @@ export async function dead(options: DeadOptions = {}): Promise<string> {
     }
 
     // Formatar output
-    if (format === "json") {
-      return JSON.stringify(result, null, 2);
-    }
-
-    return formatDeadText(result);
+    return formatOutput(result, format, formatDeadText);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar dead: ${message}`);

@@ -146,6 +146,16 @@ export interface ImpactResult {
   };
   risks: RiskInfo[];
   suggestions: string[];
+  gitHistory?: {
+    hasGitRepo: boolean;
+    recentCommits: Array<{
+      hash: string;
+      shortHash: string;
+      message: string;
+      date: string;
+      author: string;
+    }>;
+  };
 }
 
 // ============================================================================
@@ -171,6 +181,7 @@ export interface SuggestResult {
   target: string;
   category: FileCategory;
   suggestions: Suggestion[];
+  testSuggestions: string[];
 }
 
 // ============================================================================
