@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.2] - 2025-02-05
+
+### Melhorado
+
+- **Documentação do servidor MCP**: Todas as tools agora têm descrições completas de parâmetros
+  - `aitool_find`: Adicionada seção de parâmetros explicando `type`, `area`, `def`, `refs`. Incluído `"trigger"` no enum do `type` para buscar Cloud Functions
+  - `aitool_list_functions`: Adicionada seção de parâmetros explicando `trigger` e `format`
+  - `aitool_suggest_reads`: Adicionada seção de parâmetros explicando `limit` (com valores default e max)
+  - `aitool_project_map`, `aitool_dead_code`, `aitool_impact_analysis`, `aitool_file_context`, `aitool_list_areas`, `aitool_area_detail`, `aitool_areas_init`, `aitool_area_context`: Todas com descrições melhoradas e seções de parâmetros
+  - Cada tool agora explica claramente o que faz e quais parâmetros aceita, facilitando uso por agentes de IA
+
 ## [0.8.1] - 2025-02-04
 
 ### Corrigido

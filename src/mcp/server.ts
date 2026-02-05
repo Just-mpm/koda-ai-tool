@@ -38,7 +38,11 @@ server.registerTool(
   {
     title: "Project Map",
     description: `Mapeia projeto e retorna resumo: contagens por categoria, areas detectadas, alertas.
-Use no inicio da sessao. Para detalhes: area_detail, file_context, suggest_reads.`,
+Use no inicio da sessao. Para detalhes: area_detail, file_context, suggest_reads.
+
+Parametros:
+- format: text (legivel) ou json (estruturado)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       format: z
         .enum(["text", "json"])
@@ -86,7 +90,11 @@ server.registerTool(
   {
     title: "Dead Code Detector",
     description: `Detecta codigo morto: arquivos orfaos, exports nao usados, deps npm mortas.
-Use antes de refatoracoes ou periodicamente para limpeza.`,
+Use antes de refatoracoes ou periodicamente para limpeza.
+
+Parametros:
+- format: text (legivel) ou json (estruturado)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       format: z
         .enum(["text", "json"])
@@ -132,7 +140,12 @@ server.registerTool(
   {
     title: "Impact Analysis",
     description: `Analisa impacto de modificar um arquivo: upstream (quem importa), downstream (o que importa), riscos.
-Use ANTES de editar arquivos para planejar mudancas seguras.`,
+Use ANTES de editar arquivos para planejar mudancas seguras.
+
+Parametros:
+- target: Arquivo a analisar (caminho completo, parcial ou nome)
+- format: text (legivel) ou json (estruturado)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       target: z
         .string()
@@ -184,7 +197,11 @@ server.registerTool(
   {
     title: "Suggest Files to Read",
     description: `Sugere arquivos para ler ANTES de modificar um arquivo.
-Prioriza: tipos usados, dependencias diretas, upstream, testes.`,
+Prioriza: tipos usados, dependencias diretas, upstream, testes.
+
+Parametros:
+- target: Arquivo que sera modificado (caminho completo, parcial ou nome)
+- limit: Numero maximo de sugestoes (default: 10, max: 50)`,
     inputSchema: {
       target: z
         .string()
@@ -198,7 +215,7 @@ Prioriza: tipos usados, dependencias diretas, upstream, testes.`,
         .min(1)
         .max(50)
         .default(10)
-        .describe("Numero maximo de sugestoes (default: 10)"),
+        .describe("Numero maximo de sugestoes (default: 10, max: 50)"),
       cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
     },
     annotations: {
@@ -240,7 +257,11 @@ server.registerTool(
   {
     title: "Extract File Context",
     description: `Extrai assinaturas de funcoes e tipos de um arquivo (sem implementacao).
-Use para entender a API publica antes de usar ou modificar.`,
+Use para entender a API publica antes de usar ou modificar.
+
+Parametros:
+- target: Arquivo para extrair contexto (caminho completo, parcial ou nome)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       target: z
         .string()
@@ -288,7 +309,11 @@ server.registerTool(
   {
     title: "List Project Areas",
     description: `Lista areas/dominios funcionais do projeto (auth, pets, stripe...).
-Diferente de categorias (hook, component). Use area_detail para ver arquivos.`,
+Diferente de categorias (hook, component). Use area_detail para ver arquivos.
+
+Parametros:
+- format: text (legivel) ou json (estruturado)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       format: z
         .enum(["text", "json"])
@@ -334,7 +359,13 @@ server.registerTool(
   {
     title: "Area Detail",
     description: `Mostra arquivos de uma area especifica, agrupados por categoria.
-Parametros: target (nome da area), type (filtrar categoria), full (todos arquivos).`,
+Use ID (ex: auth) ou Name (ex: Autenticação) para identificar a area.
+
+Parametros:
+- target: Nome da area (ex: auth, dashboard, billing)
+- type: Filtrar por categoria (page, component, hook, service, etc)
+- full: Mostrar todos os arquivos (default: resumido)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       target: z
         .string()
@@ -403,7 +434,11 @@ server.registerTool(
   {
     title: "Initialize Areas Config",
     description: `Gera .analyze/areas.config.json para customizar deteccao de areas.
-Use quando houver arquivos sem area ou precisar ajustar deteccao.`,
+Use quando houver arquivos sem area ou precisar ajustar deteccao.
+
+Parametros:
+- force: Sobrescrever config existente
+- cwd: Diretorio do projeto`,
     inputSchema: {
       force: z
         .boolean()
@@ -449,20 +484,27 @@ server.registerTool(
   {
     title: "Find Symbol",
     description: `Busca simbolos no codigo: funcoes, tipos, componentes, hooks, constantes.
-Retorna definicao + referencias/usos. Diferente de grep, entende o AST do TypeScript.`,
+Retorna definicao + referencias/usos. Diferente de grep, entende o AST do TypeScript.
+
+Parametros:
+- query: Termo a buscar (ex: useAuth, User, login)
+- type: Filtrar por tipo (function, type, const, component, hook, trigger, all)
+- area: Buscar apenas em uma area especifica (ex: auth, dashboard)
+- def: Mostrar apenas definicoes (onde e declarado)
+- refs: Mostrar apenas referencias/usos`,
     inputSchema: {
       query: z
         .string()
         .min(1)
         .describe("Termo a buscar (nome de funcao, tipo, componente, etc)"),
       type: z
-        .enum(["function", "type", "const", "component", "hook", "all"])
+        .enum(["function", "type", "const", "component", "hook", "trigger", "all"])
         .default("all")
-        .describe("Filtrar por tipo de simbolo"),
+        .describe("Filtrar por tipo de simbolo (use trigger para Cloud Functions)"),
       area: z
         .string()
         .optional()
-        .describe("Filtrar busca por area especifica"),
+        .describe("Filtrar busca por area especifica (ex: auth, dashboard)"),
       def: z
         .boolean()
         .default(false)
@@ -515,7 +557,11 @@ server.registerTool(
   {
     title: "Area Context",
     description: `Contexto consolidado de toda uma area: tipos, hooks, funcoes, componentes, services, stores.
-Uma chamada = entender toda a feature. Muito mais eficiente que chamar context em cada arquivo.`,
+Uma chamada = entender toda a feature. Muito mais eficiente que chamar context em cada arquivo.
+
+Parametros:
+- area: Nome da area (ex: auth, dashboard, payments)
+- cwd: Diretorio do projeto a analisar`,
     inputSchema: {
       area: z
         .string()
@@ -562,12 +608,16 @@ server.registerTool(
     title: "List Cloud Functions",
     description: `Lista todas as Cloud Functions Firebase do projeto.
 Agrupa por tipo de trigger (onCall, onDocumentCreated, onSchedule, etc).
-Use para entender a arquitetura serverless antes de modificar triggers.`,
+Use para entender a arquitetura serverless antes de modificar triggers.
+
+Parametros:
+- trigger: Filtrar por tipo de trigger (ex: onCall, onDocumentCreated, onSchedule)
+- format: text (legivel) ou json (estruturado)`,
     inputSchema: {
       trigger: z
         .string()
         .optional()
-        .describe("Filtrar por tipo de trigger (ex: onCall, onDocumentCreated)"),
+        .describe("Filtrar por tipo de trigger (ex: onCall, onDocumentCreated, onSchedule)"),
       format: z
         .enum(["text", "json"])
         .default("text")
