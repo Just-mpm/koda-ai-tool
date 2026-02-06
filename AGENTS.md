@@ -15,6 +15,13 @@ Pacote npm para analise de dependencias, codigo morto e areas funcionais em proj
 - **`context <arquivo>`** - Extrai assinaturas de funcoes e tipos (sem implementacao)
 - **`context --area=<nome>`** - Contexto consolidado de toda uma area (tipos, hooks, funcoes, etc)
 
+### Busca de Áreas por Descrição (NOVO v0.9.0)
+- **`describe <termo>`** - Busca áreas por descrição em linguagem natural
+  - Ex: `npx ai-tool describe "autenticação"` → encontra área de autenticação
+  - Correções automáticas: "autenticacao" → "autenticação"
+  - Sugestões quando não encontra
+  - Use quando sabe a funcionalidade mas não o ID da área
+
 ### Busca de Simbolos
 - **`find <termo>`** - Busca simbolos no codigo (definicao + usos)
 - **`find <termo> --type=function|type|const|component|hook`** - Filtra por tipo
@@ -41,8 +48,9 @@ ai-tool --mcp  # Inicia servidor MCP via stdio
 Tools expostas:
 - `aitool_project_map` - Mapa do projeto (resumo compacto)
 - `aitool_dead_code` - Detecta codigo morto
-- `aitool_impact_analysis` - Analise de impacto antes de modificar
-- `aitool_suggest_reads` - Sugere arquivos para ler antes de editar
+- `aitool_describe` - Busca áreas por descrição em linguagem natural (NOVO v0.9.0)
+- `aitool_impact_analysis` - Analise de impacto antes de modificar (agora inclui histórico Git)
+- `aitool_suggest_reads` - Sugere arquivos para ler antes de editar (agora inclui testSuggestions)
 - `aitool_file_context` - Extrai assinaturas de um arquivo
 - `aitool_list_areas` - Lista areas funcionais do projeto
 - `aitool_area_detail` - Arquivos de uma area especifica

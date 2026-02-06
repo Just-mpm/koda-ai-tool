@@ -108,10 +108,13 @@ export interface ProjectIndex {
  * @param cwd - Diretório de trabalho do projeto
  * @returns Índice completo do projeto
  */
-export function indexProject(cwd: string): ProjectIndex {
+export function indexProject(cwd?: string): ProjectIndex {
+  // Garantir que cwd nunca seja undefined
+  const resolvedCwd = cwd || process.cwd();
+
   // 1. Listar todos os arquivos
-  const allFiles = getAllCodeFiles(cwd);
-  logger.debug(`Indexando ${allFiles.length} arquivos em ${cwd}`);
+  const allFiles = getAllCodeFiles(resolvedCwd);
+  logger.debug(`Indexando ${allFiles.length} arquivos em ${resolvedCwd}`);
 
   // Contar arquivos em functions/src/ para diagnóstico
   const functionFiles = allFiles.filter((f) => f.includes("functions/src/"));
@@ -122,14 +125,14 @@ export function indexProject(cwd: string): ProjectIndex {
   }
 
   // 2. Criar projeto ts-morph
-  const project = createProject(cwd);
+  const project = createProject(resolvedCwd);
 
   // 3. Adicionar arquivos ao projeto
   let addedCount = 0;
   let errorCount = 0;
   for (const file of allFiles) {
     try {
-      project.addSourceFileAtPath(resolve(cwd, file));
+      project.addSourceFileAtPath(resolve(resolvedCwd, file));
       addedCount++;
     } catch {
       // Ignorar arquivos que não podem ser parseados
@@ -162,7 +165,7 @@ export function indexProject(cwd: string): ProjectIndex {
   for (const sourceFile of project.getSourceFiles()) {
     // Normalizar caminho
     let filePath = sourceFile.getFilePath().replace(/\\/g, "/");
-    const cwdNormalized = cwd.replace(/\\/g, "/");
+    const cwdNormalized = resolvedCwd.replace(/\\/g, "/");
     if (filePath.startsWith(cwdNormalized + "/")) {
       filePath = filePath.slice(cwdNormalized.length + 1);
     } else if (filePath.startsWith(cwdNormalized)) {

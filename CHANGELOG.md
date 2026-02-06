@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.2] - 2026-02-06
+
+### Fixed
+- **Bug crítico: MCP tools falham quando `cwd` não é informado**
+  - `indexProject()` agora aceita `cwd?: string` opcional
+  - Usa `process.cwd()` como fallback quando `cwd` é `undefined`
+  - Corrige erro "The 'path' argument must be of type string. Received undefined"
+  - Todas as tools MCP agora funcionam sem passar parâmetro `cwd`
+
+### Technical Details
+- **Arquivo modificado**: `src/ts/cache.ts`
+- **Função alterada**: `indexProject(cwd?: string)` - garante que `resolvedCwd` nunca é `undefined`
+
 ## [0.9.1] - 2026-02-05
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-02-05T22:38:12.989Z",
+  "timestamp": "2026-02-06T06:11:44.446Z",
   "files": {
     "src/cli.ts": {
       "path": "src/cli.ts",
@@ -9,7 +9,7 @@
         {
           "name": "main",
           "file": "src/cli.ts",
-          "line": 112,
+          "line": 115,
           "kind": "function",
           "signature": "async function main()",
           "isExported": false,
@@ -19,7 +19,7 @@
         {
           "name": "HELP",
           "file": "src/cli.ts",
-          "line": 36,
+          "line": 37,
           "kind": "const",
           "signature": "const HELP = ` ai-tool v${VERSION} - Analise de de...",
           "isExported": false
@@ -88,6 +88,13 @@
           "source": "./commands/find.js",
           "specifiers": [
             "find"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "./commands/describe.js",
+          "specifiers": [
+            "describe"
           ],
           "isTypeOnly": false
         },
@@ -4928,7 +4935,7 @@
       {
         "name": "main",
         "file": "src/cli.ts",
-        "line": 112,
+        "line": 115,
         "kind": "function",
         "signature": "async function main()",
         "isExported": false,
@@ -4940,7 +4947,7 @@
       {
         "name": "HELP",
         "file": "src/cli.ts",
-        "line": 36,
+        "line": 37,
         "kind": "const",
         "signature": "const HELP = ` ai-tool v${VERSION} - Analise de de...",
         "isExported": false
