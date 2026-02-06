@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.3] - 2026-02-06
+
+### Improved
+- **Busca enriquecida no comando `describe`**: Reescrita completa do algoritmo de busca
+  - **Stopwords PT-BR/EN**: Filtra palavras comuns ("de", "da", "do", "para", "the", "of", etc.) da query antes de buscar. "Lista de alunos da turma" vira `["alunos", "turma"]`
+  - **Score parcial**: Em vez de exigir 100% das palavras, calcula percentual. 2 de 3 palavras = score 0.33. Threshold: pelo menos 40% das palavras devem bater
+  - **Keywords da config no searchableText**: O campo `keywords` das areas agora e incluido na busca. Se a area tem `keywords: ["login"]`, buscar por "login" encontra
+  - **Nomes de arquivos reais**: Busca nos nomes dos arquivos da area (ex: `StudentList.tsx` e encontrado por "StudentList")
+  - **Simbolos exportados**: Busca nos nomes de funcoes, tipos, componentes e hooks exportados (ex: `useAuth` encontra a area auth)
+  - **Contagem real de arquivos**: `fileCount` agora reflete a quantidade real (antes era placeholder)
+
+### Technical Details
+- **Arquivo modificado**: `src/commands/describe.ts` - reescrita completa do algoritmo
+- **Funcoes novas**: `removeStopwords()`, `calculatePartialScore()`, `buildAreaFileMap()`, `buildSearchableText()`
+- **Funcoes removidas**: `calculateRelevanceScore()`, `getAreaFiles()` (substituidas)
+- **Reutilizacao**: Usa `getAllCodeFiles()` de `src/ts/index.ts`, `detectFileAreas()` de `src/areas/detector.ts`, indice de simbolos com cache de `src/ts/cache.ts`
+- **Testes**: 13 novos testes (6 para stopwords, 7 para score parcial). Total: 24 testes no describe
+
 ## [0.9.2] - 2026-02-06
 
 ### Fixed

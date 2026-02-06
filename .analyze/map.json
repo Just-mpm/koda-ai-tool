@@ -1,0 +1,365 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-02-06T10:40:04.119Z",
+  "cwd": "D:\\Users\\Matheus Pimenta\\Pictures\\Pacotes-Pessoais\\ai-tool",
+  "summary": {
+    "totalFiles": 46,
+    "totalFolders": 16,
+    "categories": {
+      "other": 29,
+      "util": 7,
+      "type": 1,
+      "test": 9
+    }
+  },
+  "folders": [
+    {
+      "path": "src/areas",
+      "fileCount": 3,
+      "categories": {
+        "other": 3
+      }
+    },
+    {
+      "path": "src/cache",
+      "fileCount": 2,
+      "categories": {
+        "other": 2
+      }
+    },
+    {
+      "path": "src/utils",
+      "fileCount": 6,
+      "categories": {
+        "util": 6
+      }
+    },
+    {
+      "path": "src",
+      "fileCount": 3,
+      "categories": {
+        "other": 2,
+        "type": 1
+      }
+    },
+    {
+      "path": "src/commands",
+      "fileCount": 12,
+      "categories": {
+        "other": 12
+      }
+    },
+    {
+      "path": "src/formatters",
+      "fileCount": 1,
+      "categories": {
+        "other": 1
+      }
+    },
+    {
+      "path": "src/integrations",
+      "fileCount": 1,
+      "categories": {
+        "other": 1
+      }
+    },
+    {
+      "path": "src/ts",
+      "fileCount": 5,
+      "categories": {
+        "other": 4,
+        "util": 1
+      }
+    },
+    {
+      "path": "src/mcp",
+      "fileCount": 2,
+      "categories": {
+        "other": 2
+      }
+    },
+    {
+      "path": "tests",
+      "fileCount": 2,
+      "categories": {
+        "test": 1,
+        "other": 1
+      }
+    },
+    {
+      "path": "tests/commands",
+      "fileCount": 2,
+      "categories": {
+        "test": 2
+      }
+    },
+    {
+      "path": "tests/fixtures/firebase-project/functions/src",
+      "fileCount": 1,
+      "categories": {
+        "other": 1
+      }
+    },
+    {
+      "path": "tests/integration",
+      "fileCount": 2,
+      "categories": {
+        "test": 2
+      }
+    },
+    {
+      "path": "tests/integrations",
+      "fileCount": 1,
+      "categories": {
+        "test": 1
+      }
+    },
+    {
+      "path": "tests/ts",
+      "fileCount": 1,
+      "categories": {
+        "test": 1
+      }
+    },
+    {
+      "path": "tests/utils",
+      "fileCount": 2,
+      "categories": {
+        "test": 2
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "src/areas/config.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/cache/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/utils/firebase.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/cache/schemas.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/areas/detector.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/areas/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/cli.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/map.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/utils/detect.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/formatters/text.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/base.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/dead.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/impact.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/utils/errors.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/utils/similarity.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/utils/file-matcher.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/integrations/git.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/suggest.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/context.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/ts/extractor.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/ts/utils.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/ts/cache.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/ts/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/utils/logger.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/ts/triggers.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/areas.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/area.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/areas-init.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/find.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/describe.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/commands/functions.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/types.ts",
+      "category": "type",
+      "size": 0
+    },
+    {
+      "path": "src/mcp/server.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "src/mcp/tools.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "tests/basic.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/setup.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "tests/commands/base.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/commands/describe.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/fixtures/firebase-project/functions/src/index.ts",
+      "category": "other",
+      "size": 0
+    },
+    {
+      "path": "tests/integration/cli.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/integration/mcp.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/integrations/git.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/ts/utils.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/utils/file-matcher.test.ts",
+      "category": "test",
+      "size": 0
+    },
+    {
+      "path": "tests/utils/logger.test.ts",
+      "category": "test",
+      "size": 0
+    }
+  ],
+  "circularDependencies": []
+}

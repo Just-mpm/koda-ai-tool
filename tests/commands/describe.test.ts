@@ -4,7 +4,12 @@
 
 import { describe, it, mock } from "node:test";
 import assert from "node:assert";
-import { describe as describeCommand, formatDescribeText } from "../../src/commands/describe.js";
+import {
+  describe as describeCommand,
+  formatDescribeText,
+  removeStopwords,
+  calculatePartialScore,
+} from "../../src/commands/describe.js";
 
 describe("describe command", () => {
   describe("validação de input", () => {
@@ -191,5 +196,96 @@ describe("formatDescribeText", () => {
     assert.ok(formatted.includes("Test Area"));
     assert.ok(formatted.includes("(test-area)"));
     assert.ok(formatted.includes("0 arquivo(s)"));
+  });
+});
+
+describe("removeStopwords", () => {
+  it("deve remover stopwords PT-BR de um array de palavras", () => {
+    const result = removeStopwords(["lista", "de", "alunos"]);
+    assert.deepStrictEqual(result, ["lista", "alunos"]);
+  });
+
+  it("deve retornar array original se filtrou todas as palavras", () => {
+    const result = removeStopwords(["de", "da", "do"]);
+    assert.deepStrictEqual(result, ["de", "da", "do"]);
+  });
+
+  it("deve manter palavras que nao sao stopwords", () => {
+    const result = removeStopwords(["login"]);
+    assert.deepStrictEqual(result, ["login"]);
+  });
+
+  it("deve remover stopwords EN", () => {
+    const result = removeStopwords(["the", "login", "for", "users"]);
+    assert.deepStrictEqual(result, ["login", "users"]);
+  });
+
+  it("deve remover palavras com 1 caractere (exceto stopwords)", () => {
+    const result = removeStopwords(["x", "login", "y"]);
+    assert.deepStrictEqual(result, ["login"]);
+  });
+
+  it("deve retornar original se so tem palavras de 1 char", () => {
+    const result = removeStopwords(["a", "e"]);
+    // "a" e "e" sao stopwords E tem 1 char, filtrado retorna []
+    // fallback retorna original
+    assert.deepStrictEqual(result, ["a", "e"]);
+  });
+});
+
+describe("calculatePartialScore", () => {
+  it("deve retornar 0 quando todas as palavras sao encontradas como substring", () => {
+    const score = calculatePartialScore(
+      ["alunos", "turma"],
+      "auth autenticacao alunos turma"
+    );
+    assert.strictEqual(score, 0);
+  });
+
+  it("deve retornar 0.5 quando metade das palavras sao encontradas", () => {
+    const score = calculatePartialScore(
+      ["alunos", "turma"],
+      "auth autenticacao alunos"
+    );
+    assert.strictEqual(score, 0.5);
+  });
+
+  it("deve retornar 1 quando nenhuma palavra e encontrada", () => {
+    const score = calculatePartialScore(
+      ["alunos", "turma"],
+      "auth autenticacao"
+    );
+    assert.strictEqual(score, 1);
+  });
+
+  it("deve retornar 1 quando queryWords e vazio", () => {
+    const score = calculatePartialScore([], "qualquer texto");
+    assert.strictEqual(score, 1);
+  });
+
+  it("deve retornar 0 para match completo por substring", () => {
+    const score = calculatePartialScore(
+      ["sistema", "login"],
+      "este e o sistema login principal"
+    );
+    assert.strictEqual(score, 0);
+  });
+
+  it("deve calcular score proporcional com 3 palavras (1 encontrada)", () => {
+    const score = calculatePartialScore(
+      ["alpha", "beta", "gamma"],
+      "contendo alpha apenas"
+    );
+    // 1 de 3 encontrada -> 1 - (1/3) = 0.6666...
+    assert.ok(Math.abs(score - (1 - 1 / 3)) < 0.001);
+  });
+
+  it("deve calcular score proporcional com 3 palavras (2 encontradas)", () => {
+    const score = calculatePartialScore(
+      ["alpha", "beta", "gamma"],
+      "contendo alpha e beta"
+    );
+    // 2 de 3 encontradas -> 1 - (2/3) = 0.3333...
+    assert.ok(Math.abs(score - (1 - 2 / 3)) < 0.001);
   });
 });

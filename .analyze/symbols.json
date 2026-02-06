@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-02-06T06:11:44.446Z",
+  "timestamp": "2026-02-06T10:46:03.273Z",
   "files": {
     "src/cli.ts": {
       "path": "src/cli.ts",
@@ -2300,9 +2300,77 @@
       "category": "other",
       "symbols": [
         {
+          "name": "removeStopwords",
+          "file": "src/commands/describe.ts",
+          "line": 75,
+          "kind": "function",
+          "signature": "export function removeStopwords(words)",
+          "isExported": true,
+          "params": [
+            "words"
+          ],
+          "returnType": "string[]"
+        },
+        {
+          "name": "calculatePartialScore",
+          "file": "src/commands/describe.ts",
+          "line": 92,
+          "kind": "function",
+          "signature": "export function calculatePartialScore(queryWords, searchableText)",
+          "isExported": true,
+          "params": [
+            "queryWords",
+            "searchableText"
+          ],
+          "returnType": "number"
+        },
+        {
+          "name": "buildAreaFileMap",
+          "file": "src/commands/describe.ts",
+          "line": 118,
+          "kind": "function",
+          "signature": "function buildAreaFileMap(allFiles, config)",
+          "isExported": false,
+          "params": [
+            "allFiles",
+            "config"
+          ],
+          "returnType": "Map<string, string[]>"
+        },
+        {
+          "name": "buildSearchableText",
+          "file": "src/commands/describe.ts",
+          "line": 149,
+          "kind": "function",
+          "signature": "function buildSearchableText(candidate, config, areaFileMap, index)",
+          "isExported": false,
+          "params": [
+            "candidate",
+            "config",
+            "areaFileMap",
+            "index"
+          ],
+          "returnType": "string"
+        },
+        {
+          "name": "findAreaMatches",
+          "file": "src/commands/describe.ts",
+          "line": 199,
+          "kind": "function",
+          "signature": "function findAreaMatches(normalizedQuery, candidates, config, cwd)",
+          "isExported": false,
+          "params": [
+            "normalizedQuery",
+            "candidates",
+            "config",
+            "cwd"
+          ],
+          "returnType": "AreaMatch[]"
+        },
+        {
           "name": "describe",
           "file": "src/commands/describe.ts",
-          "line": 47,
+          "line": 268,
           "kind": "function",
           "signature": "export async function describe(query, options)",
           "isExported": true,
@@ -2313,49 +2381,9 @@
           "returnType": "Promise<string>"
         },
         {
-          "name": "findAreaMatches",
-          "file": "src/commands/describe.ts",
-          "line": 115,
-          "kind": "function",
-          "signature": "function findAreaMatches(normalizedQuery, candidates, config)",
-          "isExported": false,
-          "params": [
-            "normalizedQuery",
-            "candidates",
-            "config"
-          ],
-          "returnType": "AreaMatch[]"
-        },
-        {
-          "name": "getAreaFiles",
-          "file": "src/commands/describe.ts",
-          "line": 157,
-          "kind": "function",
-          "signature": "function getAreaFiles(areaId, config)",
-          "isExported": false,
-          "params": [
-            "areaId",
-            "config"
-          ],
-          "returnType": "string[]"
-        },
-        {
-          "name": "calculateRelevanceScore",
-          "file": "src/commands/describe.ts",
-          "line": 176,
-          "kind": "function",
-          "signature": "function calculateRelevanceScore(query, text)",
-          "isExported": false,
-          "params": [
-            "query",
-            "text"
-          ],
-          "returnType": "number"
-        },
-        {
           "name": "formatDescribeText",
           "file": "src/commands/describe.ts",
-          "line": 198,
+          "line": 336,
           "kind": "function",
           "signature": "export function formatDescribeText(result)",
           "isExported": true,
@@ -2365,9 +2393,17 @@
           "returnType": "string"
         },
         {
+          "name": "STOPWORDS",
+          "file": "src/commands/describe.ts",
+          "line": 57,
+          "kind": "const",
+          "signature": "const STOPWORDS = new Set([ // PT-BR \"de\", \"da\", \"do\", ...",
+          "isExported": false
+        },
+        {
           "name": "DescribeResult",
           "file": "src/commands/describe.ts",
-          "line": 12,
+          "line": 28,
           "kind": "interface",
           "signature": "export interface DescribeResult",
           "isExported": true,
@@ -2376,7 +2412,7 @@
         {
           "name": "AreaMatch",
           "file": "src/commands/describe.ts",
-          "line": 20,
+          "line": 36,
           "kind": "interface",
           "signature": "export interface AreaMatch",
           "isExported": true,
@@ -2385,7 +2421,7 @@
         {
           "name": "DescribeOptions",
           "file": "src/commands/describe.ts",
-          "line": 32,
+          "line": 48,
           "kind": "interface",
           "signature": "export interface DescribeOptions",
           "isExported": true,
@@ -2414,9 +2450,51 @@
             "findSimilar"
           ],
           "isTypeOnly": false
+        },
+        {
+          "source": "../areas/detector.js",
+          "specifiers": [
+            "detectFileAreas",
+            "isFileIgnored"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../ts/index.js",
+          "specifiers": [
+            "getAllCodeFiles"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../ts/cache.js",
+          "specifiers": [
+            "indexProject",
+            "ProjectIndex"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../cache/index.js",
+          "specifiers": [
+            "isCacheValid",
+            "getCachedSymbolsIndex",
+            "cacheSymbolsIndex",
+            "updateCacheMeta"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../types.js",
+          "specifiers": [
+            "AreasConfigFile"
+          ],
+          "isTypeOnly": true
         }
       ],
       "exports": [
+        "removeStopwords",
+        "calculatePartialScore",
         "describe",
         "formatDescribeText",
         "DescribeResult",
@@ -4623,7 +4701,9 @@
           "source": "../../src/commands/describe.js",
           "specifiers": [
             "describe",
-            "formatDescribeText"
+            "formatDescribeText",
+            "removeStopwords",
+            "calculatePartialScore"
           ],
           "isTypeOnly": false
         }
@@ -6703,11 +6783,89 @@
         "definition": "{ files: string[] | undefined; issues: KnipIssue[] | undefined; dependencies: string[] | undefined; devDependencies: string[] | undefined; unlisted: Record<string, string[]> | undefined; binaries: Record<string, string[]> | undefined; unresolved: Record<string, string[]> | undefined }"
       }
     ],
+    "removeStopwords": [
+      {
+        "name": "removeStopwords",
+        "file": "src/commands/describe.ts",
+        "line": 75,
+        "kind": "function",
+        "signature": "export function removeStopwords(words)",
+        "isExported": true,
+        "params": [
+          "words"
+        ],
+        "returnType": "string[]"
+      }
+    ],
+    "calculatePartialScore": [
+      {
+        "name": "calculatePartialScore",
+        "file": "src/commands/describe.ts",
+        "line": 92,
+        "kind": "function",
+        "signature": "export function calculatePartialScore(queryWords, searchableText)",
+        "isExported": true,
+        "params": [
+          "queryWords",
+          "searchableText"
+        ],
+        "returnType": "number"
+      }
+    ],
+    "buildAreaFileMap": [
+      {
+        "name": "buildAreaFileMap",
+        "file": "src/commands/describe.ts",
+        "line": 118,
+        "kind": "function",
+        "signature": "function buildAreaFileMap(allFiles, config)",
+        "isExported": false,
+        "params": [
+          "allFiles",
+          "config"
+        ],
+        "returnType": "Map<string, string[]>"
+      }
+    ],
+    "buildSearchableText": [
+      {
+        "name": "buildSearchableText",
+        "file": "src/commands/describe.ts",
+        "line": 149,
+        "kind": "function",
+        "signature": "function buildSearchableText(candidate, config, areaFileMap, index)",
+        "isExported": false,
+        "params": [
+          "candidate",
+          "config",
+          "areaFileMap",
+          "index"
+        ],
+        "returnType": "string"
+      }
+    ],
+    "findAreaMatches": [
+      {
+        "name": "findAreaMatches",
+        "file": "src/commands/describe.ts",
+        "line": 199,
+        "kind": "function",
+        "signature": "function findAreaMatches(normalizedQuery, candidates, config, cwd)",
+        "isExported": false,
+        "params": [
+          "normalizedQuery",
+          "candidates",
+          "config",
+          "cwd"
+        ],
+        "returnType": "AreaMatch[]"
+      }
+    ],
     "describe": [
       {
         "name": "describe",
         "file": "src/commands/describe.ts",
-        "line": 47,
+        "line": 268,
         "kind": "function",
         "signature": "export async function describe(query, options)",
         "isExported": true,
@@ -6718,57 +6876,11 @@
         "returnType": "Promise<string>"
       }
     ],
-    "findAreaMatches": [
-      {
-        "name": "findAreaMatches",
-        "file": "src/commands/describe.ts",
-        "line": 115,
-        "kind": "function",
-        "signature": "function findAreaMatches(normalizedQuery, candidates, config)",
-        "isExported": false,
-        "params": [
-          "normalizedQuery",
-          "candidates",
-          "config"
-        ],
-        "returnType": "AreaMatch[]"
-      }
-    ],
-    "getAreaFiles": [
-      {
-        "name": "getAreaFiles",
-        "file": "src/commands/describe.ts",
-        "line": 157,
-        "kind": "function",
-        "signature": "function getAreaFiles(areaId, config)",
-        "isExported": false,
-        "params": [
-          "areaId",
-          "config"
-        ],
-        "returnType": "string[]"
-      }
-    ],
-    "calculateRelevanceScore": [
-      {
-        "name": "calculateRelevanceScore",
-        "file": "src/commands/describe.ts",
-        "line": 176,
-        "kind": "function",
-        "signature": "function calculateRelevanceScore(query, text)",
-        "isExported": false,
-        "params": [
-          "query",
-          "text"
-        ],
-        "returnType": "number"
-      }
-    ],
     "formatDescribeText": [
       {
         "name": "formatDescribeText",
         "file": "src/commands/describe.ts",
-        "line": 198,
+        "line": 336,
         "kind": "function",
         "signature": "export function formatDescribeText(result)",
         "isExported": true,
@@ -6778,11 +6890,21 @@
         "returnType": "string"
       }
     ],
+    "STOPWORDS": [
+      {
+        "name": "STOPWORDS",
+        "file": "src/commands/describe.ts",
+        "line": 57,
+        "kind": "const",
+        "signature": "const STOPWORDS = new Set([ // PT-BR \"de\", \"da\", \"do\", ...",
+        "isExported": false
+      }
+    ],
     "DescribeResult": [
       {
         "name": "DescribeResult",
         "file": "src/commands/describe.ts",
-        "line": 12,
+        "line": 28,
         "kind": "interface",
         "signature": "export interface DescribeResult",
         "isExported": true,
@@ -6793,7 +6915,7 @@
       {
         "name": "AreaMatch",
         "file": "src/commands/describe.ts",
-        "line": 20,
+        "line": 36,
         "kind": "interface",
         "signature": "export interface AreaMatch",
         "isExported": true,
@@ -6804,7 +6926,7 @@
       {
         "name": "DescribeOptions",
         "file": "src/commands/describe.ts",
-        "line": 32,
+        "line": 48,
         "kind": "interface",
         "signature": "export interface DescribeOptions",
         "isExported": true,
@@ -8233,5 +8355,5 @@
     ]
   },
   "fileCount": 46,
-  "symbolCount": 257
+  "symbolCount": 260
 }
