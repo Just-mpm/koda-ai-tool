@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-02-06T10:40:04.119Z",
+  "timestamp": "2026-02-07T13:42:14.964Z",
   "cwd": "D:\\Users\\Matheus Pimenta\\Pictures\\Pacotes-Pessoais\\ai-tool",
   "summary": {
-    "totalFiles": 46,
+    "totalFiles": 47,
     "totalFolders": 16,
     "categories": {
       "other": 29,
-      "util": 7,
+      "util": 8,
       "type": 1,
       "test": 9
     }
@@ -29,9 +29,9 @@
     },
     {
       "path": "src/utils",
-      "fileCount": 6,
+      "fileCount": 7,
       "categories": {
-        "util": 6
+        "util": 7
       }
     },
     {
@@ -181,6 +181,16 @@
       "size": 0
     },
     {
+      "path": "src/utils/hints.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
+      "path": "src/utils/similarity.ts",
+      "category": "util",
+      "size": 0
+    },
+    {
       "path": "src/commands/base.ts",
       "category": "other",
       "size": 0
@@ -197,11 +207,6 @@
     },
     {
       "path": "src/utils/errors.ts",
-      "category": "util",
-      "size": 0
-    },
-    {
-      "path": "src/utils/similarity.ts",
       "category": "util",
       "size": 0
     },

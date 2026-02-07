@@ -1,5 +1,86 @@
 # Changelog
 
+## [1.0.0] - 2026-02-07
+
+### AI Experience Overhaul
+
+Release focada em melhorar a experiencia de IAs que usam o MCP Analyze. Todas as mudancas visam guiar melhor a IA para a proxima acao, reduzir tokens desperdicados e fornecer sugestoes inteligentes quando algo da errado.
+
+### Added
+
+- **Sistema de dicas contextuais CLI/MCP** (`src/utils/hints.ts`)
+  - Detecta contexto de execucao (CLI vs MCP) e gera instrucoes no formato correto
+  - CLI: `ai-tool impact Button` / MCP: `analyze__aitool_impact_analysis { target: 'Button' }`
+  - Proximos passos contextuais: cada comando sugere a acao mais relevante depois
+  - Dicas de recuperacao: quando algo da errado, sugere como resolver
+
+- **Constantes exportadas no comando `context`**
+  - Nova secao "CONSTANTS" mostra constantes exportadas com nome e tipo
+  - Tipo `ConstantInfo` adicionado em `types.ts`
+  - Complementa funcoes e tipos que ja eram exibidos
+
+- **Top 5 pastas no `map`**
+  - Resumo compacto agora mostra as 5 pastas com mais arquivos
+  - Ex: `src/commands/ (12), src/utils/ (7), src/ts/ (5)`
+
+- **Sugestoes "Voce quis dizer?" no `find`**
+  - Quando nao encontra resultado, usa Levenshtein contra o indice de simbolos
+  - Sugere nomes parecidos: `impct` → "Voce quis dizer? → ai-tool find impact"
+  - Tambem sugere `describe` como alternativa de busca
+
+### Improved
+
+- **Descriptions das tools MCP reescritas** - foco no "quando usar" + mini-workflow
+  - Cada tool explica quando usar, o que retorna, e sugere proximos passos
+  - Ex: `suggest_reads` → "Primeira tool a chamar quando vai editar um arquivo"
+  - Ex: `impact_analysis` → "Workflow: suggest_reads → impact_analysis → file_context"
+
+- **Proximos passos em TODOS os formatadores** - 10 formatadores agora terminam com secao contextual
+  - `impact` → sugere `suggest`, `context`, `find`
+  - `suggest` → sugere `context`, `impact`
+  - `context` → sugere `impact`, `find`, `suggest`
+  - `area` → sugere `area_context`, `context`, `find`
+  - E assim por diante para todos os comandos
+
+- **Erros MCP com dicas de recuperacao** - todos os catch blocks orientam a IA
+  - Arquivo nao encontrado → sugere `project_map` e `find`
+  - Area nao encontrada → sugere `list_areas`, `describe`, `areas_init`
+  - Nao e Firebase → sugere `project_map`, `find`, `list_areas`
+  - Erro generico → sugere verificar `cwd`
+
+- **`areaContext` com Levenshtein** - quando area nao encontrada, usa `formatAreaNotFound`
+  - Antes: "Area nao encontrada. Use areas para listar"
+  - Agora: "Voce quis dizer? auth (15 arquivos)" + lista de areas disponiveis
+
+- **`find` com area invalida** - mostra areas disponiveis com Levenshtein
+  - Antes: "Nenhum arquivo encontrado na area xyz"
+  - Agora: mesma experiencia rica do `areaContext`
+
+- **`functions` quando nao e Firebase** - sugere tools alternativas
+  - Antes: "Este nao e um projeto Firebase"
+  - Agora: "Comandos disponiveis: map, find, areas"
+
+- **`describe` limita arquivos** - max 5 por area + "e mais N" + dica de `area_detail`
+  - Antes: listava TODOS os arquivos (desperdicava tokens)
+  - Agora: resumo compacto com link para detalhes
+
+- **Decoracoes visuais removidas** - headers `═══╗` e linhas `━━━` substituidos por `## Titulo`
+  - Economia de ~200 caracteres por formatador
+  - Output mais limpo e eficiente para IAs
+
+### Technical Details
+
+- **Novo arquivo**: `src/utils/hints.ts` (sistema de dicas CLI/MCP)
+- **Modificado**: `src/formatters/text.ts` (340 linhas - proximos passos, decoracoes, constants)
+- **Modificado**: `src/mcp/tools.ts` (152 linhas - descriptions, catch blocks)
+- **Modificado**: `src/commands/context.ts` (52 linhas - constants, areaContext Levenshtein)
+- **Modificado**: `src/commands/find.ts` (25 linhas - area invalida, symbolNames)
+- **Modificado**: `src/commands/functions.ts` (28 linhas - dicas alternativas)
+- **Modificado**: `src/commands/describe.ts` (10 linhas - limite de arquivos)
+- **Modificado**: `src/types.ts` (7 linhas - ConstantInfo)
+- **Modificado**: `src/index.ts` (4 linhas - export hints)
+- **126 testes passando**, 0 falhas
+
 ## [0.9.3] - 2026-02-06
 
 ### Improved

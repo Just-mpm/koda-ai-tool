@@ -67,17 +67,29 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
 
   // Verificar se é projeto Firebase
   if (!isFirebaseProject(cwd)) {
-    const errorMsg = "Este não é um projeto Firebase.\nNão foi encontrado .firebaserc ou firebase.json";
-    return format === "json"
-      ? JSON.stringify({ error: errorMsg })
-      : `❌ ${errorMsg}`;
+    const errorMsg = "Este nao e um projeto Firebase (nao encontrou .firebaserc ou firebase.json)";
+    if (format === "json") {
+      return JSON.stringify({ error: errorMsg });
+    }
+    let out = `❌ ${errorMsg}\n`;
+    out += `\n💡 Comandos disponiveis para este projeto:\n`;
+    out += `   → ai-tool map - ver estrutura do projeto\n`;
+    out += `   → ai-tool find <termo> - buscar simbolos no codigo\n`;
+    out += `   → ai-tool areas - listar areas funcionais\n`;
+    return out;
   }
 
   if (!hasFirebaseFunctions(cwd)) {
-    const errorMsg = "Projeto Firebase sem Cloud Functions.\nNão foi encontrado functions/src/index.ts";
-    return format === "json"
-      ? JSON.stringify({ error: errorMsg })
-      : `❌ ${errorMsg}`;
+    const errorMsg = "Projeto Firebase detectado, mas sem Cloud Functions";
+    if (format === "json") {
+      return JSON.stringify({ error: errorMsg });
+    }
+    let out = `❌ ${errorMsg}\n`;
+    out += `   Nao foi encontrado functions/src/index.ts\n\n`;
+    out += `💡 Para adicionar Cloud Functions:\n`;
+    out += `   → firebase init functions\n`;
+    out += `   → Documentacao: https://firebase.google.com/docs/functions\n`;
+    return out;
   }
 
   try {

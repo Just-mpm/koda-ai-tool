@@ -361,9 +361,17 @@ export function formatDescribeText(result: DescribeResult): string {
     out += `📁 ${area.fileCount} arquivo(s)\n\n`;
 
     if (area.files.length > 0) {
+      const MAX_FILES = 5;
+      const filesToShow = area.files.slice(0, MAX_FILES);
+      const remaining = area.files.length - filesToShow.length;
+
       out += `Arquivos:\n`;
-      for (const file of area.files) {
+      for (const file of filesToShow) {
         out += `   • ${file}\n`;
+      }
+      if (remaining > 0) {
+        out += `   ... e mais ${remaining} arquivo(s)\n`;
+        out += `   → Use 'ai-tool area ${area.id}' para ver todos\n`;
       }
       out += "\n";
     }

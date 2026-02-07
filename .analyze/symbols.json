@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "timestamp": "2026-02-06T10:46:03.273Z",
+  "timestamp": "2026-02-07T13:46:24.672Z",
   "files": {
     "src/cli.ts": {
       "path": "src/cli.ts",
@@ -143,7 +143,7 @@
         {
           "name": "require",
           "file": "src/index.ts",
-          "line": 141,
+          "line": 145,
           "kind": "const",
           "signature": "const require = createRequire(import.meta.url)",
           "isExported": false
@@ -151,7 +151,7 @@
         {
           "name": "pkg",
           "file": "src/index.ts",
-          "line": 142,
+          "line": 146,
           "kind": "const",
           "signature": "const pkg = require(\"../package.json\")",
           "isExported": false
@@ -159,7 +159,7 @@
         {
           "name": "VERSION",
           "file": "src/index.ts",
-          "line": 143,
+          "line": 147,
           "kind": "const",
           "signature": "export const VERSION = pkg.version",
           "isExported": true
@@ -363,18 +363,27 @@
           "definition": "{ name: string; kind: TypeKind; definition: string; isExported: boolean }"
         },
         {
-          "name": "ContextResult",
+          "name": "ConstantInfo",
           "file": "src/types.ts",
           "line": 225,
           "kind": "interface",
+          "signature": "export interface ConstantInfo",
+          "isExported": true,
+          "definition": "{ name: string; type: string; isExported: boolean }"
+        },
+        {
+          "name": "ContextResult",
+          "file": "src/types.ts",
+          "line": 231,
+          "kind": "interface",
           "signature": "export interface ContextResult",
           "isExported": true,
-          "definition": "{ version: string; timestamp: string; file: string; category: FileCategory; imports: ImportInfo[]; exports: string[]; functions: FunctionInfo[]; types: TypeInfo[] }"
+          "definition": "{ version: string; timestamp: string; file: string; category: FileCategory; imports: ImportInfo[]; exports: string[]; functions: FunctionInfo[]; types: TypeInfo[]; constants: ConstantInfo[] | undefined }"
         },
         {
           "name": "AreaConfig",
           "file": "src/types.ts",
-          "line": 240,
+          "line": 247,
           "kind": "interface",
           "signature": "export interface AreaConfig",
           "isExported": true,
@@ -383,7 +392,7 @@
         {
           "name": "AreasConfigFile",
           "file": "src/types.ts",
-          "line": 248,
+          "line": 255,
           "kind": "interface",
           "signature": "export interface AreasConfigFile",
           "isExported": true,
@@ -392,7 +401,7 @@
         {
           "name": "AreaFile",
           "file": "src/types.ts",
-          "line": 261,
+          "line": 268,
           "kind": "interface",
           "signature": "export interface AreaFile",
           "isExported": true,
@@ -401,7 +410,7 @@
         {
           "name": "DetectedArea",
           "file": "src/types.ts",
-          "line": 267,
+          "line": 274,
           "kind": "interface",
           "signature": "export interface DetectedArea",
           "isExported": true,
@@ -410,7 +419,7 @@
         {
           "name": "AreasResult",
           "file": "src/types.ts",
-          "line": 277,
+          "line": 284,
           "kind": "interface",
           "signature": "export interface AreasResult",
           "isExported": true,
@@ -419,7 +428,7 @@
         {
           "name": "AreaDetailResult",
           "file": "src/types.ts",
-          "line": 290,
+          "line": 297,
           "kind": "interface",
           "signature": "export interface AreaDetailResult",
           "isExported": true,
@@ -428,7 +437,7 @@
         {
           "name": "AreasOptions",
           "file": "src/types.ts",
-          "line": 297,
+          "line": 304,
           "kind": "interface",
           "signature": "export interface AreasOptions",
           "isExported": true,
@@ -437,7 +446,7 @@
         {
           "name": "AreaOptions",
           "file": "src/types.ts",
-          "line": 302,
+          "line": 309,
           "kind": "interface",
           "signature": "export interface AreaOptions",
           "isExported": true,
@@ -446,7 +455,7 @@
         {
           "name": "AreaContextTypeInfo",
           "file": "src/types.ts",
-          "line": 311,
+          "line": 318,
           "kind": "interface",
           "signature": "export interface AreaContextTypeInfo",
           "isExported": true,
@@ -455,7 +464,7 @@
         {
           "name": "AreaContextFunctionInfo",
           "file": "src/types.ts",
-          "line": 318,
+          "line": 325,
           "kind": "interface",
           "signature": "export interface AreaContextFunctionInfo",
           "isExported": true,
@@ -464,7 +473,7 @@
         {
           "name": "AreaContextComponentInfo",
           "file": "src/types.ts",
-          "line": 326,
+          "line": 333,
           "kind": "interface",
           "signature": "export interface AreaContextComponentInfo",
           "isExported": true,
@@ -473,7 +482,7 @@
         {
           "name": "AreaContextStoreInfo",
           "file": "src/types.ts",
-          "line": 333,
+          "line": 340,
           "kind": "interface",
           "signature": "export interface AreaContextStoreInfo",
           "isExported": true,
@@ -482,7 +491,7 @@
         {
           "name": "AreaContextTriggerInfo",
           "file": "src/types.ts",
-          "line": 340,
+          "line": 347,
           "kind": "interface",
           "signature": "export interface AreaContextTriggerInfo",
           "isExported": true,
@@ -491,7 +500,7 @@
         {
           "name": "AreaContextResult",
           "file": "src/types.ts",
-          "line": 349,
+          "line": 356,
           "kind": "interface",
           "signature": "export interface AreaContextResult",
           "isExported": true,
@@ -565,6 +574,7 @@
         "ImportInfo",
         "FunctionInfo",
         "TypeInfo",
+        "ConstantInfo",
         "ContextResult",
         "AreaConfig",
         "AreasConfigFile",
@@ -1926,7 +1936,7 @@
         {
           "name": "context",
           "file": "src/commands/context.ts",
-          "line": 48,
+          "line": 51,
           "kind": "function",
           "signature": "export async function context(target, options)",
           "isExported": true,
@@ -1939,7 +1949,7 @@
         {
           "name": "findTargetFile",
           "file": "src/commands/context.ts",
-          "line": 105,
+          "line": 130,
           "kind": "function",
           "signature": "function findTargetFile(target, cwd)",
           "isExported": false,
@@ -1952,7 +1962,7 @@
         {
           "name": "isCodeFile",
           "file": "src/commands/context.ts",
-          "line": 155,
+          "line": 180,
           "kind": "function",
           "signature": "function isCodeFile(filePath)",
           "isExported": false,
@@ -1964,7 +1974,7 @@
         {
           "name": "getAllCodeFiles",
           "file": "src/commands/context.ts",
-          "line": 163,
+          "line": 188,
           "kind": "function",
           "signature": "function getAllCodeFiles(dir, files, baseDir)",
           "isExported": false,
@@ -1978,7 +1988,7 @@
         {
           "name": "shouldIgnore",
           "file": "src/commands/context.ts",
-          "line": 199,
+          "line": 224,
           "kind": "function",
           "signature": "function shouldIgnore(name)",
           "isExported": false,
@@ -1990,7 +2000,7 @@
         {
           "name": "areaContext",
           "file": "src/commands/context.ts",
-          "line": 229,
+          "line": 254,
           "kind": "function",
           "signature": "export async function areaContext(areaName, options)",
           "isExported": true,
@@ -2003,7 +2013,7 @@
         {
           "name": "findRealAreaIdFromIndex",
           "file": "src/commands/context.ts",
-          "line": 421,
+          "line": 461,
           "kind": "function",
           "signature": "function findRealAreaIdFromIndex(target, areaFiles, config)",
           "isExported": false,
@@ -2017,7 +2027,7 @@
         {
           "name": "CODE_EXTENSIONS",
           "file": "src/commands/context.ts",
-          "line": 100,
+          "line": 125,
           "kind": "const",
           "signature": "const CODE_EXTENSIONS = new Set([\".ts\", \".tsx\", \".js\", \".jsx\"...",
           "isExported": false
@@ -2025,7 +2035,7 @@
         {
           "name": "AreaContextOptions",
           "file": "src/commands/context.ts",
-          "line": 218,
+          "line": 243,
           "kind": "interface",
           "signature": "export interface AreaContextOptions",
           "isExported": true,
@@ -2053,10 +2063,18 @@
           "isTypeOnly": false
         },
         {
+          "source": "ts-morph",
+          "specifiers": [
+            "SyntaxKind"
+          ],
+          "isTypeOnly": false
+        },
+        {
           "source": "../types.js",
           "specifiers": [
             "ContextOptions",
             "ContextResult",
+            "ConstantInfo",
             "AreaContextResult",
             "AreaContextTypeInfo",
             "AreaContextFunctionInfo",
@@ -2096,7 +2114,15 @@
         {
           "source": "../utils/errors.js",
           "specifiers": [
-            "formatFileNotFound"
+            "formatFileNotFound",
+            "formatAreaNotFound"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../ts/utils.js",
+          "specifiers": [
+            "simplifyType"
           ],
           "isTypeOnly": false
         },
@@ -2509,7 +2535,7 @@
         {
           "name": "find",
           "file": "src/commands/find.ts",
-          "line": 81,
+          "line": 82,
           "kind": "function",
           "signature": "export async function find(query, options)",
           "isExported": true,
@@ -2522,7 +2548,7 @@
         {
           "name": "searchInIndex",
           "file": "src/commands/find.ts",
-          "line": 211,
+          "line": 228,
           "kind": "function",
           "signature": "function searchInIndex(index, query, filterType, allowedFiles)",
           "isExported": false,
@@ -2537,7 +2563,7 @@
         {
           "name": "matchesType",
           "file": "src/commands/find.ts",
-          "line": 299,
+          "line": 316,
           "kind": "function",
           "signature": "function matchesType(kind, filter)",
           "isExported": false,
@@ -2550,7 +2576,7 @@
         {
           "name": "mapKindToSymbolType",
           "file": "src/commands/find.ts",
-          "line": 325,
+          "line": 342,
           "kind": "function",
           "signature": "function mapKindToSymbolType(kind)",
           "isExported": false,
@@ -2562,7 +2588,7 @@
         {
           "name": "inferSymbolTypeFromName",
           "file": "src/commands/find.ts",
-          "line": 349,
+          "line": 366,
           "kind": "function",
           "signature": "function inferSymbolTypeFromName(name)",
           "isExported": false,
@@ -2574,7 +2600,7 @@
         {
           "name": "FindOptions",
           "file": "src/commands/find.ts",
-          "line": 32,
+          "line": 33,
           "kind": "interface",
           "signature": "export interface FindOptions",
           "isExported": true,
@@ -2583,7 +2609,7 @@
         {
           "name": "FindMatch",
           "file": "src/commands/find.ts",
-          "line": 45,
+          "line": 46,
           "kind": "interface",
           "signature": "export interface FindMatch",
           "isExported": true,
@@ -2592,7 +2618,7 @@
         {
           "name": "FindResult",
           "file": "src/commands/find.ts",
-          "line": 58,
+          "line": 59,
           "kind": "interface",
           "signature": "export interface FindResult",
           "isExported": true,
@@ -2601,7 +2627,7 @@
         {
           "name": "SymbolType",
           "file": "src/commands/find.ts",
-          "line": 27,
+          "line": 28,
           "kind": "type",
           "signature": "export type SymbolType",
           "isExported": true,
@@ -2635,6 +2661,13 @@
           "source": "../formatters/text.js",
           "specifiers": [
             "formatFindText"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../utils/errors.js",
+          "specifiers": [
+            "formatAreaNotFound"
           ],
           "isTypeOnly": false
         },
@@ -2693,7 +2726,7 @@
         {
           "name": "formatFunctionsText",
           "file": "src/commands/functions.ts",
-          "line": 175,
+          "line": 187,
           "kind": "function",
           "signature": "function formatFunctionsText(result)",
           "isExported": false,
@@ -2705,7 +2738,7 @@
         {
           "name": "getTriggerIcon",
           "file": "src/commands/functions.ts",
-          "line": 281,
+          "line": 293,
           "kind": "function",
           "signature": "function getTriggerIcon(trigger)",
           "isExported": false,
@@ -3204,44 +3237,47 @@
         {
           "name": "formatMapSummary",
           "file": "src/formatters/text.ts",
-          "line": 24,
+          "line": 31,
           "kind": "function",
-          "signature": "export function formatMapSummary(result, areasInfo)",
+          "signature": "export function formatMapSummary(result, areasInfo, ctx)",
           "isExported": true,
           "params": [
             "result",
-            "areasInfo"
+            "areasInfo",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatMapText",
           "file": "src/formatters/text.ts",
-          "line": 99,
+          "line": 113,
           "kind": "function",
-          "signature": "export function formatMapText(result)",
+          "signature": "export function formatMapText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatDeadText",
           "file": "src/formatters/text.ts",
-          "line": 170,
+          "line": 183,
           "kind": "function",
-          "signature": "export function formatDeadText(result)",
+          "signature": "export function formatDeadText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "generateIgnoreSuggestions",
           "file": "src/formatters/text.ts",
-          "line": 274,
+          "line": 287,
           "kind": "function",
           "signature": "function generateIgnoreSuggestions(result)",
           "isExported": false,
@@ -3253,85 +3289,93 @@
         {
           "name": "formatImpactText",
           "file": "src/formatters/text.ts",
-          "line": 345,
+          "line": 358,
           "kind": "function",
-          "signature": "export function formatImpactText(result)",
+          "signature": "export function formatImpactText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatSuggestText",
           "file": "src/formatters/text.ts",
-          "line": 466,
+          "line": 476,
           "kind": "function",
-          "signature": "export function formatSuggestText(result)",
+          "signature": "export function formatSuggestText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatContextText",
           "file": "src/formatters/text.ts",
-          "line": 576,
+          "line": 581,
           "kind": "function",
-          "signature": "export function formatContextText(result)",
+          "signature": "export function formatContextText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatAreasText",
           "file": "src/formatters/text.ts",
-          "line": 651,
+          "line": 664,
           "kind": "function",
-          "signature": "export function formatAreasText(result)",
+          "signature": "export function formatAreasText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatAreaDetailText",
           "file": "src/formatters/text.ts",
-          "line": 724,
+          "line": 729,
           "kind": "function",
-          "signature": "export function formatAreaDetailText(result, options)",
+          "signature": "export function formatAreaDetailText(result, options, ctx)",
           "isExported": true,
           "params": [
             "result",
-            "options"
+            "options",
+            "ctx"
           ],
           "returnType": "string"
         },
         {
           "name": "formatFindText",
           "file": "src/formatters/text.ts",
-          "line": 830,
+          "line": 838,
           "kind": "function",
-          "signature": "export function formatFindText(result)",
+          "signature": "export function formatFindText(result, ctx, symbolNames)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx",
+            "symbolNames"
           ],
           "returnType": "string"
         },
         {
           "name": "formatAreaContextText",
           "file": "src/formatters/text.ts",
-          "line": 921,
+          "line": 940,
           "kind": "function",
-          "signature": "export function formatAreaContextText(result)",
+          "signature": "export function formatAreaContextText(result, ctx)",
           "isExported": true,
           "params": [
-            "result"
+            "result",
+            "ctx"
           ],
           "returnType": "string"
         }
@@ -3364,6 +3408,22 @@
           "source": "../utils/detect.js",
           "specifiers": [
             "categoryIcons"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../utils/hints.js",
+          "specifiers": [
+            "nextSteps",
+            "hint",
+            "HintContext"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../utils/similarity.js",
+          "specifiers": [
+            "findSimilar"
           ],
           "isTypeOnly": false
         }
@@ -3576,7 +3636,7 @@
         {
           "name": "registerAllTools",
           "file": "src/mcp/tools.ts",
-          "line": 27,
+          "line": 28,
           "kind": "function",
           "signature": "export function registerAllTools(server)",
           "isExported": true,
@@ -3676,6 +3736,13 @@
           "source": "../commands/describe.js",
           "specifiers": [
             "describe"
+          ],
+          "isTypeOnly": false
+        },
+        {
+          "source": "../utils/hints.js",
+          "specifiers": [
+            "recoveryHint"
           ],
           "isTypeOnly": false
         }
@@ -4551,6 +4618,103 @@
         "clearFirebaseCache"
       ]
     },
+    "src/utils/hints.ts": {
+      "path": "src/utils/hints.ts",
+      "category": "util",
+      "symbols": [
+        {
+          "name": "hint",
+          "file": "src/utils/hints.ts",
+          "line": 84,
+          "kind": "function",
+          "signature": "export function hint(command, ctx, params)",
+          "isExported": true,
+          "params": [
+            "command",
+            "ctx",
+            "params"
+          ],
+          "returnType": "string"
+        },
+        {
+          "name": "nextSteps",
+          "file": "src/utils/hints.ts",
+          "line": 180,
+          "kind": "function",
+          "signature": "export function nextSteps(command, ctx)",
+          "isExported": true,
+          "params": [
+            "command",
+            "ctx"
+          ],
+          "returnType": "string"
+        },
+        {
+          "name": "recoveryHint",
+          "file": "src/utils/hints.ts",
+          "line": 203,
+          "kind": "function",
+          "signature": "export function recoveryHint(errorType, ctx, _extra)",
+          "isExported": true,
+          "params": [
+            "errorType",
+            "ctx",
+            "_extra"
+          ],
+          "returnType": "string"
+        },
+        {
+          "name": "COMMAND_MAP",
+          "file": "src/utils/hints.ts",
+          "line": 25,
+          "kind": "const",
+          "signature": "const COMMAND_MAP = { map: { cli: \"ai-tool map\", mcp: \"an...",
+          "isExported": false
+        },
+        {
+          "name": "NEXT_STEPS",
+          "file": "src/utils/hints.ts",
+          "line": 119,
+          "kind": "const",
+          "signature": "const NEXT_STEPS = { map: [ { command: \"area\", descripti...",
+          "isExported": false
+        },
+        {
+          "name": "CommandMapping",
+          "file": "src/utils/hints.ts",
+          "line": 20,
+          "kind": "interface",
+          "signature": "interface CommandMapping",
+          "isExported": false,
+          "definition": "{ cli: string; mcp: string }"
+        },
+        {
+          "name": "NextStep",
+          "file": "src/utils/hints.ts",
+          "line": 106,
+          "kind": "interface",
+          "signature": "interface NextStep",
+          "isExported": false,
+          "definition": "{ command: string; description: string; params: Record<string, string> | undefined }"
+        },
+        {
+          "name": "HintContext",
+          "file": "src/utils/hints.ts",
+          "line": 15,
+          "kind": "type",
+          "signature": "export type HintContext",
+          "isExported": true,
+          "definition": "HintContext"
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "hint",
+        "nextSteps",
+        "recoveryHint",
+        "HintContext"
+      ]
+    },
     "src/utils/logger.ts": {
       "path": "src/utils/logger.ts",
       "category": "util",
@@ -5037,7 +5201,7 @@
       {
         "name": "require",
         "file": "src/index.ts",
-        "line": 141,
+        "line": 145,
         "kind": "const",
         "signature": "const require = createRequire(import.meta.url)",
         "isExported": false
@@ -5047,7 +5211,7 @@
       {
         "name": "pkg",
         "file": "src/index.ts",
-        "line": 142,
+        "line": 146,
         "kind": "const",
         "signature": "const pkg = require(\"../package.json\")",
         "isExported": false
@@ -5057,7 +5221,7 @@
       {
         "name": "VERSION",
         "file": "src/index.ts",
-        "line": 143,
+        "line": 147,
         "kind": "const",
         "signature": "export const VERSION = pkg.version",
         "isExported": true
@@ -5310,22 +5474,33 @@
         "definition": "{ name: string; kind: TypeKind; definition: string; isExported: boolean }"
       }
     ],
+    "ConstantInfo": [
+      {
+        "name": "ConstantInfo",
+        "file": "src/types.ts",
+        "line": 225,
+        "kind": "interface",
+        "signature": "export interface ConstantInfo",
+        "isExported": true,
+        "definition": "{ name: string; type: string; isExported: boolean }"
+      }
+    ],
     "ContextResult": [
       {
         "name": "ContextResult",
         "file": "src/types.ts",
-        "line": 225,
+        "line": 231,
         "kind": "interface",
         "signature": "export interface ContextResult",
         "isExported": true,
-        "definition": "{ version: string; timestamp: string; file: string; category: FileCategory; imports: ImportInfo[]; exports: string[]; functions: FunctionInfo[]; types: TypeInfo[] }"
+        "definition": "{ version: string; timestamp: string; file: string; category: FileCategory; imports: ImportInfo[]; exports: string[]; functions: FunctionInfo[]; types: TypeInfo[]; constants: ConstantInfo[] | undefined }"
       }
     ],
     "AreaConfig": [
       {
         "name": "AreaConfig",
         "file": "src/types.ts",
-        "line": 240,
+        "line": 247,
         "kind": "interface",
         "signature": "export interface AreaConfig",
         "isExported": true,
@@ -5336,7 +5511,7 @@
       {
         "name": "AreasConfigFile",
         "file": "src/types.ts",
-        "line": 248,
+        "line": 255,
         "kind": "interface",
         "signature": "export interface AreasConfigFile",
         "isExported": true,
@@ -5347,7 +5522,7 @@
       {
         "name": "AreaFile",
         "file": "src/types.ts",
-        "line": 261,
+        "line": 268,
         "kind": "interface",
         "signature": "export interface AreaFile",
         "isExported": true,
@@ -5358,7 +5533,7 @@
       {
         "name": "DetectedArea",
         "file": "src/types.ts",
-        "line": 267,
+        "line": 274,
         "kind": "interface",
         "signature": "export interface DetectedArea",
         "isExported": true,
@@ -5369,7 +5544,7 @@
       {
         "name": "AreasResult",
         "file": "src/types.ts",
-        "line": 277,
+        "line": 284,
         "kind": "interface",
         "signature": "export interface AreasResult",
         "isExported": true,
@@ -5380,7 +5555,7 @@
       {
         "name": "AreaDetailResult",
         "file": "src/types.ts",
-        "line": 290,
+        "line": 297,
         "kind": "interface",
         "signature": "export interface AreaDetailResult",
         "isExported": true,
@@ -5391,7 +5566,7 @@
       {
         "name": "AreasOptions",
         "file": "src/types.ts",
-        "line": 297,
+        "line": 304,
         "kind": "interface",
         "signature": "export interface AreasOptions",
         "isExported": true,
@@ -5402,7 +5577,7 @@
       {
         "name": "AreaOptions",
         "file": "src/types.ts",
-        "line": 302,
+        "line": 309,
         "kind": "interface",
         "signature": "export interface AreaOptions",
         "isExported": true,
@@ -5413,7 +5588,7 @@
       {
         "name": "AreaContextTypeInfo",
         "file": "src/types.ts",
-        "line": 311,
+        "line": 318,
         "kind": "interface",
         "signature": "export interface AreaContextTypeInfo",
         "isExported": true,
@@ -5424,7 +5599,7 @@
       {
         "name": "AreaContextFunctionInfo",
         "file": "src/types.ts",
-        "line": 318,
+        "line": 325,
         "kind": "interface",
         "signature": "export interface AreaContextFunctionInfo",
         "isExported": true,
@@ -5435,7 +5610,7 @@
       {
         "name": "AreaContextComponentInfo",
         "file": "src/types.ts",
-        "line": 326,
+        "line": 333,
         "kind": "interface",
         "signature": "export interface AreaContextComponentInfo",
         "isExported": true,
@@ -5446,7 +5621,7 @@
       {
         "name": "AreaContextStoreInfo",
         "file": "src/types.ts",
-        "line": 333,
+        "line": 340,
         "kind": "interface",
         "signature": "export interface AreaContextStoreInfo",
         "isExported": true,
@@ -5457,7 +5632,7 @@
       {
         "name": "AreaContextTriggerInfo",
         "file": "src/types.ts",
-        "line": 340,
+        "line": 347,
         "kind": "interface",
         "signature": "export interface AreaContextTriggerInfo",
         "isExported": true,
@@ -5468,7 +5643,7 @@
       {
         "name": "AreaContextResult",
         "file": "src/types.ts",
-        "line": 349,
+        "line": 356,
         "kind": "interface",
         "signature": "export interface AreaContextResult",
         "isExported": true,
@@ -6358,7 +6533,7 @@
       {
         "name": "getAllCodeFiles",
         "file": "src/commands/context.ts",
-        "line": 163,
+        "line": 188,
         "kind": "function",
         "signature": "function getAllCodeFiles(dir, files, baseDir)",
         "isExported": false,
@@ -6412,7 +6587,7 @@
       {
         "name": "CODE_EXTENSIONS",
         "file": "src/commands/context.ts",
-        "line": 100,
+        "line": 125,
         "kind": "const",
         "signature": "const CODE_EXTENSIONS = new Set([\".ts\", \".tsx\", \".js\", \".jsx\"...",
         "isExported": false
@@ -6598,7 +6773,7 @@
       {
         "name": "context",
         "file": "src/commands/context.ts",
-        "line": 48,
+        "line": 51,
         "kind": "function",
         "signature": "export async function context(target, options)",
         "isExported": true,
@@ -6613,7 +6788,7 @@
       {
         "name": "findTargetFile",
         "file": "src/commands/context.ts",
-        "line": 105,
+        "line": 130,
         "kind": "function",
         "signature": "function findTargetFile(target, cwd)",
         "isExported": false,
@@ -6641,7 +6816,7 @@
       {
         "name": "isCodeFile",
         "file": "src/commands/context.ts",
-        "line": 155,
+        "line": 180,
         "kind": "function",
         "signature": "function isCodeFile(filePath)",
         "isExported": false,
@@ -6667,7 +6842,7 @@
       {
         "name": "shouldIgnore",
         "file": "src/commands/context.ts",
-        "line": 199,
+        "line": 224,
         "kind": "function",
         "signature": "function shouldIgnore(name)",
         "isExported": false,
@@ -6681,7 +6856,7 @@
       {
         "name": "areaContext",
         "file": "src/commands/context.ts",
-        "line": 229,
+        "line": 254,
         "kind": "function",
         "signature": "export async function areaContext(areaName, options)",
         "isExported": true,
@@ -6696,7 +6871,7 @@
       {
         "name": "findRealAreaIdFromIndex",
         "file": "src/commands/context.ts",
-        "line": 421,
+        "line": 461,
         "kind": "function",
         "signature": "function findRealAreaIdFromIndex(target, areaFiles, config)",
         "isExported": false,
@@ -6712,7 +6887,7 @@
       {
         "name": "AreaContextOptions",
         "file": "src/commands/context.ts",
-        "line": 218,
+        "line": 243,
         "kind": "interface",
         "signature": "export interface AreaContextOptions",
         "isExported": true,
@@ -6937,7 +7112,7 @@
       {
         "name": "find",
         "file": "src/commands/find.ts",
-        "line": 81,
+        "line": 82,
         "kind": "function",
         "signature": "export async function find(query, options)",
         "isExported": true,
@@ -6952,7 +7127,7 @@
       {
         "name": "searchInIndex",
         "file": "src/commands/find.ts",
-        "line": 211,
+        "line": 228,
         "kind": "function",
         "signature": "function searchInIndex(index, query, filterType, allowedFiles)",
         "isExported": false,
@@ -6969,7 +7144,7 @@
       {
         "name": "matchesType",
         "file": "src/commands/find.ts",
-        "line": 299,
+        "line": 316,
         "kind": "function",
         "signature": "function matchesType(kind, filter)",
         "isExported": false,
@@ -6984,7 +7159,7 @@
       {
         "name": "mapKindToSymbolType",
         "file": "src/commands/find.ts",
-        "line": 325,
+        "line": 342,
         "kind": "function",
         "signature": "function mapKindToSymbolType(kind)",
         "isExported": false,
@@ -6998,7 +7173,7 @@
       {
         "name": "inferSymbolTypeFromName",
         "file": "src/commands/find.ts",
-        "line": 349,
+        "line": 366,
         "kind": "function",
         "signature": "function inferSymbolTypeFromName(name)",
         "isExported": false,
@@ -7012,7 +7187,7 @@
       {
         "name": "FindOptions",
         "file": "src/commands/find.ts",
-        "line": 32,
+        "line": 33,
         "kind": "interface",
         "signature": "export interface FindOptions",
         "isExported": true,
@@ -7023,7 +7198,7 @@
       {
         "name": "FindMatch",
         "file": "src/commands/find.ts",
-        "line": 45,
+        "line": 46,
         "kind": "interface",
         "signature": "export interface FindMatch",
         "isExported": true,
@@ -7034,7 +7209,7 @@
       {
         "name": "FindResult",
         "file": "src/commands/find.ts",
-        "line": 58,
+        "line": 59,
         "kind": "interface",
         "signature": "export interface FindResult",
         "isExported": true,
@@ -7045,7 +7220,7 @@
       {
         "name": "SymbolType",
         "file": "src/commands/find.ts",
-        "line": 27,
+        "line": 28,
         "kind": "type",
         "signature": "export type SymbolType",
         "isExported": true,
@@ -7070,7 +7245,7 @@
       {
         "name": "formatFunctionsText",
         "file": "src/commands/functions.ts",
-        "line": 175,
+        "line": 187,
         "kind": "function",
         "signature": "function formatFunctionsText(result)",
         "isExported": false,
@@ -7084,7 +7259,7 @@
       {
         "name": "getTriggerIcon",
         "file": "src/commands/functions.ts",
-        "line": 281,
+        "line": 293,
         "kind": "function",
         "signature": "function getTriggerIcon(trigger)",
         "isExported": false,
@@ -7343,13 +7518,14 @@
       {
         "name": "formatMapSummary",
         "file": "src/formatters/text.ts",
-        "line": 24,
+        "line": 31,
         "kind": "function",
-        "signature": "export function formatMapSummary(result, areasInfo)",
+        "signature": "export function formatMapSummary(result, areasInfo, ctx)",
         "isExported": true,
         "params": [
           "result",
-          "areasInfo"
+          "areasInfo",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7358,12 +7534,13 @@
       {
         "name": "formatMapText",
         "file": "src/formatters/text.ts",
-        "line": 99,
+        "line": 113,
         "kind": "function",
-        "signature": "export function formatMapText(result)",
+        "signature": "export function formatMapText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7372,12 +7549,13 @@
       {
         "name": "formatDeadText",
         "file": "src/formatters/text.ts",
-        "line": 170,
+        "line": 183,
         "kind": "function",
-        "signature": "export function formatDeadText(result)",
+        "signature": "export function formatDeadText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7386,7 +7564,7 @@
       {
         "name": "generateIgnoreSuggestions",
         "file": "src/formatters/text.ts",
-        "line": 274,
+        "line": 287,
         "kind": "function",
         "signature": "function generateIgnoreSuggestions(result)",
         "isExported": false,
@@ -7400,12 +7578,13 @@
       {
         "name": "formatImpactText",
         "file": "src/formatters/text.ts",
-        "line": 345,
+        "line": 358,
         "kind": "function",
-        "signature": "export function formatImpactText(result)",
+        "signature": "export function formatImpactText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7414,12 +7593,13 @@
       {
         "name": "formatSuggestText",
         "file": "src/formatters/text.ts",
-        "line": 466,
+        "line": 476,
         "kind": "function",
-        "signature": "export function formatSuggestText(result)",
+        "signature": "export function formatSuggestText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7428,12 +7608,13 @@
       {
         "name": "formatContextText",
         "file": "src/formatters/text.ts",
-        "line": 576,
+        "line": 581,
         "kind": "function",
-        "signature": "export function formatContextText(result)",
+        "signature": "export function formatContextText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7442,12 +7623,13 @@
       {
         "name": "formatAreasText",
         "file": "src/formatters/text.ts",
-        "line": 651,
+        "line": 664,
         "kind": "function",
-        "signature": "export function formatAreasText(result)",
+        "signature": "export function formatAreasText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7456,13 +7638,14 @@
       {
         "name": "formatAreaDetailText",
         "file": "src/formatters/text.ts",
-        "line": 724,
+        "line": 729,
         "kind": "function",
-        "signature": "export function formatAreaDetailText(result, options)",
+        "signature": "export function formatAreaDetailText(result, options, ctx)",
         "isExported": true,
         "params": [
           "result",
-          "options"
+          "options",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7471,12 +7654,14 @@
       {
         "name": "formatFindText",
         "file": "src/formatters/text.ts",
-        "line": 830,
+        "line": 838,
         "kind": "function",
-        "signature": "export function formatFindText(result)",
+        "signature": "export function formatFindText(result, ctx, symbolNames)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx",
+          "symbolNames"
         ],
         "returnType": "string"
       }
@@ -7485,12 +7670,13 @@
       {
         "name": "formatAreaContextText",
         "file": "src/formatters/text.ts",
-        "line": 921,
+        "line": 940,
         "kind": "function",
-        "signature": "export function formatAreaContextText(result)",
+        "signature": "export function formatAreaContextText(result, ctx)",
         "isExported": true,
         "params": [
-          "result"
+          "result",
+          "ctx"
         ],
         "returnType": "string"
       }
@@ -7636,7 +7822,7 @@
       {
         "name": "registerAllTools",
         "file": "src/mcp/tools.ts",
-        "line": 27,
+        "line": 28,
         "kind": "function",
         "signature": "export function registerAllTools(server)",
         "isExported": true,
@@ -8195,6 +8381,106 @@
         "returnType": "void"
       }
     ],
+    "hint": [
+      {
+        "name": "hint",
+        "file": "src/utils/hints.ts",
+        "line": 84,
+        "kind": "function",
+        "signature": "export function hint(command, ctx, params)",
+        "isExported": true,
+        "params": [
+          "command",
+          "ctx",
+          "params"
+        ],
+        "returnType": "string"
+      }
+    ],
+    "nextSteps": [
+      {
+        "name": "nextSteps",
+        "file": "src/utils/hints.ts",
+        "line": 180,
+        "kind": "function",
+        "signature": "export function nextSteps(command, ctx)",
+        "isExported": true,
+        "params": [
+          "command",
+          "ctx"
+        ],
+        "returnType": "string"
+      }
+    ],
+    "recoveryHint": [
+      {
+        "name": "recoveryHint",
+        "file": "src/utils/hints.ts",
+        "line": 203,
+        "kind": "function",
+        "signature": "export function recoveryHint(errorType, ctx, _extra)",
+        "isExported": true,
+        "params": [
+          "errorType",
+          "ctx",
+          "_extra"
+        ],
+        "returnType": "string"
+      }
+    ],
+    "COMMAND_MAP": [
+      {
+        "name": "COMMAND_MAP",
+        "file": "src/utils/hints.ts",
+        "line": 25,
+        "kind": "const",
+        "signature": "const COMMAND_MAP = { map: { cli: \"ai-tool map\", mcp: \"an...",
+        "isExported": false
+      }
+    ],
+    "NEXT_STEPS": [
+      {
+        "name": "NEXT_STEPS",
+        "file": "src/utils/hints.ts",
+        "line": 119,
+        "kind": "const",
+        "signature": "const NEXT_STEPS = { map: [ { command: \"area\", descripti...",
+        "isExported": false
+      }
+    ],
+    "CommandMapping": [
+      {
+        "name": "CommandMapping",
+        "file": "src/utils/hints.ts",
+        "line": 20,
+        "kind": "interface",
+        "signature": "interface CommandMapping",
+        "isExported": false,
+        "definition": "{ cli: string; mcp: string }"
+      }
+    ],
+    "NextStep": [
+      {
+        "name": "NextStep",
+        "file": "src/utils/hints.ts",
+        "line": 106,
+        "kind": "interface",
+        "signature": "interface NextStep",
+        "isExported": false,
+        "definition": "{ command: string; description: string; params: Record<string, string> | undefined }"
+      }
+    ],
+    "HintContext": [
+      {
+        "name": "HintContext",
+        "file": "src/utils/hints.ts",
+        "line": 15,
+        "kind": "type",
+        "signature": "export type HintContext",
+        "isExported": true,
+        "definition": "HintContext"
+      }
+    ],
     "logger": [
       {
         "name": "logger",
@@ -8354,6 +8640,6 @@
       }
     ]
   },
-  "fileCount": 46,
-  "symbolCount": 260
+  "fileCount": 47,
+  "symbolCount": 269
 }

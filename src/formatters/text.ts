@@ -1,5 +1,10 @@
 /**
- * Formatadores de texto para output no terminal
+ * Formatadores de texto para output no terminal e MCP
+ *
+ * Todas as funcoes recebem um parametro opcional `ctx` (HintContext)
+ * que determina o formato das dicas de navegacao:
+ * - "cli": instrucoes no formato CLI (ex: "ai-tool impact Button")
+ * - "mcp": instrucoes no formato MCP (ex: "aitool_impact_analysis { target: 'Button' }")
  */
 
 import type {
@@ -16,14 +21,17 @@ import type {
 } from "../types.js";
 import type { FindResult } from "../commands/find.js";
 import { categoryIcons } from "../utils/detect.js";
+import { nextSteps, hint, type HintContext } from "../utils/hints.js";
+import { findSimilar } from "../utils/similarity.js";
 
 /**
  * Formata resultado do MAP como resumo compacto + dicas contextuais
- * Usado como output padrão para economizar tokens
+ * Usado como output padrao para economizar tokens
  */
 export function formatMapSummary(
   result: MapResult,
-  areasInfo?: MapAreasInfo
+  areasInfo?: MapAreasInfo,
+  ctx: HintContext = "cli"
 ): string {
   let out = "";
 
@@ -56,9 +64,18 @@ export function formatMapSummary(
   }
   out += `   ${catParts.join(", ")}\n`;
 
-  // Áreas (se disponível)
+  // Top pastas
+  const topFolders = result.folders
+    .sort((a, b) => b.fileCount - a.fileCount)
+    .slice(0, 5);
+  if (topFolders.length > 0) {
+    const folderParts = topFolders.map(f => `${f.path}/ (${f.fileCount})`);
+    out += `📁 ${folderParts.join(", ")}\n`;
+  }
+
+  // Areas (se disponivel)
   if (areasInfo && areasInfo.total > 0) {
-    out += `\n🗂️ Áreas: ${areasInfo.names.join(", ")}\n`;
+    out += `\n🗂️ Areas: ${areasInfo.names.join(", ")}\n`;
   }
 
   // Alertas e dicas contextuais
@@ -69,26 +86,23 @@ export function formatMapSummary(
   if (cloudFunctionCount > 0) {
     out += `🔥 Firebase Cloud Functions detectado\n`;
     out += `   ${cloudFunctionCount} function(s) em functions/src/\n`;
-    out += `   → Use 'ai-tool functions' para listar triggers\n\n`;
+    out += `   → ${hint("functions", ctx)}\n\n`;
   }
 
-  // Alerta: dependências circulares
+  // Alerta: dependencias circulares
   if (result.circularDependencies.length > 0) {
-    out += `⚠️ ${result.circularDependencies.length} dependência(s) circular(es) detectada(s)\n`;
-    out += `   → Use impact <arquivo> para investigar\n\n`;
+    out += `⚠️ ${result.circularDependencies.length} dependencia(s) circular(es) detectada(s)\n`;
+    out += `   → ${hint("impact", ctx)} para investigar\n\n`;
   }
 
-  // Alerta: arquivos sem área
+  // Alerta: arquivos sem area
   if (areasInfo && areasInfo.unmappedCount > 0) {
-    out += `⚠️ ${areasInfo.unmappedCount} arquivo(s) sem área definida\n`;
-    out += `   → Use areas init para configurar\n\n`;
+    out += `⚠️ ${areasInfo.unmappedCount} arquivo(s) sem area definida\n`;
+    out += `   → ${hint("areas_init", ctx)} para configurar\n\n`;
   }
 
-  // Dicas de navegação
-  out += `📖 Próximos passos:\n`;
-  out += `   → area <nome> - ver arquivos de uma área\n`;
-  out += `   → suggest <arquivo> - o que ler antes de editar\n`;
-  out += `   → context <arquivo> - ver API de um arquivo\n`;
+  // Proximos passos contextuais
+  out += nextSteps("map", ctx);
 
   return out;
 }
@@ -96,19 +110,16 @@ export function formatMapSummary(
 /**
  * Formata resultado do MAP para texto completo (lista todos arquivos)
  */
-export function formatMapText(result: MapResult): string {
+export function formatMapText(result: MapResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    📁 PROJECT MAP                           ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 📁 PROJECT MAP\n\n`;
 
   // Resumo
   out += `📊 RESUMO\n`;
   out += `   Arquivos: ${result.summary.totalFiles}\n`;
   out += `   Pastas: ${result.summary.totalFolders}\n`;
-  out += `   Diretório: ${result.cwd}\n\n`;
+  out += `   Diretorio: ${result.cwd}\n\n`;
 
   // Categorias
   out += `📂 CATEGORIAS\n`;
@@ -150,9 +161,9 @@ export function formatMapText(result: MapResult): string {
     out += `   ... e mais ${result.folders.length - 15} pastas\n`;
   }
 
-  // Dependências circulares
+  // Dependencias circulares
   if (result.circularDependencies.length > 0) {
-    out += `\n⚠️ DEPENDÊNCIAS CIRCULARES (${result.circularDependencies.length})\n`;
+    out += `\n⚠️ DEPENDENCIAS CIRCULARES (${result.circularDependencies.length})\n`;
     for (const cycle of result.circularDependencies.slice(0, 5)) {
       out += `   ${cycle.join(" → ")}\n`;
     }
@@ -161,37 +172,37 @@ export function formatMapText(result: MapResult): string {
     }
   }
 
+  out += nextSteps("map", ctx);
+
   return out;
 }
 
 /**
  * Formata resultado do DEAD para texto
  */
-export function formatDeadText(result: DeadResult): string {
+export function formatDeadText(result: DeadResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    💀 DEAD CODE                              ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 💀 DEAD CODE\n\n`;
 
   if (result.summary.totalDead === 0) {
-    out += `✅ Nenhum código morto encontrado!\n`;
-    out += `   Todos os arquivos e exports estão sendo utilizados.\n`;
+    out += `✅ Nenhum codigo morto encontrado!\n`;
+    out += `   Todos os arquivos e exports estao sendo utilizados.\n`;
+    out += nextSteps("dead", ctx);
     return out;
   }
 
   // Resumo
   out += `📊 RESUMO\n`;
-  out += `   Total: ${result.summary.totalDead} itens não utilizados\n`;
-  out += `   Arquivos órfãos: ${result.summary.byType.files}\n`;
-  out += `   Exports não usados: ${result.summary.byType.exports}\n`;
-  out += `   Dependências não usadas: ${result.summary.byType.dependencies}\n\n`;
+  out += `   Total: ${result.summary.totalDead} itens nao utilizados\n`;
+  out += `   Arquivos orfaos: ${result.summary.byType.files}\n`;
+  out += `   Exports nao usados: ${result.summary.byType.exports}\n`;
+  out += `   Dependencias nao usadas: ${result.summary.byType.dependencies}\n\n`;
 
-  // Arquivos órfãos
+  // Arquivos orfaos
   if (result.files.length > 0) {
-    out += `🗑️ ARQUIVOS ÓRFÃOS (${result.files.length})\n`;
-    out += `   Arquivos que ninguém importa:\n\n`;
+    out += `🗑️ ARQUIVOS ORFAOS (${result.files.length})\n`;
+    out += `   Arquivos que ninguem importa:\n\n`;
 
     // Agrupar por categoria
     const byCategory = new Map<FileCategory, typeof result.files>();
@@ -215,9 +226,9 @@ export function formatDeadText(result: DeadResult): string {
     }
   }
 
-  // Exports não usados
+  // Exports nao usados
   if (result.exports.length > 0) {
-    out += `📤 EXPORTS NÃO USADOS (${result.exports.length})\n`;
+    out += `📤 EXPORTS NAO USADOS (${result.exports.length})\n`;
     for (const exp of result.exports.slice(0, 10)) {
       out += `   ${exp.file}: ${exp.export}\n`;
     }
@@ -227,9 +238,9 @@ export function formatDeadText(result: DeadResult): string {
     out += `\n`;
   }
 
-  // Dependências não usadas
+  // Dependencias nao usadas
   if (result.dependencies.length > 0) {
-    out += `📦 DEPENDÊNCIAS NÃO USADAS (${result.dependencies.length})\n`;
+    out += `📦 DEPENDENCIAS NAO USADAS (${result.dependencies.length})\n`;
     for (const dep of result.dependencies) {
       out += `   ${dep}\n`;
     }
@@ -252,12 +263,12 @@ export function formatDeadText(result: DeadResult): string {
   out += `   2. Remover automaticamente:\n`;
   out += `      npx knip --fix\n\n`;
   out += `   3. Ver detalhes em JSON:\n`;
-  out += `      ai-tool dead --format=json\n`;
+  out += `      ${hint("dead", ctx)} --format=json\n`;
 
-  // Detectar e sugerir padrões comuns
+  // Detectar e sugerir padroes comuns
   const suggestions = generateIgnoreSuggestions(result);
   if (suggestions.length > 0) {
-    out += `\n🎯 SUGESTÕES INTELIGENTES\n\n`;
+    out += `\n🎯 SUGESTOES INTELIGENTES\n\n`;
     for (const suggestion of suggestions) {
       out += `   ${suggestion.icon} ${suggestion.pattern}\n`;
       out += `      Motivo: ${suggestion.reason}\n`;
@@ -265,11 +276,13 @@ export function formatDeadText(result: DeadResult): string {
     }
   }
 
+  out += nextSteps("dead", ctx);
+
   return out;
 }
 
 /**
- * Gera sugestões de padrões para ignorar baseado nos arquivos encontrados
+ * Gera sugestoes de padroes para ignorar baseado nos arquivos encontrados
  */
 function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pattern: string; reason: string; count: number}> {
   const suggestions: Array<{icon: string; pattern: string; reason: string; count: number}> = [];
@@ -292,14 +305,14 @@ function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pat
     suggestions.push({
       icon: "🧪",
       pattern: "**/*.(test|spec).(ts|tsx|js|jsx)",
-      reason: "Arquivos de teste geralmente são entry points próprios",
+      reason: "Arquivos de teste geralmente sao entry points proprios",
       count: testFiles.length
     });
   }
 
-  // Detectar arquivos de configuração/build
-  const configFiles = files.filter(f => 
-    f.includes("vite.config") || 
+  // Detectar arquivos de configuracao/build
+  const configFiles = files.filter(f =>
+    f.includes("vite.config") ||
     f.includes("next.config") ||
     f.includes("tailwind.config") ||
     f.includes("jest.config") ||
@@ -309,7 +322,7 @@ function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pat
     suggestions.push({
       icon: "⚙️",
       pattern: "**/*.config.(ts|js|mjs|cjs)",
-      reason: "Arquivos de configuração são entry points",
+      reason: "Arquivos de configuracao sao entry points",
       count: configFiles.length
     });
   }
@@ -320,7 +333,7 @@ function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pat
     suggestions.push({
       icon: "📘",
       pattern: "**/*.d.ts",
-      reason: "Arquivos de definição TypeScript",
+      reason: "Arquivos de definicao TypeScript",
       count: dtsFiles.length
     });
   }
@@ -331,7 +344,7 @@ function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pat
     suggestions.push({
       icon: "📜",
       pattern: "scripts/**",
-      reason: "Scripts de automação são entry points",
+      reason: "Scripts de automacao sao entry points",
       count: scriptFiles.length
     });
   }
@@ -342,23 +355,18 @@ function generateIgnoreSuggestions(result: DeadResult): Array<{icon: string; pat
 /**
  * Formata resultado do IMPACT para texto
  */
-export function formatImpactText(result: ImpactResult): string {
+export function formatImpactText(result: ImpactResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    🎯 IMPACT ANALYSIS                        ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 🎯 IMPACT ANALYSIS\n\n`;
 
   // Info do arquivo
   const icon = categoryIcons[result.category];
   out += `📍 ARQUIVO: ${result.target}\n`;
   out += `   ${icon} ${result.category}\n\n`;
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
   // Upstream (quem usa)
-  out += `⬆️ USADO POR (${result.upstream.total} arquivo${result.upstream.total !== 1 ? "s" : ""} único${result.upstream.total !== 1 ? "s" : ""})\n`;
+  out += `⬆️ USADO POR (${result.upstream.total} arquivo${result.upstream.total !== 1 ? "s" : ""} unico${result.upstream.total !== 1 ? "s" : ""})\n`;
 
   if (result.upstream.direct.length > 0 || result.upstream.indirect.length > 0) {
     out += `   📍 ${result.upstream.direct.length} direto${result.upstream.direct.length !== 1 ? "s" : ""} + ${result.upstream.indirect.length} indireto${result.upstream.indirect.length !== 1 ? "s" : ""}\n`;
@@ -367,7 +375,7 @@ export function formatImpactText(result: ImpactResult): string {
   out += `   Quem importa este arquivo:\n\n`;
 
   if (result.upstream.total === 0) {
-    out += `   Ninguém importa este arquivo diretamente.\n`;
+    out += `   Ninguem importa este arquivo diretamente.\n`;
   } else {
     // Diretos
     for (const file of result.upstream.direct.slice(0, 10)) {
@@ -388,10 +396,10 @@ export function formatImpactText(result: ImpactResult): string {
     }
   }
 
-  out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  out += `\n`;
 
-  // Downstream (dependências)
-  out += `⬇️ DEPENDÊNCIAS (${result.downstream.total} arquivo${result.downstream.total !== 1 ? "s" : ""} único${result.downstream.total !== 1 ? "s" : ""})\n`;
+  // Downstream (dependencias)
+  out += `⬇️ DEPENDENCIAS (${result.downstream.total} arquivo${result.downstream.total !== 1 ? "s" : ""} unico${result.downstream.total !== 1 ? "s" : ""})\n`;
 
   if (result.downstream.direct.length > 0 || result.downstream.indirect.length > 0) {
     out += `   📍 ${result.downstream.direct.length} direto${result.downstream.direct.length !== 1 ? "s" : ""} + ${result.downstream.indirect.length} indireto${result.downstream.indirect.length !== 1 ? "s" : ""}\n`;
@@ -400,7 +408,7 @@ export function formatImpactText(result: ImpactResult): string {
   out += `   O que este arquivo importa:\n\n`;
 
   if (result.downstream.total === 0) {
-    out += `   Este arquivo não importa nenhum arquivo local.\n`;
+    out += `   Este arquivo nao importa nenhum arquivo local.\n`;
   } else {
     for (const file of result.downstream.direct.slice(0, 10)) {
       const fileIcon = categoryIcons[file.category];
@@ -411,12 +419,12 @@ export function formatImpactText(result: ImpactResult): string {
     }
   }
 
-  out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  out += `\n`;
 
-  // Métricas
-  out += `📊 MÉTRICAS DE IMPACTO\n\n`;
-  out += `   Arquivos que importam este (upstream):  ${result.upstream.total} único${result.upstream.total !== 1 ? "s" : ""}\n`;
-  out += `   Arquivos que este importa (downstream): ${result.downstream.total} único${result.downstream.total !== 1 ? "s" : ""}\n`;
+  // Metricas
+  out += `📊 METRICAS DE IMPACTO\n\n`;
+  out += `   Arquivos que importam este (upstream):  ${result.upstream.total} unico${result.upstream.total !== 1 ? "s" : ""}\n`;
+  out += `   Arquivos que este importa (downstream): ${result.downstream.total} unico${result.downstream.total !== 1 ? "s" : ""}\n`;
 
   // Riscos
   if (result.risks.length > 0) {
@@ -428,20 +436,20 @@ export function formatImpactText(result: ImpactResult): string {
     }
   }
 
-  // Sugestões
+  // Sugestoes
   if (result.suggestions.length > 0) {
-    out += `\n💡 SUGESTÕES\n\n`;
+    out += `\n💡 SUGESTOES\n\n`;
     for (const suggestion of result.suggestions) {
       out += `   • ${suggestion}\n`;
     }
   }
 
-  // Histórico Git
+  // Historico Git
   if (result.gitHistory && result.gitHistory.hasGitRepo) {
-    out += `\n📜 HISTÓRICO GIT (últimos ${result.gitHistory.recentCommits.length} commits)\n\n`;
+    out += `\n📜 HISTORICO GIT (ultimos ${result.gitHistory.recentCommits.length} commits)\n\n`;
 
     if (result.gitHistory.recentCommits.length === 0) {
-      out += `   Arquivo não está no repositório Git ou sem histórico.\n`;
+      out += `   Arquivo nao esta no repositorio Git ou sem historico.\n`;
     } else {
       for (const commit of result.gitHistory.recentCommits) {
         const date = commit.date;
@@ -457,19 +465,18 @@ export function formatImpactText(result: ImpactResult): string {
     }
   }
 
+  out += nextSteps("impact", ctx);
+
   return out;
 }
 
 /**
  * Formata resultado do SUGGEST para texto
  */
-export function formatSuggestText(result: SuggestResult): string {
+export function formatSuggestText(result: SuggestResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    📚 SUGGEST                                ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 📚 SUGGEST\n\n`;
 
   // Info do arquivo alvo
   const icon = categoryIcons[result.category];
@@ -479,10 +486,9 @@ export function formatSuggestText(result: SuggestResult): string {
   if (result.suggestions.length === 0) {
     out += `✅ Nenhuma sugestao de leitura.\n`;
     out += `   Este arquivo nao tem dependencias ou arquivos relacionados.\n`;
+    out += nextSteps("suggest", ctx);
     return out;
   }
-
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   // Agrupar por prioridade
   const byPriority = {
@@ -540,8 +546,6 @@ export function formatSuggestText(result: SuggestResult): string {
     out += `\n`;
   }
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
   // Resumo
   out += `📊 RESUMO\n`;
   out += `   Total de arquivos sugeridos: ${result.suggestions.length}\n`;
@@ -558,14 +562,15 @@ export function formatSuggestText(result: SuggestResult): string {
     out += `   🟢 Opcionais: ${byPriority.low.length}\n`;
   }
 
-  // Sugestões de testes
+  // Sugestoes de testes
   if (result.testSuggestions.length > 0) {
-    out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    out += `🧪 TESTES E VERIFICAÇÕES\n\n`;
+    out += `\n🧪 TESTES E VERIFICACOES\n\n`;
     for (const testSuggestion of result.testSuggestions) {
       out += `   ${testSuggestion}\n`;
     }
   }
+
+  out += nextSteps("suggest", ctx);
 
   return out;
 }
@@ -573,20 +578,15 @@ export function formatSuggestText(result: SuggestResult): string {
 /**
  * Formata resultado do CONTEXT para texto
  */
-export function formatContextText(result: ContextResult): string {
+export function formatContextText(result: ContextResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    📄 CONTEXT                                ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 📄 CONTEXT\n\n`;
 
   // Info do arquivo
   const icon = categoryIcons[result.category];
   out += `📍 ARQUIVO: ${result.file}\n`;
   out += `   ${icon} ${result.category}\n\n`;
-
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   // Imports
   if (result.imports.length > 0) {
@@ -622,10 +622,10 @@ export function formatContextText(result: ContextResult): string {
     out += `⚡ FUNCTIONS (${result.functions.length})\n\n`;
     for (const fn of result.functions) {
       const exported = fn.isExported ? "export " : "";
-      const async = fn.isAsync ? "async " : "";
+      const asyncLabel = fn.isAsync ? "async " : "";
       const arrow = fn.isArrowFunction ? " =>" : "";
       const params = fn.params.map((p) => `${p.name}: ${p.type}`).join(", ");
-      out += `   ${exported}${async}${fn.name}(${params})${arrow}: ${fn.returnType}\n`;
+      out += `   ${exported}${asyncLabel}${fn.name}(${params})${arrow}: ${fn.returnType}\n`;
       if (fn.jsdoc) {
         out += `      /** ${fn.jsdoc} */\n`;
       }
@@ -633,7 +633,15 @@ export function formatContextText(result: ContextResult): string {
     }
   }
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  // Constants
+  if (result.constants && result.constants.length > 0) {
+    out += `📌 CONSTANTS (${result.constants.length})\n\n`;
+    for (const c of result.constants) {
+      const exported = c.isExported ? "export " : "";
+      out += `   ${exported}${c.name}: ${c.type}\n`;
+    }
+    out += `\n`;
+  }
 
   // Resumo
   out += `📊 RESUMO\n`;
@@ -641,6 +649,11 @@ export function formatContextText(result: ContextResult): string {
   out += `   Exports: ${result.exports.length}\n`;
   out += `   Types: ${result.types.length}\n`;
   out += `   Functions: ${result.functions.length}\n`;
+  if (result.constants && result.constants.length > 0) {
+    out += `   Constants: ${result.constants.length}\n`;
+  }
+
+  out += nextSteps("context", ctx);
 
   return out;
 }
@@ -648,33 +661,28 @@ export function formatContextText(result: ContextResult): string {
 /**
  * Formata resultado do AREAS para texto
  */
-export function formatAreasText(result: AreasResult): string {
+export function formatAreasText(result: AreasResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    📦 PROJECT AREAS                         ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 📦 PROJECT AREAS\n\n`;
 
   // Resumo
   out += `📊 RESUMO\n`;
-  out += `   Áreas: ${result.summary.totalAreas}\n`;
+  out += `   Areas: ${result.summary.totalAreas}\n`;
   out += `   Arquivos: ${result.summary.totalFiles}\n`;
   if (result.summary.unmappedCount > 0) {
-    out += `   ⚠️ Sem área: ${result.summary.unmappedCount}\n`;
+    out += `   ⚠️ Sem area: ${result.summary.unmappedCount}\n`;
   }
   out += `\n`;
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  // Lista de áreas
-  out += `📦 ÁREAS DETECTADAS\n\n`;
+  // Lista de areas
+  out += `📦 AREAS DETECTADAS\n\n`;
 
   for (const area of result.areas) {
     const autoTag = area.isAutoDetected ? " (auto)" : "";
     out += `   ${area.name.padEnd(25)} ${String(area.fileCount).padStart(4)} arquivos${autoTag}\n`;
 
-    // Mostrar distribuição de categorias (resumido)
+    // Mostrar distribuicao de categorias (resumido)
     const catSummary = Object.entries(area.categories)
       .sort((a, b) => (b[1] as number) - (a[1] as number))
       .slice(0, 4)
@@ -692,28 +700,25 @@ export function formatAreasText(result: AreasResult): string {
     out += `\n`;
   }
 
-  // Arquivos sem área
+  // Arquivos sem area
   if (result.unmapped.length > 0) {
-    out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    out += `⚠️ ARQUIVOS SEM ÁREA (${result.unmapped.length})\n\n`;
+    out += `⚠️ ARQUIVOS SEM AREA (${result.unmapped.length})\n\n`;
 
     for (const file of result.unmapped.slice(0, 10)) {
-      const icon = categoryIcons[file.category];
-      out += `   ${icon} ${file.path}\n`;
+      const fileIcon = categoryIcons[file.category];
+      out += `   ${fileIcon} ${file.path}\n`;
     }
 
     if (result.unmapped.length > 10) {
       out += `   ... e mais ${result.unmapped.length - 10}\n`;
     }
 
-    out += `\n💡 Adicione padrões em .analyze/areas.config.json\n`;
-    out += `   ou execute 'ai-tool areas init' para gerar configuração\n`;
+    out += `\n💡 Adicione padroes em .analyze/areas.config.json\n`;
+    out += `   ou execute ${hint("areas_init", ctx)} para gerar configuracao\n`;
   }
 
-  out += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  out += `💡 Use 'ai-tool area <nome>' para ver detalhes de uma área\n`;
-  out += `   Exemplo: ai-tool area auth\n`;
+  // Proximos passos contextuais (substitui a secao manual anterior)
+  out += nextSteps("areas", ctx);
 
   return out;
 }
@@ -723,19 +728,17 @@ export function formatAreasText(result: AreasResult): string {
  */
 export function formatAreaDetailText(
   result: AreaDetailResult,
-  options: { full?: boolean; filterType?: FileCategory } = {}
+  options: { full?: boolean; filterType?: FileCategory } = {},
+  ctx: HintContext = "cli"
 ): string {
   const { full = false, filterType } = options;
   const { area, byCategory } = result;
 
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    📦 AREA DETAIL                           ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 📦 AREA DETAIL\n\n`;
 
-  // Header da área
+  // Header da area
   out += `📦 ${area.name}\n`;
   if (area.description) {
     out += `   ${area.description}\n`;
@@ -771,9 +774,7 @@ export function formatAreaDetailText(
   out += catParts.join("  ");
   out += `\n\n`;
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  // Se filtro por tipo, mostrar só esse tipo
+  // Se filtro por tipo, mostrar so esse tipo
   if (filterType) {
     const files = byCategory[filterType] || [];
     out += `${categoryIcons[filterType]} ${filterType.toUpperCase()} (${files.length})\n\n`;
@@ -783,6 +784,7 @@ export function formatAreaDetailText(
       out += `   ${file.path}${desc}\n`;
     }
 
+    out += nextSteps("area", ctx);
     return out;
   }
 
@@ -821,19 +823,26 @@ export function formatAreaDetailText(
     out += `💡 Use --full para ver todos os arquivos\n`;
   }
 
+  out += nextSteps("area", ctx);
+
   return out;
 }
 
 /**
  * Formata resultado do FIND para texto
+ *
+ * @param result - Resultado da busca
+ * @param ctx - Contexto de execucao (cli ou mcp)
+ * @param symbolNames - Lista de nomes de simbolos para sugestoes "voce quis dizer?"
  */
-export function formatFindText(result: FindResult): string {
+export function formatFindText(
+  result: FindResult,
+  ctx: HintContext = "cli",
+  symbolNames?: string[]
+): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    🔍 FIND                                   ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 🔍 FIND\n\n`;
 
   // Query e filtros
   if (result.query) {
@@ -847,39 +856,49 @@ export function formatFindText(result: FindResult): string {
     out += `\n\n`;
   } else {
     // Modo listar todos
-    out += `📋 Listando todos os símbolos do tipo: ${result.filters.type || "all"}\n\n`;
+    out += `📋 Listando todos os simbolos do tipo: ${result.filters.type || "all"}\n\n`;
   }
 
-  // Se não encontrou nada
+  // Se nao encontrou nada
   if (!result.definition && result.references.length === 0 && result.summary.definitions === 0) {
     if (result.query) {
       out += `❌ Nenhum resultado encontrado para "${result.query}"\n\n`;
     } else {
-      out += `❌ Nenhum símbolo do tipo "${result.filters.type}" encontrado\n\n`;
+      out += `❌ Nenhum simbolo do tipo "${result.filters.type}" encontrado\n\n`;
+    }
+
+    if (symbolNames && symbolNames.length > 0 && result.query) {
+      const similar = findSimilar(result.query, symbolNames, { maxDistance: 3, limit: 5 });
+      if (similar.length > 0) {
+        out += `💡 Voce quis dizer?\n`;
+        for (const name of similar) {
+          out += `   → ${hint("find", ctx, { "<termo>": name })}\n`;
+        }
+        out += `\n`;
+      }
     }
     out += `💡 Dicas:\n`;
-    out += `   • Verifique a ortografia\n`;
-    out += `   • Tente buscar parte do nome\n`;
-    out += `   • Remova filtros de tipo ou área\n`;
+    out += `   → Verifique a ortografia\n`;
+    out += `   → Tente buscar parte do nome\n`;
+    out += `   → Remova filtros de tipo ou area\n`;
+    out += `   → ${hint("describe", ctx)} - buscar areas por descricao\n`;
     return out;
   }
 
   // Resumo
-  out += `📊 ${result.summary.definitions} definição, ${result.summary.references} referências em ${result.summary.files} arquivos\n\n`;
+  out += `📊 ${result.summary.definitions} definicao, ${result.summary.references} referencias em ${result.summary.files} arquivos\n\n`;
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
-  // Definição
+  // Definicao
   if (result.definition) {
-    out += `📍 DEFINIÇÃO\n\n`;
+    out += `📍 DEFINICAO\n\n`;
     const def = result.definition;
-    const icon = categoryIcons[def.category];
-    out += `   ${icon} ${def.file}:${def.line}\n`;
+    const defIcon = categoryIcons[def.category];
+    out += `   ${defIcon} ${def.file}:${def.line}\n`;
     out += `      ${def.code}\n`;
     out += `\n`;
   }
 
-  // Referências
+  // Referencias
   if (result.references.length > 0) {
     // Agrupar por tipo de match
     const imports = result.references.filter((r) => r.matchType === "import");
@@ -888,8 +907,8 @@ export function formatFindText(result: FindResult): string {
     if (imports.length > 0) {
       out += `📥 IMPORTS (${imports.length})\n\n`;
       for (const ref of imports.slice(0, 10)) {
-        const icon = categoryIcons[ref.category];
-        out += `   ${icon} ${ref.file}:${ref.line}\n`;
+        const refIcon = categoryIcons[ref.category];
+        out += `   ${refIcon} ${ref.file}:${ref.line}\n`;
         out += `      ${ref.code}\n`;
       }
       if (imports.length > 10) {
@@ -901,8 +920,8 @@ export function formatFindText(result: FindResult): string {
     if (usages.length > 0) {
       out += `⚡ USOS (${usages.length})\n\n`;
       for (const ref of usages.slice(0, 15)) {
-        const icon = categoryIcons[ref.category];
-        out += `   ${icon} ${ref.file}:${ref.line}\n`;
+        const refIcon = categoryIcons[ref.category];
+        out += `   ${refIcon} ${ref.file}:${ref.line}\n`;
         out += `      ${ref.code}\n`;
       }
       if (usages.length > 15) {
@@ -918,13 +937,10 @@ export function formatFindText(result: FindResult): string {
 /**
  * Formata resultado do CONTEXT --area para texto
  */
-export function formatAreaContextText(result: AreaContextResult): string {
+export function formatAreaContextText(result: AreaContextResult, ctx: HintContext = "cli"): string {
   let out = "";
 
-  out += `\n`;
-  out += `╔══════════════════════════════════════════════════════════════╗\n`;
-  out += `║                    📦 AREA CONTEXT                          ║\n`;
-  out += `╚══════════════════════════════════════════════════════════════╝\n\n`;
+  out += `## 📦 AREA CONTEXT\n\n`;
 
   // Header
   out += `📦 ${result.area.name} - Contexto Consolidado (${result.area.fileCount} arquivos)\n`;
@@ -932,8 +948,6 @@ export function formatAreaContextText(result: AreaContextResult): string {
     out += `   ${result.area.description}\n`;
   }
   out += `\n`;
-
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
   // Types
   if (result.types.length > 0) {
@@ -1017,8 +1031,6 @@ export function formatAreaContextText(result: AreaContextResult): string {
     }
   }
 
-  out += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-
   // Resumo
   out += `📊 RESUMO\n`;
   out += `   Types: ${result.types.length}\n`;
@@ -1030,6 +1042,8 @@ export function formatAreaContextText(result: AreaContextResult): string {
   if (result.triggers && result.triggers.length > 0) {
     out += `   Triggers: ${result.triggers.length}\n`;
   }
+
+  out += nextSteps("area_context", ctx);
 
   return out;
 }

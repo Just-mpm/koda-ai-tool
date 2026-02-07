@@ -12,6 +12,7 @@ import type { FileCategory } from "../types.js";
 import { readConfig } from "../areas/config.js";
 import { detectFileAreas, isFileIgnored } from "../areas/detector.js";
 import { formatFindText } from "../formatters/text.js";
+import { formatAreaNotFound } from "../utils/errors.js";
 import {
   isCacheValid,
   getCachedSymbolsIndex,
@@ -138,9 +139,24 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
       }
 
       if (allowedFiles.size === 0) {
-        return format === "json"
-          ? JSON.stringify({ error: `Nenhum arquivo encontrado na área "${filterArea}"` })
-          : `❌ Nenhum arquivo encontrado na área "${filterArea}"`;
+        // Coletar areas disponiveis para sugestoes inteligentes
+        const availableAreas = new Map<string, number>();
+        for (const filePath of Object.keys(index.files)) {
+          if (isFileIgnored(filePath, config)) continue;
+          const fileAreas = detectFileAreas(filePath, config);
+          for (const areaId of fileAreas) {
+            availableAreas.set(areaId, (availableAreas.get(areaId) || 0) + 1);
+          }
+        }
+
+        const areaList = [...availableAreas.entries()]
+          .map(([id, count]) => ({ id, count }))
+          .sort((a, b) => b.count - a.count);
+
+        if (format === "json") {
+          return JSON.stringify({ error: `Nenhum arquivo encontrado na area "${filterArea}"`, availableAreas: areaList });
+        }
+        return formatAreaNotFound({ target: filterArea, availableAreas: areaList });
       }
     }
 
@@ -198,7 +214,8 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
     };
 
     // 8. Formatar output
-    return formatOutput(result, format, formatFindText, fromCache);
+    const allSymbolNames = Object.keys(index.symbolsByName);
+    return formatOutput(result, format, (r) => formatFindText(r, "cli", allSymbolNames), fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar find: ${message}`);

@@ -5,9 +5,11 @@
 
 import { existsSync, readdirSync, statSync } from "fs";
 import { join, resolve, basename, extname } from "path";
+import { SyntaxKind } from "ts-morph";
 import type {
   ContextOptions,
   ContextResult,
+  ConstantInfo,
   AreaContextResult,
   AreaContextTypeInfo,
   AreaContextFunctionInfo,
@@ -25,7 +27,8 @@ import {
   extractTypes,
   extractExports,
 } from "../ts/extractor.js";
-import { formatFileNotFound } from "../utils/errors.js";
+import { formatFileNotFound, formatAreaNotFound } from "../utils/errors.js";
+import { simplifyType } from "../ts/utils.js";
 import { readConfig } from "../areas/config.js";
 import {
   detectFileAreas,
@@ -74,7 +77,28 @@ export async function context(target: string, options: ContextOptions = {}): Pro
     const types = extractTypes(sourceFile);
     const exports = extractExports(sourceFile);
 
-    // 5. Montar resultado
+    // 5. Extrair constantes exportadas (excluindo arrow functions que ja estao em functions)
+    const constants: ConstantInfo[] = [];
+    for (const varStatement of sourceFile.getVariableStatements()) {
+      if (!varStatement.isExported()) continue;
+      for (const decl of varStatement.getDeclarations()) {
+        const init = decl.getInitializer();
+        // Pular arrow functions e function expressions (ja capturadas em functions)
+        if (init) {
+          const kind = init.getKind();
+          if (kind === SyntaxKind.ArrowFunction || kind === SyntaxKind.FunctionExpression) {
+            continue;
+          }
+        }
+        constants.push({
+          name: decl.getName(),
+          type: simplifyType(decl.getType().getText()),
+          isExported: true,
+        });
+      }
+    }
+
+    // 6. Montar resultado
     const result: ContextResult = {
       version: "1.0.0",
       timestamp: new Date().toISOString(),
@@ -84,9 +108,10 @@ export async function context(target: string, options: ContextOptions = {}): Pro
       exports,
       functions,
       types,
+      constants: constants.length > 0 ? constants : undefined,
     };
 
-    // 6. Formatar output
+    // 7. Formatar output
     return formatOutput(result, format, formatContextText);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -277,9 +302,24 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
     }
 
     if (areaFiles.length === 0) {
-      return format === "json"
-        ? JSON.stringify({ error: `Área não encontrada: "${areaName}"` })
-        : `❌ Área não encontrada: "${areaName}"\n\n💡 Use 'ai-tool areas' para listar áreas disponíveis`;
+      // Coletar areas disponiveis para sugestoes inteligentes
+      const availableAreas = new Map<string, number>();
+      for (const filePath of Object.keys(index.files)) {
+        if (isFileIgnored(filePath, config)) continue;
+        const fileAreas = detectFileAreas(filePath, config);
+        for (const areaId of fileAreas) {
+          availableAreas.set(areaId, (availableAreas.get(areaId) || 0) + 1);
+        }
+      }
+
+      const areaList = [...availableAreas.entries()]
+        .map(([id, count]) => ({ id, count }))
+        .sort((a, b) => b.count - a.count);
+
+      if (format === "json") {
+        return JSON.stringify({ error: `Area nao encontrada: "${areaName}"`, availableAreas: areaList });
+      }
+      return formatAreaNotFound({ target: areaName, availableAreas: areaList });
     }
 
     // 4. Coletar contexto de cada arquivo usando o índice

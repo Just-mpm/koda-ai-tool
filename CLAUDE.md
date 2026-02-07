@@ -132,7 +132,7 @@ src/
   cache/        # Sistema de cache (graph, dead, symbols)
     ├── index.ts              # Cache com validação Zod
     └── schemas.ts            # Schemas Zod para validação
-  utils/        # Utilitários (detect, errors, firebase, similarity, logger, file-matcher)
+  utils/        # Utilitários (detect, errors, firebase, similarity, logger, file-matcher, hints)
   integrations/ # Integrações externas
     └── git.ts                # Integração Git (getCommitsForFile, getBlameInfo)
   dist/           # Build compilado
@@ -182,62 +182,55 @@ npx ai-tool find createUser --type=trigger  # Busca uma Cloud Function
 npx ai-tool --mcp
 ```
 
-## Novidades na v0.9.0
+## Novidades na v1.0.0
 
-### Comando `describe` - Busca por Descrição
-Busca áreas funcionais por descrição em linguagem natural usando keywords + correções via Levenshtein.
+### AI Experience Overhaul
+Release focada em melhorar a experiencia de IAs que usam o MCP. Nenhuma mudanca na API - apenas a qualidade dos outputs e mensagens de erro.
 
-```bash
-npx ai-tool describe "autenticação"
+### Dicas contextuais CLI/MCP
+Todos os comandos agora detectam se estao rodando via CLI ou MCP e geram instrucoes no formato correto:
+- **CLI**: `ai-tool impact Button`
+- **MCP**: `analyze__aitool_impact_analysis { target: 'Button' }`
+
+### Proximos passos em todos os comandos
+Cada comando agora sugere a acao mais relevante ao final do output:
+```
+📖 Proximos passos:
+   → ai-tool suggest <arquivo> - o que ler antes de editar este arquivo
+   → ai-tool context <arquivo> - ver assinaturas dos arquivos upstream
+   → ai-tool find <termo> - localizar usos de exports especificos
 ```
 
-**Output:**
+### Sugestoes "Voce quis dizer?" no `find`
+Quando nao encontra um simbolo, usa Levenshtein contra o indice para sugerir nomes parecidos:
 ```
-🔍 Busca: "autenticação"
+❌ Nenhum resultado encontrado para "impct"
 
-## Autenticação (auth)
-Sistema de login, signup e gerenciamento de sessão
-📁 15 arquivo(s)
-
-Arquivos:
-   • [Use 'ai-tool area auth' para ver arquivos completos]
-
-📖 Próximos passos:
-   → ai-tool area <id> - ver detalhes de uma área
-   → ai-tool context --area=<id> - contexto completo de uma área
+💡 Voce quis dizer?
+   → ai-tool find impact
 ```
 
-### Integração Git
-Comando `impact` agora mostra histórico de commits do arquivo alvo.
-
-**Output:**
+### Constantes exportadas no `context`
+Nova secao mostra constantes exportadas (alem de funcoes e tipos):
 ```
-📜 HISTÓRICO GIT (últimos 5 commits)
-
-   abc1234 - Corrige bug no matcher (Matheus)
-   def5678 - Adiciona prioridades (Matheus)
-   ...
+📌 CONSTANTS (1)
+   export COMMAND_REFERENCE: Record<string, string>
 ```
 
-### Testes Inteligentes
-Comando `suggest` agora inclui sugestões de testes baseadas nos arquivos afetados.
-
-**Output:**
+### Top 5 pastas no `map`
+Resumo compacto agora inclui as pastas com mais arquivos:
 ```
-💡 SUGESTÕES DE TESTES
-
-   → Rode os testes: tests/commands/impact.test.ts
-   → Rode os testes: tests/utils/file-matcher.test.ts
-
-💡 Se não encontrou testes relacionados, considere criar testes para os arquivos modificados
+📁 src/commands/ (12), src/utils/ (7), src/ts/ (5)
 ```
 
-### Refatorações Arquiteturais
-- **src/mcp/server.ts** reduzido de 674 para 36 linhas (95% de redução)
-- **src/ts/indexer.ts** dividido em 3 módulos: `index.ts` (219 linhas), `cache.ts` (519 linhas), `triggers.ts` (302 linhas)
-- **Zero duplicações**: Funções `findTargetFile`, `simplifyType`, `formatInterfaceDefinition` extraídas para módulos compartilhados
-- **Type safety**: Validação Zod para cache com migração automática (schemaVersion=2.0.0)
-- **113 testes**: Suite de testes completa com 100% de pass rate
+### Outras melhorias
+- **Descriptions MCP reescritas**: foco no "quando usar" + mini-workflow
+- **Erros MCP com dicas de recuperacao**: cada erro sugere como resolver
+- **`find` e `areaContext` com Levenshtein**: sugerem areas parecidas quando nao encontram
+- **`functions` sugere alternativas**: quando projeto nao e Firebase
+- **`describe` limita arquivos**: max 5 por area + link para detalhes
+- **Decoracoes visuais removidas**: economia de tokens para IAs
+- **126 testes passando**
 
 ## Opções
 

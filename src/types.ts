@@ -222,6 +222,12 @@ export interface TypeInfo {
   isExported: boolean;
 }
 
+export interface ConstantInfo {
+  name: string;
+  type: string;
+  isExported: boolean;
+}
+
 export interface ContextResult {
   version: string;
   timestamp: string;
@@ -231,6 +237,7 @@ export interface ContextResult {
   exports: string[];
   functions: FunctionInfo[];
   types: TypeInfo[];
+  constants?: ConstantInfo[];
 }
 
 // ============================================================================

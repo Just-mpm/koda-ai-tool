@@ -113,10 +113,30 @@
     "src/formatters/text.ts": {
       "id": "src/formatters/text.ts",
       "adjacentTo": [
-        "src/utils/detect.ts"
+        "src/utils/detect.ts",
+        "src/utils/hints.ts",
+        "src/utils/similarity.ts"
       ],
       "body": {
-        "size": 36890,
+        "size": 32733,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/hints.ts": {
+      "id": "src/utils/hints.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 7647,
+        "thirdPartyDependencies": [],
+        "builtinDependencies": []
+      }
+    },
+    "src/utils/similarity.ts": {
+      "id": "src/utils/similarity.ts",
+      "adjacentTo": [],
+      "body": {
+        "size": 4983,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -174,15 +194,6 @@
         "builtinDependencies": []
       }
     },
-    "src/utils/similarity.ts": {
-      "id": "src/utils/similarity.ts",
-      "adjacentTo": [],
-      "body": {
-        "size": 4983,
-        "thirdPartyDependencies": [],
-        "builtinDependencies": []
-      }
-    },
     "src/utils/file-matcher.ts": {
       "id": "src/utils/file-matcher.ts",
       "adjacentTo": [],
@@ -224,6 +235,7 @@
         "src/formatters/text.ts",
         "src/ts/extractor.ts",
         "src/utils/errors.ts",
+        "src/ts/utils.ts",
         "src/areas/config.ts",
         "src/areas/detector.ts",
         "src/cache/index.ts",
@@ -231,7 +243,7 @@
         "src/commands/base.ts"
       ],
       "body": {
-        "size": 12821,
+        "size": 14878,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -348,12 +360,13 @@
         "src/areas/config.ts",
         "src/areas/detector.ts",
         "src/formatters/text.ts",
+        "src/utils/errors.ts",
         "src/cache/index.ts",
         "src/ts/cache.ts",
         "src/commands/base.ts"
       ],
       "body": {
-        "size": 10011,
+        "size": 11191,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -363,10 +376,14 @@
       "adjacentTo": [
         "src/areas/config.ts",
         "src/commands/base.ts",
-        "src/utils/similarity.ts"
+        "src/utils/similarity.ts",
+        "src/areas/detector.ts",
+        "src/ts/index.ts",
+        "src/ts/cache.ts",
+        "src/cache/index.ts"
       ],
       "body": {
-        "size": 6821,
+        "size": 12114,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -379,7 +396,7 @@
         "src/cache/index.ts"
       ],
       "body": {
-        "size": 9328,
+        "size": 9865,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -403,13 +420,14 @@
         "src/utils/detect.ts",
         "src/utils/similarity.ts",
         "src/utils/errors.ts",
+        "src/utils/hints.ts",
         "src/utils/firebase.ts",
         "src/cache/index.ts",
         "src/areas/config.ts",
         "src/areas/detector.ts"
       ],
       "body": {
-        "size": 3512,
+        "size": 3816,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -418,7 +436,7 @@
       "id": "src/types.ts",
       "adjacentTo": [],
       "body": {
-        "size": 7956,
+        "size": 8448,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -448,10 +466,11 @@
         "src/commands/areas-init.ts",
         "src/commands/find.ts",
         "src/commands/functions.ts",
-        "src/commands/describe.ts"
+        "src/commands/describe.ts",
+        "src/utils/hints.ts"
       ],
       "body": {
-        "size": 19846,
+        "size": 23580,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -493,7 +512,7 @@
         "src/commands/describe.ts"
       ],
       "body": {
-        "size": 5842,
+        "size": 8827,
         "thirdPartyDependencies": [],
         "builtinDependencies": []
       }
@@ -586,11 +605,12 @@
     "src/commands/map.ts",
     "src/utils/detect.ts",
     "src/formatters/text.ts",
+    "src/utils/hints.ts",
+    "src/utils/similarity.ts",
     "src/commands/base.ts",
     "src/commands/dead.ts",
     "src/commands/impact.ts",
     "src/utils/errors.ts",
-    "src/utils/similarity.ts",
     "src/utils/file-matcher.ts",
     "src/integrations/git.ts",
     "src/commands/suggest.ts",
@@ -623,5 +643,5 @@
     "tests/utils/file-matcher.test.ts",
     "tests/utils/logger.test.ts"
   ],
-  "timestamp": "2026-02-06T10:40:04.112Z"
+  "timestamp": "2026-02-07T13:42:14.954Z"
 }
