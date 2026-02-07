@@ -35,13 +35,13 @@ export function registerAllTools(server: McpServer): void {
     {
       title: "Project Map",
       description: `Use no inicio da sessao para entender a estrutura do projeto.
-Retorna contagens por categoria, areas detectadas e alertas.
+Retorna contagens por categoria, areas detectadas, framework e alertas.
+Para projetos pequenos (<25 arquivos), lista todos os arquivos automaticamente.
 
-Workflow: project_map → area_detail (explorar area) → file_context (entender API)
+Quando usar: primeiro contato com projeto, visao geral rapida, verificar se areas estao configuradas.
+NAO use para: ver detalhes de um arquivo especifico (use file_context) ou buscar simbolos (use find).
 
-Parametros:
-- format: text (legivel) ou json (estruturado)
-- cwd: Diretorio do projeto a analisar`,
+Workflow: project_map → area_detail (explorar area) → file_context (entender API)`,
       inputSchema: {
         format: z.enum(["text", "json"]).default("text").describe("Formato de saida: text (legivel) ou json (estruturado)"),
         cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
@@ -60,6 +60,7 @@ Parametros:
           format: params.format,
           cwd: params.cwd,
           full: false,
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -81,13 +82,11 @@ Parametros:
     "aitool_dead_code",
     {
       title: "Dead Code Detector",
-      description: `Use antes de refatoracoes ou periodicamente para encontrar codigo nao utilizado.
-Detecta arquivos orfaos, exports nao usados e dependencias npm mortas.
+      description: `Detecta arquivos orfaos, exports nao usados e dependencias npm mortas.
 Se encontrar itens, use impact_analysis para confirmar que realmente nao sao usados.
 
-Parametros:
-- format: text (legivel) ou json (estruturado)
-- cwd: Diretorio do projeto a analisar`,
+Quando usar: antes de refatoracoes, limpeza periodica, verificar se um arquivo pode ser removido.
+NAO use para: verificar um arquivo especifico (use impact_analysis).`,
       inputSchema: {
         format: z.enum(["text", "json"]).default("text").describe("Formato de saida: text (legivel) ou json (estruturado)"),
         cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
@@ -105,6 +104,7 @@ Parametros:
         const result = await dead({
           format: params.format,
           cwd: params.cwd,
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -126,17 +126,13 @@ Parametros:
     "aitool_impact_analysis",
     {
       title: "Impact Analysis",
-      description: `Use ANTES de editar um arquivo para saber quem sera afetado pela mudanca.
-Mostra upstream (quem importa este arquivo), downstream (o que ele importa), riscos e historico Git.
+      description: `Mostra upstream (quem importa este arquivo), downstream (o que ele importa), riscos e historico Git.
 
-Workflow: suggest_reads (o que ler) → impact_analysis (quem sera afetado) → file_context (entender APIs)
+Quando usar: ANTES de editar um arquivo, avaliar risco de mudanca, entender dependencias.
+NAO use para: ver a API/assinaturas de um arquivo (use file_context) ou saber o que ler antes de editar (use suggest_reads).
 
 Se o impacto for alto (muitos upstream), considere usar suggest_reads primeiro para planejar.
-
-Parametros:
-- target: Arquivo a analisar (caminho completo, parcial ou nome)
-- format: text (legivel) ou json (estruturado)
-- cwd: Diretorio do projeto a analisar`,
+Workflow: suggest_reads (o que ler) → impact_analysis (quem sera afetado) → file_context (entender APIs)`,
       inputSchema: {
         target: z.string().min(1).describe("Arquivo a analisar: caminho completo, parcial ou nome do arquivo"),
         format: z.enum(["text", "json"]).default("text").describe("Formato de saida: text (legivel) ou json (estruturado)"),
@@ -155,6 +151,7 @@ Parametros:
         const result = await impact(params.target, {
           format: params.format,
           cwd: params.cwd,
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -176,16 +173,14 @@ Parametros:
     "aitool_suggest_reads",
     {
       title: "Suggest Files to Read",
-      description: `Primeira tool a chamar quando vai editar um arquivo.
+      description: `PRIMEIRA tool a chamar quando vai editar um arquivo.
 Retorna lista priorizada de arquivos que voce DEVE ler antes de modificar.
 Prioriza: tipos usados (critico), dependencias diretas (importante), upstream (recomendado), testes (opcional).
 
-Workflow: suggest_reads → file_context (para cada arquivo sugerido) → editar
+Quando usar: sempre como PRIMEIRO passo antes de qualquer edicao de arquivo.
+NAO use para: entender a API de um arquivo (use file_context) ou ver quem usa um arquivo (use impact_analysis).
 
-Parametros:
-- target: Arquivo que sera modificado (caminho completo, parcial ou nome)
-- limit: Numero maximo de sugestoes (default: 10, max: 50)
-- cwd: Diretorio do projeto a analisar`,
+Workflow: suggest_reads → file_context (para cada arquivo sugerido) → editar`,
       inputSchema: {
         target: z.string().min(1).describe("Arquivo que sera modificado: caminho completo, parcial ou nome"),
         limit: z.number().int().min(1).max(50).default(10).describe("Numero maximo de sugestoes (default: 10, max: 50)"),
@@ -205,6 +200,7 @@ Parametros:
           limit: params.limit,
           cwd: params.cwd,
           format: "text",
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -226,14 +222,13 @@ Parametros:
     "aitool_file_context",
     {
       title: "Extract File Context",
-      description: `Extrai assinaturas de funcoes, tipos e constantes de um arquivo SEM mostrar implementacao.
+      description: `Extrai assinaturas de funcoes, tipos e constantes de UM arquivo SEM mostrar implementacao.
 Use para entender a API publica antes de usar ou modificar um arquivo.
 
-Apos entender o contexto, use find para localizar onde cada export e usado no projeto.
+Quando usar: entender a API de UM arquivo especifico, ver tipos/funcoes exportados.
+NAO use para: entender uma area/feature inteira (use area_context, que consolida TODOS os arquivos de uma area em uma unica chamada).
 
-Parametros:
-- target: Arquivo para extrair contexto (caminho completo, parcial ou nome)
-- cwd: Diretorio do projeto a analisar`,
+Apos entender o contexto, use find para localizar onde cada export e usado no projeto.`,
       inputSchema: {
         target: z.string().min(1).describe("Arquivo para extrair contexto: caminho completo, parcial ou nome"),
         cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
@@ -251,6 +246,7 @@ Parametros:
         const result = await context(params.target, {
           cwd: params.cwd,
           format: "text",
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -274,14 +270,10 @@ Parametros:
       title: "List Project Areas",
       description: `Lista areas/dominios funcionais do projeto (auth, pets, stripe, dashboard...).
 Areas sao diferentes de categorias (hook, component, page).
-Requer configuracao em .analyze/areas.config.json (use areas_init para gerar).
+Requer configuracao manual em .analyze/areas.config.json (use areas_init para gerar o template).
 
-Se nao encontrar areas, use areas_init para gerar a configuracao.
-Use area_detail para ver os arquivos de uma area especifica.
-
-Parametros:
-- format: text (legivel) ou json (estruturado)
-- cwd: Diretorio do projeto a analisar`,
+Quando usar: ver todas as areas disponiveis, entender a organizacao do projeto por dominio de negocio.
+NAO use para: buscar uma area pelo nome/descricao (use describe) ou ver os arquivos de uma area (use area_detail).`,
       inputSchema: {
         format: z.enum(["text", "json"]).default("text").describe("Formato de saida: text (legivel) ou json (estruturado)"),
         cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
@@ -299,6 +291,7 @@ Parametros:
         const result = await areas({
           format: params.format,
           cwd: params.cwd,
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -321,16 +314,12 @@ Parametros:
     {
       title: "Area Detail",
       description: `Mostra todos os arquivos de uma area especifica, agrupados por categoria.
-Use apos list_areas para explorar uma area de interesse.
 Aceita tanto o ID (ex: auth) quanto o nome amigavel (ex: Autenticacao).
 
-Apos ver os arquivos, use area_context para obter contexto consolidado (tipos, hooks, funcoes).
+Quando usar: ver QUAIS arquivos pertencem a uma area, explorar a estrutura de uma feature.
+NAO use para: entender a API/tipos de uma area inteira (use area_context, que extrai assinaturas de TODOS os arquivos).
 
-Parametros:
-- target: Nome ou ID da area (ex: auth, dashboard, billing)
-- type: Filtrar por categoria (page, component, hook, service, etc)
-- full: Mostrar todos os arquivos (default: resumido)
-- cwd: Diretorio do projeto a analisar`,
+Workflow: list_areas → area_detail → area_context (para entender o codigo)`,
       inputSchema: {
         target: z.string().min(1).describe("Nome da area: auth, dashboard, billing, etc"),
         type: z.enum(["page", "layout", "route", "component", "hook", "service", "store", "util", "type", "config", "test", "other"]).optional().describe("Filtrar por categoria especifica"),
@@ -352,11 +341,12 @@ Parametros:
           full: params.full,
           cwd: params.cwd,
           format: "text",
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        const hint = recoveryHint("file_not_found", "mcp");
+        const hint = recoveryHint("area_not_found", "mcp");
         return {
           content: [{ type: "text", text: `Erro ao executar area: ${msg}\n${hint}` }],
           isError: true,
@@ -374,13 +364,10 @@ Parametros:
     {
       title: "Initialize Areas Config",
       description: `Gera .analyze/areas.config.json com template baseado no framework detectado.
-Use quando: (1) areas nao estao configuradas, (2) muitos arquivos sem area, (3) precisa ajustar deteccao.
+O arquivo gerado e um TEMPLATE que precisa ser editado manualmente pelo usuario.
 
-O arquivo gerado e um template que precisa ser editado manualmente pelo usuario.
-
-Parametros:
-- force: Sobrescrever config existente
-- cwd: Diretorio do projeto`,
+Quando usar: areas nao estao configuradas, muitos arquivos sem area, precisa ajustar deteccao.
+NAO use para: listar areas existentes (use list_areas) ou buscar areas (use describe).`,
       inputSchema: {
         force: z.boolean().default(false).describe("Sobrescrever config existente"),
         cwd: z.string().optional().describe("Diretorio do projeto"),
@@ -423,15 +410,10 @@ Parametros:
 Encontra funcoes, tipos, componentes, hooks, constantes e Cloud Functions.
 Retorna definicao (onde foi declarado) + referencias (onde e importado/usado).
 
-Se nao encontrar, tente: buscar parte do nome, remover filtros, ou usar describe para buscar por descricao.
+Quando usar: saber onde um simbolo e definido e usado, verificar adocao de uma funcao/tipo.
+NAO use para: buscar areas por descricao em linguagem natural (use describe) ou entender a API completa de um arquivo (use file_context).
 
-Parametros:
-- query: Termo a buscar (ex: useAuth, User, handleSubmit)
-- type: Filtrar por tipo (function, type, const, component, hook, trigger, all)
-- area: Buscar apenas em uma area especifica (ex: auth, dashboard)
-- def: Mostrar apenas definicoes (onde e declarado)
-- refs: Mostrar apenas referencias/usos
-- cwd: Diretorio do projeto a analisar`,
+Se nao encontrar: tente buscar parte do nome, remover filtros, ou usar describe para buscar areas.`,
       inputSchema: {
         query: z.string().min(1).describe("Termo a buscar (nome de funcao, tipo, componente, etc)"),
         type: z.enum(["function", "type", "const", "component", "hook", "trigger", "all"]).default("all").describe("Filtrar por tipo de simbolo (use trigger para Cloud Functions)"),
@@ -457,11 +439,12 @@ Parametros:
           refs: params.refs,
           cwd: params.cwd,
           format: "text",
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        const hint = recoveryHint("area_not_found", "mcp");
+        const hint = recoveryHint("symbol_not_found", "mcp");
         return {
           content: [{ type: "text", text: `Erro ao executar find: ${msg}\n${hint}` }],
           isError: true,
@@ -478,15 +461,14 @@ Parametros:
     "aitool_area_context",
     {
       title: "Area Context",
-      description: `Contexto consolidado de TODA uma area em uma unica chamada.
+      description: `Contexto consolidado de TODA uma area em uma UNICA chamada.
 Retorna tipos, hooks, funcoes, componentes, services, stores e triggers da area.
-Muito mais eficiente que chamar file_context em cada arquivo individualmente.
+MUITO mais eficiente que chamar file_context em cada arquivo individualmente.
 
-Use apos area_detail para entender a API completa de uma feature.
+Quando usar: entender a API completa de uma feature/dominio, ver todos os tipos e funcoes de uma area.
+NAO use para: ver um unico arquivo (use file_context) ou ver a lista de arquivos sem assinaturas (use area_detail).
 
-Parametros:
-- area: Nome ou ID da area (ex: auth, dashboard, payments)
-- cwd: Diretorio do projeto a analisar`,
+Workflow: list_areas → area_detail (ver arquivos) → area_context (entender codigo)`,
       inputSchema: {
         area: z.string().min(1).describe("Nome da area: auth, dashboard, payments, etc"),
         cwd: z.string().optional().describe("Diretorio do projeto a analisar"),
@@ -504,6 +486,7 @@ Parametros:
         const result = await areaContext(params.area, {
           cwd: params.cwd,
           format: "text",
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -528,12 +511,10 @@ Parametros:
       description: `Lista todas as Cloud Functions Firebase do projeto, agrupadas por trigger.
 Detecta: onCall, onDocumentCreated, onSchedule, onRequest e outros triggers v2.
 
-Se nenhuma function for detectada, verifique: (1) projeto tem .firebaserc, (2) existe functions/src/index.ts, (3) tente com cache desabilitado.
+Quando usar: ver todas as Cloud Functions do projeto, entender a arquitetura serverless.
+NAO use para: buscar uma function especifica pelo nome (use find com type=trigger) ou ver o codigo de uma function (use file_context).
 
-Parametros:
-- trigger: Filtrar por tipo de trigger (ex: onCall, onDocumentCreated, onSchedule)
-- format: text (legivel) ou json (estruturado)
-- cwd: Diretorio do projeto a analisar`,
+Se nenhuma function for detectada: verifique se o projeto tem .firebaserc e functions/src/index.ts.`,
       inputSchema: {
         trigger: z.string().optional().describe("Filtrar por tipo de trigger (ex: onCall, onDocumentCreated, onSchedule)"),
         format: z.enum(["text", "json"]).default("text").describe("Formato de saida: text (legivel) ou json (estruturado)"),
@@ -553,6 +534,7 @@ Parametros:
           format: params.format,
           trigger: params.trigger,
           cwd: params.cwd,
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {
@@ -578,12 +560,10 @@ Parametros:
 Exemplo: "login" encontra a area de autenticacao, "pagamento" encontra a area de billing.
 Usa keywords + correcao via Levenshtein para tolerancia a erros de digitacao.
 
-Se nao encontrar, tente: termos diferentes, usar list_areas para ver areas disponiveis, ou areas_init se nao ha config.
+Quando usar: nao sabe o ID exato da area, buscar por conceito/descricao, explorar areas por tema.
+NAO use para: buscar simbolos no codigo (use find) ou listar todas as areas (use list_areas).
 
-Parametros:
-- query: Descricao ou keyword para buscar areas
-- format: text (legivel) ou json (estruturado)
-- cwd: Diretorio do projeto a analisar`,
+Se nao encontrar: tente termos diferentes, use list_areas para ver areas disponiveis, ou areas_init se nao ha config.`,
       inputSchema: {
         query: z.string().min(1).describe("Descricao ou keyword para buscar areas"),
         format: z.enum(["text", "json"]).default("text").describe("Formato de saida: text (legivel) ou json (estruturado)"),
@@ -602,6 +582,7 @@ Parametros:
         const result = await describe(params.query, {
           format: params.format,
           cwd: params.cwd,
+          ctx: "mcp",
         });
         return { content: [{ type: "text", text: result }] };
       } catch (error) {

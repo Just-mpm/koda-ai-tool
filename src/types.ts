@@ -24,6 +24,7 @@ export interface CommandOptions {
   cwd?: string;
   save?: boolean;
   cache?: boolean; // default: true
+  ctx?: "cli" | "mcp";
 }
 
 export interface MapOptions extends CommandOptions {
@@ -61,6 +62,7 @@ export interface MapResult {
   version: string;
   timestamp: string;
   cwd: string;
+  framework?: string;
   summary: {
     totalFiles: number;
     totalFolders: number;

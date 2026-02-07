@@ -1,5 +1,69 @@
 # Changelog
 
+## [1.0.1] - 2026-02-07
+
+### Improved
+
+- **HintContext propagado em TODOS os comandos** - Cada comando agora recebe `ctx: "cli" | "mcp"` e gera instrucoes no formato correto
+  - CLI: `ai-tool impact Button` / MCP: `analyze__aitool_impact_analysis { target: 'Button' }`
+  - Antes: apenas `hints.ts` e `errors.ts` usavam ctx; agora 11 comandos propagam corretamente
+  - `CommandOptions` em `types.ts` agora inclui `ctx?: "cli" | "mcp"`
+
+- **Todos os 11 tools MCP passam `ctx: "mcp"`** - Corrigido problema onde tools MCP geravam instrucoes CLI
+  - Antes: `find` no MCP sugeria "ai-tool find useAuth" (formato CLI)
+  - Agora: sugere "analyze__aitool_find { query: 'useAuth' }" (formato MCP)
+
+- **Recovery hints corrigidos em tools MCP** - Dicas de recuperacao agora usam o tipo correto
+  - `find`: corrigido de `area_not_found` para `symbol_not_found`
+  - `area_detail`: corrigido de `file_not_found` para `area_not_found`
+
+- **Alerta proativo quando areas nao configuradas** - 3 comandos agora detectam config vazia
+  - `describe`, `areaContext`, `area` verificam se `areas.config.json` existe e tem areas
+  - Em vez de erro generico, sugere executar `areas_init` para configurar
+
+- **NextSteps inteligentes no `context`** - Proximos passos baseados no conteudo do arquivo
+  - Hook com poucos exports → sugere `impact` e `suggest`
+  - Muitos exports → sugere `find` para buscar usos
+  - Service → sugere `impact` para ver dependentes
+  - Antes: nextSteps generico igual para todos
+
+- **`find` agora mostra usos reais** - Fase 3 busca onde simbolos sao usados no codigo
+  - Alem de definicoes e imports, agora busca usos em funcoes/componentes
+  - Limites: 10 arquivos, 3 usos por arquivo (evita tokens excessivos)
+  - Ignora linhas de import/export/comentario
+
+- **Descriptions das tools MCP reescritas (v2)** - Cada tool agora tem secoes "Quando usar:" e "NAO use para:"
+  - Guia a IA para escolher a tool correta sem tentativa e erro
+  - Ex: `suggest_reads` → "Quando usar: ANTES de editar um arquivo" / "NAO use para: entender o projeto"
+
+- **`map` detecta framework do projeto** - Mostra framework principal no resumo
+  - Detecta: Next.js, Vite, Remix, Astro, Nuxt, SvelteKit, Firebase
+  - Projetos pequenos (<25 arquivos) listam todos os arquivos no resumo
+
+- **Novos tipos de erro em RecoveryErrorType** - 3 novos tipos de recuperacao
+  - `no_areas_configured`: quando areas nao estao configuradas
+  - `symbol_not_found`: quando simbolo nao e encontrado no find
+  - `index_failed`: quando indexacao do projeto falha
+
+### Technical Details
+
+- **Modificado**: `src/types.ts` - `ctx` em CommandOptions, `framework` em MapResult
+- **Modificado**: `src/utils/hints.ts` - 3 novos RecoveryErrorType
+- **Modificado**: `src/utils/errors.ts` - Todas funcoes aceitam ctx, removido COMMAND_REFERENCE export
+- **Modificado**: `src/commands/find.ts` - Phase 3 (usos reais), escapeRegex, ctx propagation
+- **Modificado**: `src/commands/describe.ts` - Alerta proativo areas, ctx propagation
+- **Modificado**: `src/commands/context.ts` - Alerta proativo areas, ctx propagation
+- **Modificado**: `src/commands/area.ts` - Alerta proativo areas, ctx propagation
+- **Modificado**: `src/commands/map.ts` - detectFramework(), ctx propagation
+- **Modificado**: `src/commands/impact.ts` - ctx propagation
+- **Modificado**: `src/commands/suggest.ts` - ctx propagation
+- **Modificado**: `src/commands/areas.ts` - ctx propagation
+- **Modificado**: `src/commands/functions.ts` - ctx propagation, nextSteps
+- **Modificado**: `src/formatters/text.ts` - nextSteps inteligentes no context, framework no map
+- **Modificado**: `src/mcp/tools.ts` - ctx: "mcp" em todas tools, descriptions v2, recovery hints corrigidos
+- **Modificado**: `src/index.ts` - Export RecoveryErrorType, removido COMMAND_REFERENCE
+- **126 testes passando**, 0 falhas
+
 ## [1.0.0] - 2026-02-07
 
 ### AI Experience Overhaul

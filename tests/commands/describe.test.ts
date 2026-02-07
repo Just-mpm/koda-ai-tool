@@ -86,9 +86,9 @@ describe("formatDescribeText", () => {
     };
 
     const formatted = formatDescribeText(result);
-    assert.ok(formatted.includes("❌ Nenhuma área encontrada"));
+    assert.ok(formatted.includes("❌ Nenhuma area encontrada"));
     assert.ok(formatted.includes('"test"'));
-    assert.ok(formatted.includes("💡 Você quis dizer?"));
+    assert.ok(formatted.includes("💡 Voce quis dizer?"));
     assert.ok(formatted.includes("→ ai-tool describe auth"));
   });
 
@@ -136,9 +136,9 @@ describe("formatDescribeText", () => {
     };
 
     const formatted = formatDescribeText(result);
-    assert.ok(formatted.includes("📖 Próximos passos:"));
-    assert.ok(formatted.includes("→ ai-tool area <id>"));
-    assert.ok(formatted.includes("→ ai-tool context --area=<id>"));
+    assert.ok(formatted.includes("Proximos passos:"));
+    assert.ok(formatted.includes("ai-tool area"));
+    assert.ok(formatted.includes("ai-tool context --area="));
   });
 
   it("deve lidar com múltiplas áreas encontradas", () => {

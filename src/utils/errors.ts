@@ -1,34 +1,42 @@
 /**
- * Formatadores de mensagens de erro com sugestões inteligentes
+ * Formatadores de mensagens de erro com sugestoes inteligentes
  *
- * Todas as funções retornam strings formatadas para exibição,
- * com sugestões "você quis dizer?" e referência de comandos.
+ * Todas as funcoes recebem um parametro `ctx` (HintContext)
+ * que determina o formato das dicas de navegacao:
+ * - "cli": instrucoes no formato CLI (ex: "ai-tool impact Button")
+ * - "mcp": instrucoes no formato MCP (ex: "analyze__aitool_impact_analysis { target: 'Button' }")
  */
 
 import { findSimilar, findBestMatch, extractFileName } from "./similarity.js";
+import { hint, type HintContext } from "./hints.js";
 
 /**
- * Referência rápida de comandos disponíveis
+ * Referencia rapida de comandos disponiveis
  */
-export const COMMAND_REFERENCE: Record<string, string> = {
-  map: "Resumo do projeto (sem target)",
-  areas: "Listar todas as áreas (sem target)",
-  area: "Arquivos de uma área específica",
+const COMMAND_REFERENCE_KEYS = ["map", "areas", "area", "suggest", "context", "impact", "dead", "find", "describe"] as const;
+
+const COMMAND_DESCRIPTIONS: Record<string, string> = {
+  map: "Resumo do projeto",
+  areas: "Listar todas as areas",
+  area: "Arquivos de uma area especifica",
   suggest: "O que ler antes de editar",
   context: "API/assinaturas de um arquivo",
   impact: "Quem usa este arquivo",
-  dead: "Código morto (sem target)",
+  dead: "Codigo morto",
+  find: "Buscar simbolos no codigo",
+  describe: "Buscar areas por descricao",
 };
 
 /**
- * Gera seção de referência de comandos
+ * Gera secao de referencia de comandos usando hint()
  */
-function getCommandReferenceSection(excludeCommand?: string): string {
-  let out = `\n📌 Comandos úteis:\n`;
+function getCommandReferenceSection(ctx: HintContext, excludeCommand?: string): string {
+  let out = `\n📌 Comandos uteis:\n`;
 
-  for (const [cmd, desc] of Object.entries(COMMAND_REFERENCE)) {
+  for (const cmd of COMMAND_REFERENCE_KEYS) {
     if (cmd !== excludeCommand) {
-      out += `   ai-tool ${cmd.padEnd(10)} ${desc}\n`;
+      const desc = COMMAND_DESCRIPTIONS[cmd];
+      out += `   → ${hint(cmd, ctx)} - ${desc}\n`;
     }
   }
 
@@ -42,19 +50,21 @@ function getCommandReferenceSection(excludeCommand?: string): string {
 export interface FormatFileNotFoundOptions {
   /** Termo buscado */
   target: string;
-  /** Lista de todos os arquivos disponíveis */
+  /** Lista de todos os arquivos disponiveis */
   allFiles: string[];
   /** Comando que gerou o erro (para contexto) */
   command?: string;
+  /** Contexto de execucao */
+  ctx?: HintContext;
 }
 
 /**
- * Formata mensagem de arquivo não encontrado
+ * Formata mensagem de arquivo nao encontrado
  *
- * Inclui sugestões de arquivos similares e referência de comandos.
+ * Inclui sugestoes de arquivos similares e referencia de comandos.
  */
 export function formatFileNotFound(options: FormatFileNotFoundOptions): string {
-  const { target, allFiles, command } = options;
+  const { target, allFiles, command, ctx = "cli" } = options;
 
   // Encontra arquivos similares
   const similarFiles = findSimilar(target, allFiles, {
@@ -63,15 +73,18 @@ export function formatFileNotFound(options: FormatFileNotFoundOptions): string {
     extractKey: extractFileName,
   });
 
-  // Encontra melhor sugestão
+  // Encontra melhor sugestao
   const bestMatch = findBestMatch(target, allFiles, extractFileName);
 
-  let out = `\n❌ Arquivo não encontrado: "${target}"\n\n`;
+  let out = `\n❌ Arquivo nao encontrado: "${target}"\n\n`;
   out += `📊 Total de arquivos indexados: ${allFiles.length}\n\n`;
 
-  // "Você quis dizer?" se houver match confiável
-  if (bestMatch) {
-    out += `💡 Você quis dizer?\n`;
+  // "Voce quis dizer?" se houver match confiavel
+  if (bestMatch && command) {
+    out += `💡 Voce quis dizer?\n`;
+    out += `   → ${hint(command, ctx, { "<arquivo>": bestMatch, "<termo>": bestMatch })}\n\n`;
+  } else if (bestMatch) {
+    out += `💡 Voce quis dizer?\n`;
     out += `   → ${bestMatch}\n\n`;
   }
 
@@ -90,11 +103,11 @@ export function formatFileNotFound(options: FormatFileNotFoundOptions): string {
   out += `📖 Dicas:\n`;
   out += `   • Use o caminho relativo: src/components/Header.tsx\n`;
   out += `   • Ou apenas o nome do arquivo: Header\n`;
-  out += `   • Verifique se o arquivo está em uma pasta incluída no scan\n`;
+  out += `   • Verifique se o arquivo esta em uma pasta incluida no scan\n`;
 
-  // Referência de comandos
+  // Referencia de comandos
   if (command) {
-    out += getCommandReferenceSection(command);
+    out += getCommandReferenceSection(ctx, command);
   }
 
   return out;
@@ -105,50 +118,52 @@ export function formatFileNotFound(options: FormatFileNotFoundOptions): string {
 // ============================================================================
 
 export interface AreaInfo {
-  /** ID da área */
+  /** ID da area */
   id: string;
-  /** Número de arquivos na área */
+  /** Numero de arquivos na area */
   count: number;
 }
 
 export interface FormatAreaNotFoundOptions {
   /** Termo buscado */
   target: string;
-  /** Lista de áreas disponíveis */
+  /** Lista de areas disponiveis */
   availableAreas: AreaInfo[];
+  /** Contexto de execucao */
+  ctx?: HintContext;
 }
 
 /**
- * Formata mensagem de área não encontrada
+ * Formata mensagem de area nao encontrada
  *
- * Inclui sugestões de áreas similares usando Levenshtein.
+ * Inclui sugestoes de areas similares usando Levenshtein.
  */
 export function formatAreaNotFound(options: FormatAreaNotFoundOptions): string {
-  const { target, availableAreas } = options;
+  const { target, availableAreas, ctx = "cli" } = options;
 
-  // Extrai IDs para comparação
+  // Extrai IDs para comparacao
   const areaIds = availableAreas.map((a) => a.id);
 
-  // Encontra melhor sugestão (case-insensitive)
+  // Encontra melhor sugestao (case-insensitive)
   const bestMatchId = findBestMatch(target, areaIds);
 
-  // Encontra áreas similares
+  // Encontra areas similares
   const similarAreaIds = findSimilar(target, areaIds, {
     maxDistance: 3,
     limit: 5,
   });
 
-  let out = `\n❌ Área não encontrada: "${target}"\n\n`;
+  let out = `\n❌ Area nao encontrada: "${target}"\n\n`;
 
-  // "Você quis dizer?" se houver match confiável
+  // "Voce quis dizer?" se houver match confiavel
   if (bestMatchId) {
-    out += `💡 Você quis dizer?\n`;
-    out += `   → ai-tool area ${bestMatchId}\n\n`;
+    out += `💡 Voce quis dizer?\n`;
+    out += `   → ${hint("area", ctx, { "<nome>": bestMatchId })}\n\n`;
   }
 
-  // Áreas disponíveis (prioriza similares se houver)
+  // Areas disponiveis (prioriza similares se houver)
   if (availableAreas.length > 0) {
-    out += `📦 Áreas disponíveis:\n\n`;
+    out += `📦 Areas disponiveis:\n\n`;
 
     // Se tem similares, mostra elas primeiro
     if (similarAreaIds.length > 0 && !bestMatchId) {
@@ -161,7 +176,7 @@ export function formatAreaNotFound(options: FormatAreaNotFoundOptions): string {
       out += `   ---\n`;
     }
 
-    // Mostra as demais (ou todas se não houver similares)
+    // Mostra as demais (ou todas se nao houver similares)
     const areasToShow =
       similarAreaIds.length > 0 && !bestMatchId
         ? availableAreas.filter((a) => !similarAreaIds.includes(a.id)).slice(0, 10)
@@ -181,14 +196,9 @@ export function formatAreaNotFound(options: FormatAreaNotFoundOptions): string {
 
   // Dicas
   out += `📖 Dicas:\n`;
-  out += `   • Use o ID exato da área (ex: ai-tool area auth)\n`;
-  out += `   • Use 'ai-tool areas' para listar todas as áreas\n`;
-  out += `   • IDs são case-sensitive (Auth ≠ auth)\n`;
-
-  // Referência de comandos relacionados
-  out += `\n📌 Comandos relacionados:\n`;
-  out += `   ai-tool areas      Listar todas as áreas\n`;
-  out += `   ai-tool map        Ver estrutura do projeto\n`;
+  out += `   → ${hint("areas", ctx)} - listar todas as areas\n`;
+  out += `   → ${hint("describe", ctx)} - buscar areas por descricao\n`;
+  out += `   → IDs sao case-sensitive (Auth ≠ auth)\n`;
 
   return out;
 }
@@ -198,25 +208,23 @@ export function formatAreaNotFound(options: FormatAreaNotFoundOptions): string {
 // ============================================================================
 
 /**
- * Formata mensagem de target obrigatório faltando
+ * Formata mensagem de target obrigatorio faltando
  */
-export function formatMissingTarget(command: string): string {
-  let out = `\n❌ Erro: parâmetro "target" é OBRIGATÓRIO para o comando "${command}".\n\n`;
+export function formatMissingTarget(command: string, ctx: HintContext = "cli"): string {
+  let out = `\n❌ Erro: parametro "target" e OBRIGATORIO para o comando "${command}".\n\n`;
 
   out += `📝 Exemplos:\n`;
 
   if (command === "area") {
-    out += `   ai-tool area auth\n`;
-    out += `   ai-tool area dashboard\n`;
-    out += `   ai-tool area billing --type=hook\n\n`;
-    out += `💡 Use 'ai-tool areas' para listar todas as áreas disponíveis.\n`;
+    out += `   ${hint("area", ctx, { "<nome>": "auth" })}\n`;
+    out += `   ${hint("area", ctx, { "<nome>": "dashboard" })}\n\n`;
+    out += `💡 ${hint("areas", ctx)} - listar todas as areas disponiveis\n`;
   } else {
-    out += `   ai-tool ${command} useAuth\n`;
-    out += `   ai-tool ${command} Button.tsx\n`;
-    out += `   ai-tool ${command} src/hooks/useAuth.ts\n`;
+    out += `   ${hint(command, ctx, { "<arquivo>": "useAuth", "<termo>": "useAuth" })}\n`;
+    out += `   ${hint(command, ctx, { "<arquivo>": "Button.tsx", "<termo>": "Button" })}\n`;
   }
 
-  out += getCommandReferenceSection(command);
+  out += getCommandReferenceSection(ctx, command);
 
   return out;
 }
@@ -226,22 +234,23 @@ export function formatMissingTarget(command: string): string {
 // ============================================================================
 
 /**
- * Formata mensagem de comando inválido
+ * Formata mensagem de comando invalido
  */
-export function formatInvalidCommand(command: string): string {
-  const validCommands = Object.keys(COMMAND_REFERENCE);
+export function formatInvalidCommand(command: string, ctx: HintContext = "cli"): string {
+  const validCommands = Object.keys(COMMAND_DESCRIPTIONS);
   const bestMatch = findBestMatch(command, validCommands);
 
-  let out = `\n❌ Comando inválido: "${command}"\n\n`;
+  let out = `\n❌ Comando invalido: "${command}"\n\n`;
 
   if (bestMatch) {
-    out += `💡 Você quis dizer?\n`;
-    out += `   → ai-tool ${bestMatch}\n\n`;
+    out += `💡 Voce quis dizer?\n`;
+    out += `   → ${hint(bestMatch, ctx)}\n\n`;
   }
 
-  out += `📌 Comandos disponíveis:\n`;
-  for (const [cmd, desc] of Object.entries(COMMAND_REFERENCE)) {
-    out += `   ai-tool ${cmd.padEnd(10)} ${desc}\n`;
+  out += `📌 Comandos disponiveis:\n`;
+  for (const cmd of COMMAND_REFERENCE_KEYS) {
+    const desc = COMMAND_DESCRIPTIONS[cmd];
+    out += `   → ${hint(cmd, ctx)} - ${desc}\n`;
   }
 
   return out;

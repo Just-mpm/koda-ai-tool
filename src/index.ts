@@ -101,14 +101,13 @@ export {
   formatAreaNotFound,
   formatMissingTarget,
   formatInvalidCommand,
-  COMMAND_REFERENCE,
 } from "./utils/errors.js";
 export type { FindSimilarOptions } from "./utils/similarity.js";
 export type { FormatFileNotFoundOptions, FormatAreaNotFoundOptions, AreaInfo } from "./utils/errors.js";
 
 // Hints (dicas contextuais CLI/MCP)
 export { hint, nextSteps, recoveryHint } from "./utils/hints.js";
-export type { HintContext } from "./utils/hints.js";
+export type { HintContext, RecoveryErrorType } from "./utils/hints.js";
 
 // Firebase Cloud Functions utils
 export {

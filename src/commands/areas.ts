@@ -15,6 +15,7 @@ import {
   isFileIgnored,
 } from "../areas/detector.js";
 import { formatAreasText } from "../formatters/text.js";
+import type { HintContext } from "../utils/hints.js";
 
 /**
  * Extensões de código suportadas
@@ -43,6 +44,7 @@ const IGNORED_DIRS = new Set([
 export async function areas(options: AreasOptions = {}): Promise<string> {
   const cwd = options.cwd || process.cwd();
   const format = options.format || "text";
+  const ctx: HintContext = options.ctx || "cli";
 
   try {
     // 1. Ler configuração
@@ -129,7 +131,7 @@ export async function areas(options: AreasOptions = {}): Promise<string> {
       return JSON.stringify(result, null, 2);
     }
 
-    return formatAreasText(result);
+    return formatAreasText(result, ctx);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar areas: ${message}`);

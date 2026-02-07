@@ -29,7 +29,7 @@ import {
 } from "../ts/extractor.js";
 import { formatFileNotFound, formatAreaNotFound } from "../utils/errors.js";
 import { simplifyType } from "../ts/utils.js";
-import { readConfig } from "../areas/config.js";
+import { readConfig, configExists } from "../areas/config.js";
 import {
   detectFileAreas,
   getAreaName,
@@ -44,12 +44,14 @@ import {
 } from "../cache/index.js";
 import { indexProject, type ProjectIndex } from "../ts/cache.js";
 import { parseCommandOptions, formatOutput } from "./base.js";
+import { hint as hintFn, type HintContext } from "../utils/hints.js";
 
 /**
  * Executa o comando CONTEXT
  */
 export async function context(target: string, options: ContextOptions = {}): Promise<string> {
   const { cwd, format } = parseCommandOptions(options);
+  const ctx: HintContext = options.ctx || "cli";
 
   if (!target) {
     throw new Error("Target e obrigatorio. Exemplo: ai-tool context src/components/Button.tsx");
@@ -61,7 +63,7 @@ export async function context(target: string, options: ContextOptions = {}): Pro
 
     if (!targetPath) {
       const allFiles = getAllCodeFiles(cwd);
-      return formatFileNotFound({ target, allFiles, command: "context" });
+      return formatFileNotFound({ target, allFiles, command: "context", ctx });
     }
 
     // 2. Criar projeto ts-morph
@@ -112,7 +114,7 @@ export async function context(target: string, options: ContextOptions = {}): Pro
     };
 
     // 7. Formatar output
-    return formatOutput(result, format, formatContextText);
+    return formatOutput(result, format, (r) => formatContextText(r, ctx));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar context: ${message}`);
@@ -244,6 +246,7 @@ export interface AreaContextOptions {
   cwd?: string;
   format?: "text" | "json";
   cache?: boolean;
+  ctx?: HintContext;
 }
 
 /**
@@ -255,16 +258,30 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
   const cwd = options.cwd || process.cwd();
   const format = options.format || "text";
   const useCache = options.cache !== false;
+  const ctx: HintContext = options.ctx || "cli";
 
   if (!areaName) {
     throw new Error("Nome da área é obrigatório. Exemplo: ai-tool context --area=auth");
   }
 
   try {
-    // 1. Ler configuração
+    // 1. Verificar se áreas estão configuradas
+    if (!configExists(cwd) || Object.keys(readConfig(cwd).areas).length === 0) {
+      let out = `⚠️ Nenhuma area configurada neste projeto.\n\n`;
+      out += `O comando area_context requer areas configuradas em .analyze/areas.config.json\n`;
+      out += `Para configurar:\n`;
+      out += `   1. ${hintFn("areas_init", ctx)} - gerar arquivo de configuracao\n`;
+      out += `   2. Edite .analyze/areas.config.json com as areas do projeto\n\n`;
+      out += `Enquanto isso, use:\n`;
+      out += `   → ${hintFn("context", ctx)} - ver assinaturas de um arquivo especifico\n`;
+      out += `   → ${hintFn("find", ctx)} - buscar simbolos no codigo\n`;
+      return out;
+    }
+
+    // 2. Ler configuração
     const config = readConfig(cwd);
 
-    // 2. Obter índice (do cache ou gerando)
+    // 3. Obter índice (do cache ou gerando)
     let index: ProjectIndex;
 
     if (useCache && isCacheValid(cwd)) {
@@ -319,7 +336,7 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
       if (format === "json") {
         return JSON.stringify({ error: `Area nao encontrada: "${areaName}"`, availableAreas: areaList });
       }
-      return formatAreaNotFound({ target: areaName, availableAreas: areaList });
+      return formatAreaNotFound({ target: areaName, availableAreas: areaList, ctx });
     }
 
     // 4. Coletar contexto de cada arquivo usando o índice
@@ -448,7 +465,7 @@ export async function areaContext(areaName: string, options: AreaContextOptions 
       return JSON.stringify(result, null, 2);
     }
 
-    return formatAreaContextText(result);
+    return formatAreaContextText(result, ctx);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar context --area: ${message}`);

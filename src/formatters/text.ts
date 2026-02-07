@@ -35,6 +35,11 @@ export function formatMapSummary(
 ): string {
   let out = "";
 
+  // Framework detectado
+  if (result.framework) {
+    out += `🏗️ Framework: ${result.framework}\n`;
+  }
+
   // Resumo compacto
   out += `📊 ${result.summary.totalFiles} arquivos | ${result.summary.totalFolders} pastas\n`;
 
@@ -64,13 +69,23 @@ export function formatMapSummary(
   }
   out += `   ${catParts.join(", ")}\n`;
 
-  // Top pastas
-  const topFolders = result.folders
-    .sort((a, b) => b.fileCount - a.fileCount)
-    .slice(0, 5);
-  if (topFolders.length > 0) {
-    const folderParts = topFolders.map(f => `${f.path}/ (${f.fileCount})`);
-    out += `📁 ${folderParts.join(", ")}\n`;
+  // Projetos pequenos: listar arquivos direto
+  const SMALL_PROJECT_THRESHOLD = 25;
+  if (result.summary.totalFiles <= SMALL_PROJECT_THRESHOLD && result.files.length > 0) {
+    out += `\n📁 Arquivos:\n`;
+    for (const file of result.files) {
+      const icon = categoryIcons[file.category];
+      out += `   ${icon} ${file.path}\n`;
+    }
+  } else {
+    // Top pastas (projetos maiores)
+    const topFolders = result.folders
+      .sort((a, b) => b.fileCount - a.fileCount)
+      .slice(0, 5);
+    if (topFolders.length > 0) {
+      const folderParts = topFolders.map(f => `${f.path}/ (${f.fileCount})`);
+      out += `📁 ${folderParts.join(", ")}\n`;
+    }
   }
 
   // Areas (se disponivel)
@@ -653,7 +668,40 @@ export function formatContextText(result: ContextResult, ctx: HintContext = "cli
     out += `   Constants: ${result.constants.length}\n`;
   }
 
-  out += nextSteps("context", ctx);
+  // NextSteps contextuais baseados no conteudo
+  out += `\n📖 Proximos passos:\n`;
+
+  // Se tem muitos exports → sugerir find para cada um principal
+  const exportedFns = result.functions.filter(f => f.isExported);
+  const exportedTypes = result.types.filter(t => t.isExported);
+
+  if (exportedFns.length > 0) {
+    const mainExport = exportedFns[0].name;
+    out += `   → ${hint("find", ctx, { "<termo>": mainExport })} - ver onde ${mainExport} e usado\n`;
+  }
+
+  // Se é hook → sugerir impact
+  const isHook = result.category === "hook" || result.functions.some(f => f.name.startsWith("use"));
+  if (isHook) {
+    out += `   → ${hint("impact", ctx, { "<arquivo>": result.file })} - ver quem usa este hook\n`;
+  }
+
+  // Se é service → sugerir impact
+  if (result.category === "service") {
+    out += `   → ${hint("impact", ctx, { "<arquivo>": result.file })} - ver quem usa este service\n`;
+  }
+
+  // Se tem tipos exportados → sugerir find
+  if (exportedTypes.length > 0) {
+    const mainType = exportedTypes[0].name;
+    out += `   → ${hint("find", ctx, { "<termo>": mainType })} - ver onde ${mainType} e usado\n`;
+  }
+
+  // Sempre sugerir suggest e impact
+  if (!isHook && result.category !== "service") {
+    out += `   → ${hint("impact", ctx, { "<arquivo>": result.file })} - ver quem sera afetado por mudancas\n`;
+  }
+  out += `   → ${hint("suggest", ctx, { "<arquivo>": result.file })} - o que ler antes de editar\n`;
 
   return out;
 }

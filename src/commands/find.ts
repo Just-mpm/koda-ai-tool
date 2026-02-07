@@ -8,6 +8,8 @@
  * - Usa cache de símbolos para performance
  */
 
+import { readFileSync } from "fs";
+import { join } from "path";
 import type { FileCategory } from "../types.js";
 import { readConfig } from "../areas/config.js";
 import { detectFileAreas, isFileIgnored } from "../areas/detector.js";
@@ -21,6 +23,7 @@ import {
 } from "../cache/index.js";
 import { indexProject, type ProjectIndex, type SymbolInfo } from "../ts/cache.js";
 import { parseCommandOptions, formatOutput } from "./base.js";
+import type { HintContext } from "../utils/hints.js";
 
 /**
  * Tipos de símbolo que podem ser buscados
@@ -38,6 +41,7 @@ export interface FindOptions {
   def?: boolean;
   refs?: boolean;
   cache?: boolean;
+  ctx?: HintContext;
 }
 
 /**
@@ -86,6 +90,7 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
   const defOnly = options.def ?? false;
   const refsOnly = options.refs ?? false;
   const useCache = options.cache !== false;
+  const ctx: HintContext = options.ctx || "cli";
 
   // Permitir query vazio apenas quando defOnly=true e type !== "all"
   const listAllMode = !query && defOnly && filterType && filterType !== "all";
@@ -156,12 +161,12 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
         if (format === "json") {
           return JSON.stringify({ error: `Nenhum arquivo encontrado na area "${filterArea}"`, availableAreas: areaList });
         }
-        return formatAreaNotFound({ target: filterArea, availableAreas: areaList });
+        return formatAreaNotFound({ target: filterArea, availableAreas: areaList, ctx });
       }
     }
 
     // 3. Buscar símbolos
-    const matches = searchInIndex(index, query, filterType, allowedFiles);
+    const matches = searchInIndex(index, query, filterType, allowedFiles, cwd);
 
     // 4. Separar definição e referências
     let definition: FindMatch | null = null;
@@ -215,7 +220,7 @@ export async function find(query: string, options: FindOptions = {}): Promise<st
 
     // 8. Formatar output
     const allSymbolNames = Object.keys(index.symbolsByName);
-    return formatOutput(result, format, (r) => formatFindText(r, "cli", allSymbolNames), fromCache);
+    return formatOutput(result, format, (r) => formatFindText(r, ctx, allSymbolNames), fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar find: ${message}`);
@@ -229,7 +234,8 @@ function searchInIndex(
   index: ProjectIndex,
   query: string,
   filterType: SymbolType,
-  allowedFiles: Set<string> | null
+  allowedFiles: Set<string> | null,
+  cwd?: string
 ): FindMatch[] {
   const matches: FindMatch[] = [];
   const queryLower = query?.toLowerCase() || "";
@@ -299,7 +305,62 @@ function searchInIndex(
     }
   }
 
-  // Ordenar: definições primeiro, depois imports
+  // 3. Buscar usos reais nos arquivos que importam o símbolo
+  if (!listAllMode && query) {
+    const importFiles = matches
+      .filter((m) => m.matchType === "import")
+      .map((m) => m.file);
+
+    const baseCwd = cwd || "";
+    const MAX_USAGE_FILES = 10;
+    const MAX_USAGES_PER_FILE = 3;
+
+    for (const filePath of importFiles.slice(0, MAX_USAGE_FILES)) {
+      try {
+        const fullPath = baseCwd ? join(baseCwd, filePath) : filePath;
+        const content = readFileSync(fullPath, "utf-8");
+        const lines = content.split("\n");
+
+        // Regex para encontrar uso real (não import/export/comment)
+        const usageRegex = new RegExp(`\\b${escapeRegex(query)}\\b`);
+        let usagesFound = 0;
+
+        for (let i = 0; i < lines.length && usagesFound < MAX_USAGES_PER_FILE; i++) {
+          const line = lines[i].trim();
+
+          // Pular imports, exports, comentários
+          if (line.startsWith("import ") || line.startsWith("export ") || line.startsWith("//") || line.startsWith("*") || line.startsWith("/*")) {
+            continue;
+          }
+
+          if (usageRegex.test(line)) {
+            const key = `usage:${filePath}:${i + 1}:${query}`;
+            if (processedSymbols.has(key)) continue;
+            processedSymbols.add(key);
+
+            const fileData = index.files[filePath];
+            const codeLine = line.length > 100 ? line.substring(0, 100) + "..." : line;
+
+            matches.push({
+              file: filePath,
+              line: i + 1,
+              column: 0,
+              code: codeLine,
+              matchType: "usage",
+              symbolType: inferSymbolTypeFromName(query),
+              category: fileData?.category || "other",
+            });
+
+            usagesFound++;
+          }
+        }
+      } catch {
+        // Arquivo não legível, ignorar
+      }
+    }
+  }
+
+  // Ordenar: definições primeiro, depois imports, depois usos
   matches.sort((a, b) => {
     const order = { definition: 0, import: 1, usage: 2 };
     const orderDiff = order[a.matchType] - order[b.matchType];
@@ -308,6 +369,13 @@ function searchInIndex(
   });
 
   return matches;
+}
+
+/**
+ * Escapa caracteres especiais de regex
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**

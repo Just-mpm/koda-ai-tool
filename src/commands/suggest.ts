@@ -21,6 +21,7 @@ import {
 import { formatFileNotFound } from "../utils/errors.js";
 import { findTargetFile } from "../utils/file-matcher.js";
 import { parseCommandOptions, formatOutput } from "./base.js";
+import type { HintContext } from "../utils/hints.js";
 
 /**
  * Executa o comando SUGGEST
@@ -29,6 +30,7 @@ export async function suggest(target: string, options: SuggestOptions = {}): Pro
   const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false;
   const limit = options.limit || 10;
+  const ctx: HintContext = options.ctx || "cli";
 
   if (!target) {
     throw new Error("Target e obrigatorio. Exemplo: ai-tool suggest src/components/Button.tsx");
@@ -82,7 +84,7 @@ export async function suggest(target: string, options: SuggestOptions = {}): Pro
     const targetPath = findTargetFile(target, allFiles);
 
     if (!targetPath) {
-      return formatFileNotFound({ target, allFiles, command: "suggest" });
+      return formatFileNotFound({ target, allFiles, command: "suggest", ctx });
     }
 
     // Coletar sugestoes
@@ -102,7 +104,7 @@ export async function suggest(target: string, options: SuggestOptions = {}): Pro
     };
 
     // Formatar output
-    return formatOutput(result, format, formatSuggestText, fromCache);
+    return formatOutput(result, format, (r) => formatSuggestText(r, ctx), fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar suggest: ${message}`);

@@ -6,7 +6,7 @@ import { readdirSync, statSync } from "fs";
 import { join, extname } from "path";
 import type { AreaOptions, AreaDetailResult, AreaFile, FileCategory, DetectedArea } from "../types.js";
 import { detectCategory } from "../utils/detect.js";
-import { readConfig, getFileDescription } from "../areas/config.js";
+import { readConfig, configExists, getFileDescription } from "../areas/config.js";
 import {
   detectFileAreas,
   getAreaName,
@@ -16,6 +16,7 @@ import {
 } from "../areas/detector.js";
 import { formatAreaDetailText } from "../formatters/text.js";
 import { formatAreaNotFound as formatAreaNotFoundError } from "../utils/errors.js";
+import { hint as hintFn, type HintContext } from "../utils/hints.js";
 
 /**
  * Extensões de código suportadas
@@ -96,12 +97,26 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
   const format = options.format || "text";
   const filterType = options.type;
   const full = options.full ?? false;
+  const ctx: HintContext = options.ctx || "cli";
 
   if (!target) {
     throw new Error("Nome da área é obrigatório. Exemplo: ai-tool area auth");
   }
 
   try {
+    // 0. Verificar se áreas estão configuradas
+    if (!configExists(cwd) || Object.keys(readConfig(cwd).areas).length === 0) {
+      let out = `⚠️ Nenhuma area configurada neste projeto.\n\n`;
+      out += `O comando area requer areas configuradas em .analyze/areas.config.json\n`;
+      out += `Para configurar:\n`;
+      out += `   1. ${hintFn("areas_init", ctx)} - gerar arquivo de configuracao\n`;
+      out += `   2. Edite .analyze/areas.config.json com as areas do projeto\n\n`;
+      out += `Enquanto isso, use:\n`;
+      out += `   → ${hintFn("map", ctx)} - ver estrutura do projeto\n`;
+      out += `   → ${hintFn("find", ctx)} - buscar simbolos no codigo\n`;
+      return out;
+    }
+
     // 1. Ler configuração
     const config = readConfig(cwd);
 
@@ -152,7 +167,7 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
     if (areaFiles.length === 0) {
       // Listar áreas disponíveis
       const availableAreas = getAvailableAreas(filteredFiles, config);
-      return formatAreaNotFound(target, availableAreas);
+      return formatAreaNotFound(target, availableAreas, ctx);
     }
 
     // 6. Agrupar por categoria
@@ -204,7 +219,7 @@ export async function area(target: string, options: AreaOptions = {}): Promise<s
       return JSON.stringify(result, null, 2);
     }
 
-    const output = formatAreaDetailText(result, { full, filterType });
+    const output = formatAreaDetailText(result, { full, filterType }, ctx);
     return nameConversionMsg + output;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -269,8 +284,8 @@ function getAvailableAreas(
  * Formata mensagem de área não encontrada
  * Usa módulo compartilhado com sugestões "você quis dizer?"
  */
-function formatAreaNotFound(target: string, availableAreas: Array<{ id: string; count: number }>): string {
-  return formatAreaNotFoundError({ target, availableAreas });
+function formatAreaNotFound(target: string, availableAreas: Array<{ id: string; count: number }>, ctx: HintContext = "cli"): string {
+  return formatAreaNotFoundError({ target, availableAreas, ctx });
 }
 
 /**

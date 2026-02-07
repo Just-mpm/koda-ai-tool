@@ -200,8 +200,18 @@ export function nextSteps(command: string, ctx: HintContext): string {
  * @param extra - Informação extra sobre o erro
  * @returns String formatada com dica de recuperação
  */
+export type RecoveryErrorType =
+  | "file_not_found"
+  | "area_not_found"
+  | "no_results"
+  | "no_firebase"
+  | "no_areas_configured"
+  | "symbol_not_found"
+  | "index_failed"
+  | "generic";
+
 export function recoveryHint(
-  errorType: "file_not_found" | "area_not_found" | "no_results" | "no_firebase" | "generic",
+  errorType: RecoveryErrorType,
   ctx: HintContext,
   _extra?: { command?: string }
 ): string {
@@ -217,6 +227,15 @@ export function recoveryHint(
 
     case "no_firebase":
       return `\n💡 Este projeto nao usa Firebase. Comandos disponiveis:\n   → ${hint("map", ctx)} - ver estrutura do projeto\n   → ${hint("find", ctx)} - buscar simbolos no codigo\n   → ${hint("areas", ctx)} - listar areas funcionais\n`;
+
+    case "no_areas_configured":
+      return `\n💡 Nenhuma area configurada neste projeto.\n   → ${hint("areas_init", ctx)} - gerar arquivo de configuracao\n   → Depois edite .analyze/areas.config.json com as areas do projeto\n   → ${hint("map", ctx)} - ver estrutura do projeto sem areas\n`;
+
+    case "symbol_not_found":
+      return `\n💡 Dicas:\n   → Verifique a ortografia do simbolo\n   → Tente buscar parte do nome\n   → ${hint("find", ctx)} - buscar com outro termo\n   → ${hint("describe", ctx)} - buscar areas por descricao\n   → ${hint("map", ctx)} - ver estrutura do projeto\n`;
+
+    case "index_failed":
+      return `\n💡 Falha ao indexar o projeto:\n   → Verifique se tsconfig.json existe e esta valido\n   → Verifique se o projeto tem arquivos .ts ou .tsx\n   → ${hint("map", ctx)} - tente ver a estrutura basica primeiro\n`;
 
     case "generic":
       return `\n💡 Tente:\n   → ${hint("map", ctx)} - verificar estrutura do projeto\n   → Verifique se o caminho (cwd) esta correto\n`;

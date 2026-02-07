@@ -14,6 +14,7 @@ import {
   cacheSymbolsIndex,
   updateCacheMeta,
 } from "../cache/index.js";
+import { hint, nextSteps, type HintContext } from "../utils/hints.js";
 
 /**
  * Informação de uma Cloud Function
@@ -53,7 +54,8 @@ export interface FunctionsOptions {
   cwd?: string;
   format?: "text" | "json";
   cache?: boolean;
-  trigger?: string; // Filtrar por tipo de trigger
+  trigger?: string;
+  ctx?: HintContext;
 }
 
 /**
@@ -64,6 +66,7 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
   const format = options.format || "text";
   const useCache = options.cache !== false;
   const filterTrigger = options.trigger;
+  const ctx: HintContext = options.ctx || "cli";
 
   // Verificar se é projeto Firebase
   if (!isFirebaseProject(cwd)) {
@@ -73,9 +76,9 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
     }
     let out = `❌ ${errorMsg}\n`;
     out += `\n💡 Comandos disponiveis para este projeto:\n`;
-    out += `   → ai-tool map - ver estrutura do projeto\n`;
-    out += `   → ai-tool find <termo> - buscar simbolos no codigo\n`;
-    out += `   → ai-tool areas - listar areas funcionais\n`;
+    out += `   → ${hint("map", ctx)} - ver estrutura do projeto\n`;
+    out += `   → ${hint("find", ctx)} - buscar simbolos no codigo\n`;
+    out += `   → ${hint("areas", ctx)} - listar areas funcionais\n`;
     return out;
   }
 
@@ -174,7 +177,7 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
       return JSON.stringify(result, null, 2);
     }
 
-    return formatFunctionsText(result);
+    return formatFunctionsText(result, ctx);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar functions: ${message}`);
@@ -184,7 +187,7 @@ export async function functions(options: FunctionsOptions = {}): Promise<string>
 /**
  * Formata resultado em texto
  */
-function formatFunctionsText(result: FunctionsResult): string {
+function formatFunctionsText(result: FunctionsResult, ctx: HintContext = "cli"): string {
   let out = "";
 
   out += `\n`;
@@ -196,26 +199,21 @@ function formatFunctionsText(result: FunctionsResult): string {
   out += `📊 RESUMO\n`;
   out += `   Total: ${result.summary.total} functions\n`;
   out += `   Exportadas: ${result.summary.exported}\n`;
-  
-  if (result.summary.total > 0) {
-    out += `\n   💡 Filtros disponíveis:\n`;
-    out += `      ai-tool functions --trigger=onCall\n`;
-    out += `      ai-tool functions --trigger=onDocumentCreated\n`;
-  }
   out += `\n`;
 
   if (result.summary.total === 0) {
     out += `   ⚠️  NENHUMA CLOUD FUNCTION DETECTADA\n\n`;
-    out += `   Possíveis causas:\n`;
-    out += `      1. O projeto não é Firebase (não encontrou .firebaserc ou firebase.json)\n`;
-    out += `      2. Não há arquivo functions/src/index.ts\n`;
-    out += `      3. Os triggers não usam padrões v2 (onCall, onDocumentCreated, etc)\n`;
-    out += `      4. O cache está desatualizado (ex: atualizou o ai-tool recentemente)\n`;
-    out += `         → Tente: ai-tool functions --no-cache\n\n`;
-    out += `   Padrões suportados:\n`;
+    out += `   Possiveis causas:\n`;
+    out += `      1. O projeto nao e Firebase (nao encontrou .firebaserc ou firebase.json)\n`;
+    out += `      2. Nao ha arquivo functions/src/index.ts\n`;
+    out += `      3. Os triggers nao usam padroes v2 (onCall, onDocumentCreated, etc)\n`;
+    out += `      4. O cache esta desatualizado\n\n`;
+    out += `   Padroes suportados:\n`;
     out += `      export const minhaFunc = onCall((request) => { ... })\n`;
     out += `      export const minhaFunc = onDocumentCreated("path", (event) => { ... })\n\n`;
-    out += `   Documentação: https://firebase.google.com/docs/functions\n`;
+    out += `💡 Dicas:\n`;
+    out += `   → ${hint("map", ctx)} - ver estrutura do projeto\n`;
+    out += `   → ${hint("find", ctx)} - buscar simbolos no codigo\n`;
     return out;
   }
 
@@ -284,11 +282,13 @@ function formatFunctionsText(result: FunctionsResult): string {
     out += `\n`;
   }
 
+  out += nextSteps("functions", ctx);
+
   return out;
 }
 
 /**
- * Retorna ícone para cada tipo de trigger
+ * Retorna icone para cada tipo de trigger
  */
 function getTriggerIcon(trigger: string): string {
   if (trigger.includes("Call") || trigger.includes("Request")) return "🌐";

@@ -21,6 +21,7 @@ import {
   updateCacheMeta,
 } from "../cache/index.js";
 import type { AreasConfigFile } from "../types.js";
+import { hint, nextSteps, type HintContext } from "../utils/hints.js";
 
 /**
  * Resultado do comando describe
@@ -48,6 +49,7 @@ export interface AreaMatch {
 export interface DescribeOptions {
   cwd?: string;
   format?: "text" | "json";
+  ctx?: HintContext;
 }
 
 /**
@@ -270,6 +272,7 @@ export async function describe(
   options: DescribeOptions = {}
 ): Promise<string> {
   const { cwd, format } = parseCommandOptions(options);
+  const ctx: HintContext = options.ctx || "cli";
 
   if (!query || query.trim().length === 0) {
     throw new Error("Query é obrigatória. Exemplo: ai-tool describe 'autenticação'");
@@ -279,20 +282,34 @@ export async function describe(
     // 1. Ler configuração
     const config = readConfig(cwd);
 
-    // 2. Normalizar query
+    // 2. Verificar se há áreas configuradas
+    const hasAreas = Object.keys(config.areas).length > 0;
+    if (!hasAreas) {
+      let out = `⚠️ Nenhuma area configurada neste projeto.\n\n`;
+      out += `O comando describe busca em areas configuradas.\n`;
+      out += `Para configurar areas:\n`;
+      out += `   1. ${hint("areas_init", ctx)} - gerar arquivo de configuracao\n`;
+      out += `   2. Edite .analyze/areas.config.json com as areas do projeto\n\n`;
+      out += `Enquanto isso, use:\n`;
+      out += `   → ${hint("find", ctx)} - buscar simbolos no codigo\n`;
+      out += `   → ${hint("map", ctx)} - ver estrutura do projeto\n`;
+      return out;
+    }
+
+    // 3. Normalizar query
     const normalizedQuery = query.toLowerCase().trim();
 
-    // 3. Criar lista de candidatos (todas as áreas definidas)
+    // 4. Criar lista de candidatos (todas as áreas definidas)
     const candidates = Object.entries(config.areas).map(([id, area]) => ({
       id,
       name: area.name,
       description: area.description || "",
     }));
 
-    // 4. Buscar matches (com busca enriquecida)
+    // 5. Buscar matches (com busca enriquecida)
     const matches = findAreaMatches(normalizedQuery, candidates, config, cwd);
 
-    // 5. Se não encontrou nada, tentar correções via Levenshtein
+    // 6. Se não encontrou nada, tentar correções via Levenshtein
     const suggestions: string[] = [];
     if (matches.length === 0) {
       const similarAreaIds = findSimilar(
@@ -308,12 +325,12 @@ export async function describe(
       );
 
       suggestions.push(
-        ...similarAreaIds.map((id) => `→ ai-tool describe ${id}`),
-        ...similarNames.map((name) => `→ ai-tool describe "${name}"`)
+        ...similarAreaIds.map((id) => `→ ${hint("describe", ctx, { "<termo>": id })}`),
+        ...similarNames.map((name) => `→ ${hint("describe", ctx, { "<termo>": `"${name}"` })}`)
       );
     }
 
-    // 6. Montar resultado
+    // 7. Montar resultado
     const result: DescribeResult = {
       version: "1.0.0",
       timestamp: new Date().toISOString(),
@@ -322,8 +339,8 @@ export async function describe(
       suggestions: suggestions.length > 0 ? suggestions : undefined,
     };
 
-    // 7. Formatar output
-    return formatOutput(result, format, formatDescribeText);
+    // 8. Formatar output
+    return formatOutput(result, format, (r) => formatDescribeText(r, ctx));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar describe: ${message}`);
@@ -333,28 +350,30 @@ export async function describe(
 /**
  * Formata resultado do DESCRIBE para texto
  */
-export function formatDescribeText(result: DescribeResult): string {
+export function formatDescribeText(result: DescribeResult, ctx: HintContext = "cli"): string {
   let out = "";
 
   if (result.areas.length === 0) {
-    out += `❌ Nenhuma área encontrada para: "${result.query}"\n\n`;
+    out += `❌ Nenhuma area encontrada para: "${result.query}"\n\n`;
 
     if (result.suggestions && result.suggestions.length > 0) {
-      out += `💡 Você quis dizer?\n`;
+      out += `💡 Voce quis dizer?\n`;
       for (const suggestion of result.suggestions) {
         out += `   ${suggestion}\n`;
       }
       out += `\n`;
     }
 
-    out += `📖 Dica: Use 'ai-tool areas' para listar todas as áreas disponíveis`;
+    out += `📖 Dicas:\n`;
+    out += `   → ${hint("areas", ctx)} - listar todas as areas disponiveis\n`;
+    out += `   → ${hint("find", ctx)} - buscar simbolos por nome\n`;
     return out;
   }
 
   // Header
   out += `🔍 Busca: "${result.query}"\n\n`;
 
-  // Áreas encontradas
+  // Areas encontradas
   for (const area of result.areas) {
     out += `## ${area.name} (${area.id})\n`;
     out += `${area.description}\n`;
@@ -371,16 +390,13 @@ export function formatDescribeText(result: DescribeResult): string {
       }
       if (remaining > 0) {
         out += `   ... e mais ${remaining} arquivo(s)\n`;
-        out += `   → Use 'ai-tool area ${area.id}' para ver todos\n`;
+        out += `   → ${hint("area", ctx, { "<nome>": area.id })} - ver todos\n`;
       }
       out += "\n";
     }
   }
 
-  // Dicas de navegação
-  out += `📖 Próximos passos:\n`;
-  out += `   → ai-tool area <id> - ver detalhes de uma área\n`;
-  out += `   → ai-tool context --area=<id> - contexto completo de uma área\n`;
+  out += nextSteps("describe", ctx);
 
   return out;
 }

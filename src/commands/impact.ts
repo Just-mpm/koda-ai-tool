@@ -22,6 +22,7 @@ import { formatFileNotFound } from "../utils/errors.js";
 import { findTargetFile } from "../utils/file-matcher.js";
 import { parseCommandOptions, formatOutput } from "./base.js";
 import { hasGitRepo, getCommitsForFile } from "../integrations/git.js";
+import type { HintContext } from "../utils/hints.js";
 
 /**
  * Executa o comando IMPACT
@@ -29,6 +30,7 @@ import { hasGitRepo, getCommitsForFile } from "../integrations/git.js";
 export async function impact(target: string, options: ImpactOptions = {}): Promise<string> {
   const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false; // default: true
+  const ctx: HintContext = options.ctx || "cli";
 
   if (!target) {
     throw new Error("Target é obrigatório. Exemplo: ai-tool impact src/components/Button.tsx");
@@ -87,7 +89,7 @@ export async function impact(target: string, options: ImpactOptions = {}): Promi
     const targetPath = findTargetFile(target, allFiles);
 
     if (!targetPath) {
-      return formatFileNotFound({ target, allFiles, command: "impact" });
+      return formatFileNotFound({ target, allFiles, command: "impact", ctx });
     }
 
     // Calcular dependências a partir do grafo
@@ -142,7 +144,7 @@ export async function impact(target: string, options: ImpactOptions = {}): Promi
     };
 
     // Formatar output
-    return formatOutput(result, format, formatImpactText, fromCache);
+    return formatOutput(result, format, (r) => formatImpactText(r, ctx), fromCache);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar impact: ${message}`);

@@ -22,14 +22,53 @@ import {
 import { readConfig } from "../areas/config.js";
 import { detectFileAreas, getAreaName, isFileIgnored } from "../areas/detector.js";
 import { parseCommandOptions } from "./base.js";
+import { existsSync } from "fs";
+import { join } from "path";
+import type { HintContext } from "../utils/hints.js";
 
 /**
  * Executa o comando MAP
  */
+/**
+ * Detecta o framework principal do projeto
+ */
+function detectFramework(cwd: string): string | undefined {
+  // Next.js
+  if (existsSync(join(cwd, "next.config.js")) || existsSync(join(cwd, "next.config.ts")) || existsSync(join(cwd, "next.config.mjs"))) {
+    return "Next.js";
+  }
+  // Vite
+  if (existsSync(join(cwd, "vite.config.ts")) || existsSync(join(cwd, "vite.config.js"))) {
+    return "Vite";
+  }
+  // Remix
+  if (existsSync(join(cwd, "remix.config.js")) || existsSync(join(cwd, "remix.config.ts"))) {
+    return "Remix";
+  }
+  // Astro
+  if (existsSync(join(cwd, "astro.config.mjs")) || existsSync(join(cwd, "astro.config.ts"))) {
+    return "Astro";
+  }
+  // Nuxt
+  if (existsSync(join(cwd, "nuxt.config.ts")) || existsSync(join(cwd, "nuxt.config.js"))) {
+    return "Nuxt";
+  }
+  // SvelteKit
+  if (existsSync(join(cwd, "svelte.config.js")) || existsSync(join(cwd, "svelte.config.ts"))) {
+    return "SvelteKit";
+  }
+  // Firebase Functions
+  if (existsSync(join(cwd, ".firebaserc")) || existsSync(join(cwd, "firebase.json"))) {
+    return "Firebase";
+  }
+  return undefined;
+}
+
 export async function map(options: MapOptions = {}): Promise<string> {
   const { cwd, format } = parseCommandOptions(options);
   const useCache = options.cache !== false; // default: true
   const full = options.full ?? false; // default: resumo compacto
+  const ctx: HintContext = options.ctx || "cli";
 
   // Tentar usar cache
   if (useCache && isCacheValid(cwd)) {
@@ -44,10 +83,10 @@ export async function map(options: MapOptions = {}): Promise<string> {
 
       // Se full, mostra lista completa; senão, resumo
       if (full) {
-        return formatMapText(result) + "\n\n📦 (resultado do cache)";
+        return formatMapText(result, ctx) + "\n\n📦 (resultado do cache)";
       }
       const areasInfo = detectAreasInfo(cwd, result.files.map((f) => f.path));
-      return formatMapSummary(result, areasInfo) + "\n📦 (cache)";
+      return formatMapSummary(result, areasInfo, ctx) + "\n📦 (cache)";
     }
   }
 
@@ -116,11 +155,15 @@ export async function map(options: MapOptions = {}): Promise<string> {
     // Detectar dependências circulares
     const circular = findCircularDependencies();
 
+    // Detectar framework
+    const framework = detectFramework(cwd);
+
     // Montar resultado
     const result: MapResult = {
       version: "1.0.0",
       timestamp: new Date().toISOString(),
       cwd,
+      framework,
       summary: {
         totalFiles: files.length,
         totalFolders: folderMap.size,
@@ -144,11 +187,11 @@ export async function map(options: MapOptions = {}): Promise<string> {
 
     // Se full, mostra lista completa; senão, resumo
     if (full) {
-      return formatMapText(result);
+      return formatMapText(result, ctx);
     }
 
     const areasInfo = detectAreasInfo(cwd, files.map((f) => f.path));
-    return formatMapSummary(result, areasInfo);
+    return formatMapSummary(result, areasInfo, ctx);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Erro ao executar map: ${message}`);
